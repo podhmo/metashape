@@ -1,5 +1,5 @@
 test:
-	pytest --show-capture=all 
+	pytest --show-capture=all
 
 format:
 #	pip install -e .[dev]
@@ -12,7 +12,9 @@ lint:
 typing:
 #	pip install -e .[dev]
 	mypy --strict --ignore-missing-imports metashape
-# TODO: examples
+
+examples:
+	$(MAKE) -C examples/jsonschema
 
 build:
 #	pip install wheel
@@ -23,4 +25,4 @@ upload:
 	twine check dist/metashape-$(shell cat VERSION)*
 	twine upload dist/metashape-$(shell cat VERSION)*
 
-.PHONY: test format lint build upload
+.PHONY: test format lint build upload examples typing
