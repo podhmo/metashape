@@ -9,4 +9,4 @@ class Person:
 
 
 # main
-print(compile_with([Person]))
+compile_with([Person])

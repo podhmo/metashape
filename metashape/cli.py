@@ -21,7 +21,7 @@ def run(
     accessor = Accessor(
         resolver=resolver, repository=resolver.resolve_repository(m.__dict__)
     )
-    print(compile(accessor))
+    compile(accessor)
 
 
 def main(*, argv: t.Optional[t.List[str]] = None) -> None:
