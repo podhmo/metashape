@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 install_requires = []
 dev_requires = ["black", "flake8"]
-tests_requires = []
+tests_requires = ["pytest"]
 
 setup(
     classifiers=[
@@ -18,7 +18,7 @@ setup(
     python_requires=">3.5",
     packages=find_packages(exclude=["metashape.tests"]),
     install_requires=install_requires,
-    extras_require={"testing": tests_requires, "dev": dev_requires},
+    extras_require={"testing": tests_requires, "dev": dev_requires + tests_requires},
     tests_require=tests_requires,
     test_suite="metashape.tests",
 )

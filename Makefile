@@ -1,5 +1,5 @@
 test:
-	python setup.py test
+	pytest --show-capture=all 
 
 format:
 #	pip install -e .[dev]

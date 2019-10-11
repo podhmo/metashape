@@ -1,7 +1,10 @@
 import typing as t
+import typing_extensions as tx
 import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
+
+from .resolve import resolve_type_info
 
 # TODO: support format
 # TODO: support description
@@ -16,25 +19,6 @@ Store = t.Dict[str, t.Any]
 
 def _make_store() -> Store:
     return make_dict(components=make_dict(schemas=make_dict()))
-
-
-def resolve_type(val: t.Type, *, strict: bool = True) -> t.Dict[str, t.Any]:
-    if issubclass(val, str):
-        return {"type": "string"}
-    elif issubclass(val, bool):
-        return {"type": "boolean"}
-    elif issubclass(val, int):
-        return {"type": "integer"}
-    elif issubclass(val, float):
-        return {"type": "number"}
-    elif hasattr(val, "keys"):
-        return {"type": "object"}
-    elif issubclass(val, (list, tuple)):
-        return {"type": "array"}
-    elif strict:
-        raise ValueError("unsupported for {!r}".format(val))
-    else:
-        return {}
 
 
 class Emitter:
@@ -52,17 +36,16 @@ class Emitter:
         properties = make_dict()
         description = resolver.resolve_description(member, verbose=context.verbose)
 
-        schema = make_dict(properties=properties, required=required, description=description)
+        schema = make_dict(
+            properties=properties, required=required, description=description
+        )
 
         for fieldname, fieldtype in resolver.resolve_annotations(member).items():
-            prop = resolve_type(fieldtype, strict=context.strict)
-            # prop["description"] = resolver.resolve_description(
-            #     member, verbose=context.verbose
-            # )
-
+            prop = resolve_type_info(fieldtype, strict=context.strict)
             properties[fieldname] = prop
-            # TODO: optional support
-            required.append(fieldname)
+
+            if not prop.pop("optional"):
+                required.append(fieldname)
 
         if len(required) <= 0:
             schema.pop("required")

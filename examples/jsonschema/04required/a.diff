@@ -1,0 +1,12 @@
+--- 00runcode/output.json
++++ 04required/output.json
+@@ -8,6 +8,9 @@
+           },
+           "age": {
+             "type": "integer"
++          },
++          "nickname": {
++            "type": "string"
+           }
+         },
+         "required": [
