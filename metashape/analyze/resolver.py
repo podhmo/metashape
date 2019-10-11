@@ -14,6 +14,9 @@ class Resolver(tx.Protocol):
     def resolve_name(self, m: Member) -> str:
         ...
 
+    def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
+        ...
+
 
 class FakeResolver(Resolver):
     def __init__(
@@ -26,6 +29,9 @@ class FakeResolver(Resolver):
 
     def resolve_name(self, member: Member) -> str:
         return member.__name__  # type: ignore
+
+    def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
+        return ob.__annotations__
 
     def resolve_repository(self, d: t.Dict[str, t.Any]) -> "FakeRepository":
         members = [v for v in d.values() if self.is_member(v)]

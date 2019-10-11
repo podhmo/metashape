@@ -52,7 +52,7 @@ class Emitter:
         properties = make_dict()
         schema = make_dict(properties=properties, required=required)
 
-        for fieldname, fieldtype in member.__annotations__.items():  # xxx
+        for fieldname, fieldtype in resolver.resolve_annotations(member).items():
             # TODO: detect python type to openapi
             properties[fieldname] = resolve_type(fieldtype, strict=context.strict)
             # TODO: optional support
