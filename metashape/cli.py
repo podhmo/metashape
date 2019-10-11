@@ -1,6 +1,6 @@
 import typing as t
-from metashape import T
-from metashape import FakeResolver, Accessor, translate
+from metashape.types import T
+from metashape.compile import FakeResolver, Accessor, compile  # todo: rename
 
 
 def run(
@@ -19,7 +19,7 @@ def run(
     accessor = Accessor(
         resolver=resolver, repository=resolver.resolve_repository(m.__dict__)
     )
-    print(translate(accessor))
+    print(compile(accessor))
 
 
 def main(*, argv: t.Optional[t.List[str]] = None) -> None:

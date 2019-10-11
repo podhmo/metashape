@@ -1,7 +1,8 @@
-import metashape
+from metashape.declarative import mark
+from metashape import compile as c
 
 
-@metashape.mark
+@mark
 class Person:
     name: str
     age: int
@@ -9,9 +10,7 @@ class Person:
 
 # main
 print(
-    metashape.translate(
-        metashape.Accessor(
-            resolver=metashape.FakeResolver(), repository=metashape.FakeRepository([Person])
-        )
+    c.compile(
+        c.Accessor(resolver=c.FakeResolver(), repository=c.FakeRepository([Person]))
     )
 )

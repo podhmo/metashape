@@ -1,7 +1,7 @@
-import metashape
+from metashape.declarative import mark
 
 
-@metashape.mark
+@mark
 class Person:
     name: str
     age: int
