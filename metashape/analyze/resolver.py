@@ -1,5 +1,6 @@
 import typing as t
 import typing_extensions as tx
+import inspect
 
 from metashape.types import T
 from metashape.marker import is_marked
@@ -17,6 +18,9 @@ class Resolver(tx.Protocol):
     def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
         ...
 
+    def resolve_description(self, ob: object, *, verbose: bool = False) -> str:
+        ...
+
 
 class DefaultResolver(Resolver):
     def __init__(
@@ -32,6 +36,14 @@ class DefaultResolver(Resolver):
 
     def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
         return ob.__annotations__
+
+    def resolve_description(self, ob: object, *, verbose: bool = False) -> str:
+        doc = inspect.getdoc(ob)
+        if doc is None:
+            return ""
+        if not verbose:
+            return doc.split("\n\n", 1)[0]
+        return doc
 
     def resolve_repository(self, d: t.Dict[str, t.Any]) -> "DefaultRepository":
         members = [v for v in d.values() if self.is_member(v)]

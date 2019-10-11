@@ -8,8 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class Context:
-    def __init__(self, strict: bool = True):
+    def __init__(self, strict: bool = True, verbose: bool = False):
         self.strict = strict
+        self.verbose = verbose
 
 
 class Accessor:

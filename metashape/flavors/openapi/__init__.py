@@ -50,16 +50,24 @@ class Emitter:
 
         required = []
         properties = make_dict()
-        schema = make_dict(properties=properties, required=required)
+        description = resolver.resolve_description(member, verbose=context.verbose)
+
+        schema = make_dict(properties=properties, required=required, description=description)
 
         for fieldname, fieldtype in resolver.resolve_annotations(member).items():
-            # TODO: detect python type to openapi
-            properties[fieldname] = resolve_type(fieldtype, strict=context.strict)
+            prop = resolve_type(fieldtype, strict=context.strict)
+            # prop["description"] = resolver.resolve_description(
+            #     member, verbose=context.verbose
+            # )
+
+            properties[fieldname] = prop
             # TODO: optional support
             required.append(fieldname)
 
         if len(required) <= 0:
             schema.pop("required")
+        if not description:
+            schema.pop("description")
         store["components"]["schemas"][typename] = schema
 
 
