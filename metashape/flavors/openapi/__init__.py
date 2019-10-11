@@ -1,4 +1,5 @@
 import typing as t
+import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
 
@@ -10,6 +11,26 @@ def _make_store() -> Store:
     return make_dict(components=make_dict(schemas=make_dict()))
 
 
+# TODO: support format
+def resolve_type(val: t.Type, *, strict: bool = True) -> t.Dict[str, t.Any]:
+    if issubclass(val, str):
+        return {"type": "string"}
+    elif issubclass(val, bool):
+        return {"type": "boolean"}
+    elif issubclass(val, int):
+        return {"type": "integer"}
+    elif issubclass(val, float):
+        return {"type": "number"}
+    elif hasattr(val, "keys"):
+        return {"type": "object"}
+    elif issubclass(val, (list, tuple)):
+        return {"type": "array"}
+    elif strict:
+        raise ValueError("unsupported for {!r}".format(val))
+    else:
+        return {}
+
+
 class Emitter:
     def __init__(self, accessor: Accessor, *, store: Store) -> None:
         self.accessor = accessor
@@ -17,6 +38,7 @@ class Emitter:
 
     def emit(self, member: Member, *, store=Store) -> None:
         resolver = self.accessor.resolver
+        context = self.accessor.context
 
         typename = resolver.resolve_name(member)
 
@@ -26,7 +48,7 @@ class Emitter:
 
         for fieldname, fieldtype in member.__annotations__.items():  # xxx
             # TODO: detect python type to openapi
-            properties[fieldname] = make_dict(type=fieldtype.__name__)
+            properties[fieldname] = resolve_type(fieldtype, strict=context.strict)
             # TODO: optional support
             required.append(fieldname)
 
@@ -42,6 +64,4 @@ def emit(accessor: Accessor, *, output: t.IO) -> None:
     emitter = Emitter(accessor, store=store)
     for m in repository.members:
         emitter.emit(m, store=store)
-    import json
-
     return json.dump(store, output, indent=2, ensure_ascii=False)
