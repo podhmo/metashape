@@ -1,6 +1,8 @@
 import typing as t
 from metashape.types import T
-from metashape.compile import FakeResolver, Accessor, compile  # todo: rename
+from metashape.analyze import Accessor
+from metashape.analyze.resolver import FakeResolver
+from metashape.compile import compile  # todo: rename
 
 
 def run(

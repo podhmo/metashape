@@ -1,7 +1,7 @@
 import sys
+from dictknife.langhelpers import reify  # noqa
 
-# util
-if (sys.version_info[0], sys.version_info[1]) >= (3, 7):
+if sys.version_info[:2] >= (3, 6):
     make_dict = dict
 else:
     from collections import OrderedDict as make_dict  # noqa

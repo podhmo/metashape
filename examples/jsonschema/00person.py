@@ -1,5 +1,5 @@
 from metashape.declarative import mark
-from metashape import compile as c
+from metashape.shortcuts import compile_with
 
 
 @mark
@@ -9,8 +9,4 @@ class Person:
 
 
 # main
-print(
-    c.compile(
-        c.Accessor(resolver=c.FakeResolver(), repository=c.FakeRepository([Person]))
-    )
-)
+print(compile_with([Person]))
