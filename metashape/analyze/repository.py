@@ -12,7 +12,7 @@ class Repository(tx.Protocol):
 RepositoryT = t.TypeVar("RepositoryT", bound="Repository")
 
 
-class FakeRepository(Repository):
+class DefaultRepository(Repository):
     def __init__(self, members: t.List[t.Any]) -> None:
         self._members = t.cast(t.List[Member], members)  # xxx
 

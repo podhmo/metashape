@@ -20,8 +20,8 @@ runtimeかそれ以外かみたいな話があるのだよなー。
 ふわっと微妙な感じ
 
 - emit()
-- Resolver, FakeResolver
-- Repository, FakeRepository
+- Resolver, DefaultResolver
+- Repository, DefaultRepository
 - (Emitter), OpenAPI
 
 うーん。

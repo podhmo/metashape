@@ -1,7 +1,7 @@
 import typing as t
 from metashape.types import T
 from metashape.analyze import Accessor
-from metashape.analyze.resolver import FakeResolver
+from metashape.analyze.resolver import DefaultResolver
 from metashape.compile import compile  # todo: rename
 
 
@@ -17,7 +17,7 @@ def run(
     if aggressive:
         is_member = lambda x: hasattr(x, "__name__")  # noqa
 
-    resolver = FakeResolver(is_member=is_member)
+    resolver = DefaultResolver(is_member=is_member)
     accessor = Accessor(
         resolver=resolver, repository=resolver.resolve_repository(m.__dict__)
     )

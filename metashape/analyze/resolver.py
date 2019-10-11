@@ -4,7 +4,7 @@ import typing_extensions as tx
 from metashape.types import T
 from metashape.marker import is_marked
 from .core import Member
-from .repository import FakeRepository  # xxx
+from .repository import DefaultRepository  # xxx
 
 
 class Resolver(tx.Protocol):
@@ -18,7 +18,7 @@ class Resolver(tx.Protocol):
         ...
 
 
-class FakeResolver(Resolver):
+class DefaultResolver(Resolver):
     def __init__(
         self, *, is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
     ) -> None:
@@ -33,6 +33,6 @@ class FakeResolver(Resolver):
     def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
         return ob.__annotations__
 
-    def resolve_repository(self, d: t.Dict[str, t.Any]) -> "FakeRepository":
+    def resolve_repository(self, d: t.Dict[str, t.Any]) -> "DefaultRepository":
         members = [v for v in d.values() if self.is_member(v)]
-        return FakeRepository(members)
+        return DefaultRepository(members)
