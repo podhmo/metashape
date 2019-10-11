@@ -9,6 +9,11 @@ lint:
 #	pip install -e .[dev]
 	flake8 metashape --ignore W503,E203,E501
 
+typecheck:
+#	pip install -e .[dev]
+	mypy --strict metashape
+# TODO: examples
+
 build:
 #	pip install wheel
 	python setup.py bdist_wheel
