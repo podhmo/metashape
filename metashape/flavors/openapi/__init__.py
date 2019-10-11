@@ -1,10 +1,9 @@
 import typing as t
-import typing_extensions as tx
 import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
 
-from .resolve import resolve_type_info
+from . import resolve
 
 # TODO: support format
 # TODO: support description
@@ -41,7 +40,11 @@ class Emitter:
         )
 
         for fieldname, fieldtype in resolver.resolve_annotations(member).items():
-            prop = resolve_type_info(fieldtype, strict=context.strict)
+            prop = resolve.type_info(fieldtype, strict=context.strict)
+            enum = resolve.enum(fieldtype)
+            if enum:
+                prop["enum"] = enum
+
             properties[fieldname] = prop
 
             if not prop.pop("optional"):

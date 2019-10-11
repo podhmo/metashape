@@ -11,11 +11,19 @@ class TypeInfoDict(tx.TypedDict, total=True):
     optional: bool
 
 
-def resolve_type_info(
+def _is_typing_type(typ: t.Type[t.Any]) -> bool:
+    return hasattr(typ, "__origin__")
+
+
+def _get_typing_origin(typ: t.Type[t.Any]) -> t.Optional[t.Type[t.Any]]:
+    return getattr(typ, "__origin__", None)
+
+
+def type_info(
     typ: t.Type[t.Any], *, strict: bool = True, _nonetype=type(None)
 ) -> TypeInfoDict:
     optional = False
-    if hasattr(typ, "__origin__"):  # xxx
+    if _is_typing_type(typ):
         args = typing_inspect.get_args(typ)
         if len(args) == 2 and typ.__origin__ == t.Union:
             if args[0] == _nonetype:
@@ -25,10 +33,13 @@ def resolve_type_info(
                 optional = True
                 typ = args[0]
 
-        if hasattr(typ, "__origin__"):  # xxx
-            if issubclass(typ.__origin__, t.Sequence):
+        if _is_typing_type(typ):
+            origin = _get_typing_origin(typ)
+            if origin == tx.Literal:
+                typ = type(typing_inspect.get_args(typ)[0])
+            elif issubclass(origin, t.Sequence):
                 return {"type": "array", "optional": optional}
-            if issubclass(typ.__origin__, t.Mapping):
+            elif issubclass(origin, t.Mapping):
                 return {"type": "object", "optional": optional}
 
     if issubclass(typ, str):
@@ -45,3 +56,13 @@ def resolve_type_info(
         return {"type": "array", "optional": optional}
     else:
         return {"type": "object", "optional": optional}
+
+
+# TODO: enum's description
+def enum(typ: t.Type[t.Any]) -> t.Tuple[str]:
+    origin = _get_typing_origin(typ)
+    if origin is None:
+        return ()
+    if origin != tx.Literal:
+        return ()
+    return typing_inspect.get_args(typ)

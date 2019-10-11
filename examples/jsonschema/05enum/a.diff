@@ -1,0 +1,24 @@
+--- 00runcode/output.json
++++ 05enum/output.json
+@@ -8,11 +8,20 @@
+           },
+           "age": {
+             "type": "integer"
++          },
++          "personality": {
++            "type": "string",
++            "enum": [
++              "chaos",
++              "neutral",
++              "law"
++            ]
+           }
+         },
+         "required": [
+           "name",
+-          "age"
++          "age",
++          "personality"
+         ]
+       }
+     }

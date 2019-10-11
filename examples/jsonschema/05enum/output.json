@@ -1,0 +1,29 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "personality": {
+            "type": "string",
+            "enum": [
+              "chaos",
+              "neutral",
+              "law"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "personality"
+        ]
+      }
+    }
+  }
+}

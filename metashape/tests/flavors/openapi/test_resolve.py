@@ -1,4 +1,5 @@
 import typing as t
+import typing_extensions as tx
 import pytest
 
 
@@ -31,10 +32,23 @@ class Person:
         #
         (t.Optional[t.List[int]], {"type": "array", "optional": True}),
         (t.List[t.Optional[int]], {"type": "array", "optional": False}),
+        #
+        (tx.Literal["N", "S", "E", "W"], {"type": "string", "optional": False}),
     ],
 )
-def test_resolve_type_info(input, want):
-    from metashape.flavors.openapi.resolve import resolve_type_info as callFUT
+def test_type_info(input, want):
+    from metashape.flavors.openapi.resolve import type_info as callFUT
+
+    got = callFUT(input)
+    assert got == want
+
+
+@pytest.mark.parametrize(
+    "input, want",
+    [(int, ()), (str, ()), (tx.Literal["N", "S", "E", "W"], ("N", "S", "E", "W"))],
+)
+def test_enum(input, want):
+    from metashape.flavors.openapi.resolve import enum as callFUT
 
     got = callFUT(input)
     assert got == want
