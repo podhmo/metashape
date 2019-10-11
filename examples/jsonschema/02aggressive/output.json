@@ -1,0 +1,20 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "age"
+        ]
+      }
+    }
+  }
+}
