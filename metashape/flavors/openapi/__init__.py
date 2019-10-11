@@ -3,6 +3,13 @@ import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
 
+# TODO: support format
+# TODO: support description
+# TDOO: support $ref
+# TDOO: nested $ref
+# TODO: t.Union -> oneOf with discriminator
+# TODO: string literarl type -> enum
+
 
 Store = t.Dict[str, t.Any]
 
@@ -11,7 +18,6 @@ def _make_store() -> Store:
     return make_dict(components=make_dict(schemas=make_dict()))
 
 
-# TODO: support format
 def resolve_type(val: t.Type, *, strict: bool = True) -> t.Dict[str, t.Any]:
     if issubclass(val, str):
         return {"type": "string"}
