@@ -11,7 +11,7 @@ lint:
 
 typing:
 #	pip install -e .[dev]
-	mypy --strict metashape
+	mypy --strict --ignore-missing-imports metashape
 # TODO: examples
 
 build:
