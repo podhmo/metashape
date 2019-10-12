@@ -15,7 +15,11 @@ def run(
 
     m = import_module(filename)
     if aggressive:
-        is_member = lambda x: hasattr(x, "__name__") and not hasattr(x, "__loader__")  # noqa
+        is_member = (
+            lambda x: hasattr(x, "__name__")
+            and not hasattr(x, "__loader__")
+            and hasattr(x, "__annotations__")
+        )  # noqa
 
     resolver = DefaultResolver(is_member=is_member)
     accessor = Accessor(

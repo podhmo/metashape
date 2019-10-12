@@ -35,7 +35,7 @@ class DefaultResolver(Resolver):
         return member.__name__  # type: ignore
 
     def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
-        return ob.__annotations__
+        return t.get_type_hints(ob)
 
     def resolve_description(self, ob: object, *, verbose: bool = False) -> str:
         doc = inspect.getdoc(ob)

@@ -2,7 +2,6 @@ import typing as t
 import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
-
 from . import resolve
 
 # TODO: support format
@@ -40,6 +39,14 @@ class Emitter:
         )
 
         for fieldname, fieldtype in resolver.resolve_annotations(member).items():
+            if resolver.is_member(fieldtype):
+                self.accessor.q.append(fieldtype)
+
+                properties[fieldname] = {
+                    "$ref": f"#/schemas/components/{resolver.resolve_name(fieldtype)}"
+                }  # todo: lazy
+                continue
+
             prop = resolve.type_info(fieldtype, strict=context.strict)
             enum = resolve.enum(fieldtype)
             if enum:
@@ -62,6 +69,14 @@ def emit(accessor: Accessor, *, output: t.IO) -> None:
 
     store = _make_store()
     emitter = Emitter(accessor, store=store)
+
     for m in repository.members:
-        emitter.emit(m, store=store)
+        accessor.q.append(m)
+
+    while True:
+        try:
+            emitter.emit(m, store=store)
+            m = accessor.q.popleft()
+        except IndexError:
+            break
     return json.dump(store, output, indent=2, ensure_ascii=False)

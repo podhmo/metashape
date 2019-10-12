@@ -1,0 +1,28 @@
+--- 00runcode/output.json
++++ 06ref/output.json
+@@ -8,12 +8,25 @@
+           },
+           "age": {
+             "type": "integer"
++          },
++          "extra": {
++            "$ref": "#/schemas/components/Extra"
+           }
+         },
+         "required": [
+           "name",
+           "age"
+         ]
++      },
++      "Extra": {
++        "properties": {
++          "memo": {
++            "type": "string"
++          }
++        },
++        "required": [
++          "memo"
++        ]
+       }
+     }
+   }

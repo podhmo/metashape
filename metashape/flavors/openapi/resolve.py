@@ -25,7 +25,8 @@ def type_info(
     optional = False
     if _is_typing_type(typ):
         args = typing_inspect.get_args(typ)
-        if len(args) == 2 and typ.__origin__ == t.Union:
+        origin = _get_typing_origin(typ)
+        if len(args) == 2 and origin == t.Union:
             if args[0] == _nonetype:
                 optional = True
                 typ = args[1]

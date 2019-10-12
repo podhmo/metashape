@@ -1,0 +1,39 @@
+{
+  "components": {
+    "schemas": {
+      "Extra": {
+        "properties": {
+          "memo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "memo"
+        ]
+      },
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "father": {
+            "$ref": "#/schemas/components/Person"
+          },
+          "mother": {
+            "$ref": "#/schemas/components/Person"
+          },
+          "extra": {
+            "$ref": "#/schemas/components/Extra"
+          }
+        },
+        "required": [
+          "name",
+          "age"
+        ]
+      }
+    }
+  }
+}
