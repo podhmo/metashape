@@ -4,8 +4,9 @@ import inspect
 
 from metashape.types import T
 from metashape.marker import is_marked
+from . import typeinfo
 from .core import Member
-from .repository import DefaultRepository  # xxx
+from .walker import DefaultWalker  # xxx
 
 
 class Resolver(tx.Protocol):
@@ -15,10 +16,10 @@ class Resolver(tx.Protocol):
     def resolve_name(self, m: Member) -> str:
         ...
 
-    def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
+    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         ...
 
-    def resolve_description(self, ob: object, *, verbose: bool = False) -> str:
+    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
         ...
 
 
@@ -34,17 +35,21 @@ class DefaultResolver(Resolver):
     def resolve_name(self, member: Member) -> str:
         return member.__name__  # type: ignore
 
-    def resolve_annotations(self, ob: object) -> t.Dict[str, t.Type]:
-        return t.get_type_hints(ob)
+    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
+        return get_doc(ob, verbose=verbose)
 
-    def resolve_description(self, ob: object, *, verbose: bool = False) -> str:
-        doc = inspect.getdoc(ob)
-        if doc is None:
-            return ""
-        if not verbose:
-            return doc.split("\n\n", 1)[0]
-        return doc
+    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        return typeinfo.detect(typ)
 
-    def resolve_repository(self, d: t.Dict[str, t.Any]) -> "DefaultRepository":
+    def resolve_walker(self, d: t.Dict[str, t.Any]) -> "DefaultWalker":
         members = [v for v in d.values() if self.is_member(v)]
-        return DefaultRepository(members)
+        return DefaultWalker(members)
+
+
+def get_doc(ob: object, *, verbose: bool = False) -> str:
+    doc = inspect.getdoc(ob)
+    if doc is None:
+        return ""
+    if not verbose:
+        return doc.split("\n\n", 1)[0]
+    return doc

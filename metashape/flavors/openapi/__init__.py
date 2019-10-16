@@ -2,7 +2,7 @@ import typing as t
 import json
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
-from . import resolve
+from . import detect
 
 # TODO: support format
 # TODO: support description
@@ -15,10 +15,6 @@ from . import resolve
 Store = t.Dict[str, t.Any]
 
 
-def _make_store() -> Store:
-    return make_dict(components=make_dict(schemas=make_dict()))
-
-
 class Emitter:
     def __init__(self, accessor: Accessor, *, store: Store) -> None:
         self.accessor = accessor
@@ -26,19 +22,21 @@ class Emitter:
 
     def emit(self, member: Member, *, store=Store) -> None:
         resolver = self.accessor.resolver
+        walker = self.accessor.walker
         context = self.accessor.context
 
         typename = resolver.resolve_name(member)
 
         required = []
         properties = make_dict()
-        description = resolver.resolve_description(member, verbose=context.verbose)
+        description = resolver.resolve_doc(member, verbose=context.verbose)
 
         schema = make_dict(
             properties=properties, required=required, description=description
         )
 
-        for fieldname, fieldtype in resolver.resolve_annotations(member).items():
+        for fieldname, fieldtype, metadata in walker.walk_type(member):
+            # TODO: support
             if resolver.is_member(fieldtype):
                 self.accessor.q.append(fieldtype)
 
@@ -47,14 +45,15 @@ class Emitter:
                 }  # todo: lazy
                 continue
 
-            prop = resolve.type_info(fieldtype, strict=context.strict)
-            enum = resolve.enum(fieldtype)
+            info = resolver.resolve_type_info(fieldtype)
+
+            # todo: array support
+            prop = properties[fieldname] = {"type": detect.schema_type(info)}
+            enum = detect.enum(info["raw"])
             if enum:
                 prop["enum"] = enum
 
-            properties[fieldname] = prop
-
-            if not prop.pop("optional"):
+            if not info["is_optional"]:
                 required.append(fieldname)
 
         if len(required) <= 0:
@@ -65,12 +64,12 @@ class Emitter:
 
 
 def emit(accessor: Accessor, *, output: t.IO) -> None:
-    repository = accessor.repository
+    walker = accessor.walker
 
-    store = _make_store()
+    store = make_dict(components=make_dict(schemas=make_dict()))
     emitter = Emitter(accessor, store=store)
 
-    for m in repository.members:
+    for m in walker.walk_module():
         accessor.q.append(m)
 
     while True:

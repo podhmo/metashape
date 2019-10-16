@@ -23,7 +23,7 @@ def run(
 
     resolver = DefaultResolver(is_member=is_member)
     accessor = Accessor(
-        resolver=resolver, repository=resolver.resolve_repository(m.__dict__)
+        resolver=resolver, walker=resolver.resolve_walker(m.__dict__)
     )
     compile(accessor)
 

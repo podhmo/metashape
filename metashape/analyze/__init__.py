@@ -3,7 +3,7 @@ import logging
 from collections import deque
 from metashape.langhelpers import reify
 from .core import Member  # noqa
-from .repository import Repository
+from .walker import Walker
 from .resolver import Resolver
 
 logger = logging.getLogger(__name__)
@@ -17,11 +17,11 @@ class Context:
 
 class Accessor:
     resolver: Resolver
-    respository: Repository
+    walker: Walker
 
-    def __init__(self, *, resolver: Resolver, repository: Repository):
+    def __init__(self, *, resolver: Resolver, walker: Walker):
         self.resolver = resolver
-        self.repository = repository
+        self.walker = walker
 
     @reify
     def context(self) -> Context:

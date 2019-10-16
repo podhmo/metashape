@@ -1,3 +1,4 @@
+from __future__ import annotations
 import typing as t
 from functools import lru_cache
 import typing_extensions as tx
@@ -13,7 +14,7 @@ ContainerType = tx.Literal["list", "tuple", "dict", "union"]
 class Container(tx.TypedDict, total=True):
     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
     container: ContainerType
-    args: t.Tuple["TypeInfo", ...]
+    args: t.Tuple[TypeInfo, ...]
 
     is_optional: bool  # t.Optional[int] -> True, int -> False
     is_composite: bool  # t.Union -> True, dict -> False

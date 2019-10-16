@@ -2,6 +2,9 @@ import typing as t
 from .types import T
 
 
+# TODO: remove
+
+
 def is_marked(cls: t.Type[T]) -> bool:
     return hasattr(cls, "_shape_mark")
 

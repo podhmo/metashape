@@ -10,6 +10,6 @@ logger = logging.getLogger(__name__)
 def compile(accessor: Accessor, *, output: t.IO = sys.stdout) -> None:
     from metashape.flavors.openapi import emit  # TODO: dispatch
 
-    logger.debug("collect members: %d", len(accessor.repository.members))
+    logger.debug("collect members: %d", len(accessor.walker.walk_module()))
 
     emit(accessor, output=output)
