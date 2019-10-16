@@ -1,7 +1,7 @@
 import typing as t
 from metashape.types import T
 from metashape.analyze import Accessor
-from metashape.analyze.resolver import DefaultResolver
+from metashape.analyze.resolver import Resolver
 from metashape.compile import compile  # todo: rename
 
 
@@ -21,7 +21,7 @@ def run(
             and hasattr(x, "__annotations__")
         )  # noqa
 
-    resolver = DefaultResolver(is_member=is_member)
+    resolver = Resolver(is_member=is_member)
     accessor = Accessor(
         resolver=resolver, walker=resolver.resolve_walker(m.__dict__)
     )

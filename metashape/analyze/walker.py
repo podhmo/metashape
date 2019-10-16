@@ -1,21 +1,9 @@
 import typing as t
-import typing_extensions as tx
 from metashape.declarative import MetaData, get_metadata  # TODO: move
 from .core import Member
 
 
-# TODO: delete?
-
-
-class Walker(tx.Protocol):
-    def walk_module(self) -> t.List[Member]:  # support also instance variable...
-        ...
-
-
-WalkerT = t.TypeVar("WalkerT", bound="Walker")
-
-
-class DefaultWalker(Walker):
+class Walker:
     def __init__(self, members: t.List[t.Any]) -> None:
         self._members = t.cast(t.List[Member], members)  # xxx
 
