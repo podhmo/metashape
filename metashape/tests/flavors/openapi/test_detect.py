@@ -47,7 +47,12 @@ def test_schema_type(input, want):
 
 @pytest.mark.parametrize(
     "input, want",
-    [(int, ()), (str, ()), (tx.Literal["N", "S", "E", "W"], ("N", "S", "E", "W"))],
+    [
+        (int, ()),
+        (str, ()),
+        (tx.Literal["N", "S", "E", "W"], ("N", "S", "E", "W")),
+        (t.Optional[tx.Literal["N", "S", "E", "W"]], ("N", "S", "E", "W")),
+    ],
 )
 def test_enum(input, want):
     from metashape.flavors.openapi.detect import enum as callFUT

@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 05enum/output.json
-@@ -8,11 +8,20 @@
+@@ -8,11 +8,27 @@
            },
            "age": {
              "type": "integer"
@@ -11,6 +11,13 @@
 +              "chaos",
 +              "neutral",
 +              "law"
++            ]
++          },
++          "gender": {
++            "type": "string",
++            "enum": [
++              "F",
++              "M"
 +            ]
            }
          },

@@ -1,5 +1,5 @@
 test:
-	pytest --show-capture=all
+	pytest -vv --show-capture=all
 
 format:
 #	pip install -e .[dev]

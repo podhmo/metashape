@@ -33,6 +33,24 @@ def container(
 
 
 @pytest.mark.parametrize(
+    "typ, want, omitted",
+    [
+        (int, int, False),
+        (t.Optional[int], int, True),
+        (t.Union[int, str], t.Union[int, str], False),
+        (t.Union[int, t.Optional[str]], t.Union[int, str], True),
+        (t.List[int], t.List[int], False),
+        (t.List[t.Optional[int]], t.List[t.Optional[int]], False),
+    ],
+)
+def test_omit_optional(typ, want, omitted):
+    from metashape.analyze.typeinfo import omit_optional as callFUT
+
+    got = callFUT(typ)
+    assert got == (want, omitted)
+
+
+@pytest.mark.parametrize(
     "typ, want",
     [
         (int, atom(raw=int, underlying=int)),

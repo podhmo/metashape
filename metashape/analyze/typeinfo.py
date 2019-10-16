@@ -66,6 +66,33 @@ def _make_container(
 
 
 @lru_cache(maxsize=128, typed=False)
+def omit_optional(
+    typ: t.Type[t.Any], *, _nonetype: t.Type[t.Any] = type(None)
+) -> t.Tuple[t.Type[t.Any], bool]:
+    origin = getattr(typ, "__origin__", None)
+    if origin is None:
+        return typ, False
+    if origin != t.Union:
+        return typ, False
+
+    args = typing_inspect.get_args(typ)
+    if len(args) == 2:
+        if args[0] == _nonetype:
+            return args[1], True
+        elif args[1] == _nonetype:
+            return args[0], True
+        else:
+            return typ, False
+
+    is_optional = _nonetype in args
+    if not is_optional:
+        return typ, False
+    args = [x for x in args if x != _nonetype]
+    return t.Union[tuple(args)], True
+
+
+# todo: rename
+@lru_cache(maxsize=128, typed=False)
 def detect(
     typ: t.Type[t.Any],
     *,

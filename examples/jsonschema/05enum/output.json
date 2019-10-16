@@ -16,6 +16,13 @@
               "neutral",
               "law"
             ]
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "F",
+              "M"
+            ]
           }
         },
         "required": [

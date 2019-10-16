@@ -31,10 +31,8 @@ def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> str:
 
 
 def enum(typ: t.Type[t.Any]) -> t.Tuple[str]:
-    # todo: optional
+    typ, _ = typeinfo.omit_optional(typ)
     origin = getattr(typ, "__origin__", None)  # xxx
-    if origin is None:
-        return ()
     if origin != tx.Literal:
         return ()
     return typing_inspect.get_args(typ)
