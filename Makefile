@@ -14,7 +14,7 @@ typing:
 	mypy --strict --ignore-missing-imports metashape
 
 examples:
-	$(MAKE) -C examples/jsonschema
+	$(MAKE) -C examples/openapi
 
 build:
 #	pip install wheel
