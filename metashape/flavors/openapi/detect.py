@@ -30,8 +30,8 @@ def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> str:
     return unknown
 
 
-def enum(typ: t.Type[t.Any]) -> t.Tuple[str]:
-    typ, _ = typeinfo.omit_optional(typ)
+def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
+    typ = info["normalized"]
     origin = getattr(typ, "__origin__", None)  # xxx
     if origin != tx.Literal:
         return ()

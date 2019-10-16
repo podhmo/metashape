@@ -57,5 +57,6 @@ def test_schema_type(input, want):
 def test_enum(input, want):
     from metashape.flavors.openapi.detect import enum as callFUT
 
-    got = callFUT(input)
+    info = typeinfo.detect(input)
+    got = callFUT(info)
     assert got == want

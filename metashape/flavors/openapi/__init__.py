@@ -49,7 +49,7 @@ class Emitter:
 
             # todo: array support
             prop = properties[fieldname] = {"type": detect.schema_type(info)}
-            enum = detect.enum(info["raw"])
+            enum = detect.enum(info)
             if enum:
                 prop["enum"] = enum
 
