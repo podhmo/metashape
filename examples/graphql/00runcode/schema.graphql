@@ -1,0 +1,13 @@
+schema {
+  Todo: Todo
+}
+
+type Query {
+}
+
+type Todo {
+  id: !String
+  name: String
+  description: String
+  priority: Integer
+}

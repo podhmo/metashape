@@ -1,7 +1,7 @@
 import typing as t
 from metashape.types import T
 from metashape import shortcuts
-from metashape.compile import compile  # todo: rename
+from metashape.shortcuts import compile  # todo: rename
 
 
 def run(

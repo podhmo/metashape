@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", "array"]
 
 
-def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> str:
+def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> JSONSchemaType:
     if "container" in info:
         if info["container"] in ("list", "tuple"):
             return "array"
