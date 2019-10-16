@@ -1,7 +1,6 @@
 import typing as t
 from metashape.types import T
-from metashape.analyze import Accessor
-from metashape.analyze.resolver import Resolver
+from metashape import shortcuts
 from metashape.compile import compile  # todo: rename
 
 
@@ -21,11 +20,8 @@ def run(
             and hasattr(x, "__annotations__")
         )  # noqa
 
-    resolver = Resolver(is_member=is_member)
-    accessor = Accessor(
-        resolver=resolver, walker=resolver.resolve_walker(m.__dict__)
-    )
-    compile(accessor)
+    walker = shortcuts.get_walker_from_dict(m.__dict__, is_member=is_member)
+    compile(walker)
 
 
 def main(*, argv: t.Optional[t.List[str]] = None) -> None:

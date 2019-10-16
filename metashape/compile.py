@@ -1,15 +1,15 @@
 import typing as t
 import sys
 import logging
-from metashape.analyze import Accessor
+from metashape.analyze.walker import Walker
 
 
 logger = logging.getLogger(__name__)
 
 
-def compile(accessor: Accessor, *, output: t.IO = sys.stdout) -> None:
+def compile(walker: Walker, *, output: t.IO = sys.stdout) -> None:
     from metashape.flavors.openapi import emit  # TODO: dispatch
 
-    logger.debug("collect members: %d", len(accessor.walker.walk_module()))
+    logger.debug("collect members: %d", len(walker.walk_module()))
 
-    emit(accessor, output=output)
+    emit(walker, output=output)

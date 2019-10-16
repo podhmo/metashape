@@ -2,7 +2,7 @@ import typing as t
 import json
 import logging
 from metashape.langhelpers import make_dict
-from metashape.analyze import Accessor, Member
+from metashape.analyze.walker import Walker, Member
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -15,13 +15,13 @@ Store = t.Dict[str, t.Any]
 
 
 class Emitter:
-    def __init__(self, accessor: Accessor) -> None:
-        self.accessor = accessor
+    def __init__(self, walker: Walker) -> None:
+        self.walker = walker
 
     def emit(self, member: Member, *, store=Store) -> None:
-        resolver = self.accessor.resolver
-        walker = self.accessor.walker
-        context = self.accessor.context
+        walker = self.walker
+        resolver = self.walker.resolver
+        context = self.walker.context
 
         typename = resolver.resolve_name(member)
 
@@ -47,7 +47,7 @@ class Emitter:
 
             # TODO: self recursion check (warning)
             if resolver.is_member(fieldtype):
-                self.accessor.q.append(fieldtype)
+                self.walker.q.append(fieldtype)
 
                 properties[fieldname] = {
                     "$ref": f"#/schemas/components/{resolver.resolve_name(fieldtype)}"
@@ -67,18 +67,16 @@ class Emitter:
         store["components"]["schemas"][typename] = schema
 
 
-def emit(accessor: Accessor, *, output: t.IO) -> None:
-    walker = accessor.walker
-
+def emit(walker: Walker, *, output: t.IO) -> None:
     store = make_dict(components=make_dict(schemas=make_dict()))
-    emitter = Emitter(accessor)
+    emitter = Emitter(walker)
 
     for m in walker.walk_module():
-        accessor.q.append(m)
+        walker.q.append(m)
 
     while True:
         try:
-            m = accessor.q.popleft()
+            m = walker.q.popleft()
             logger.info("walk type: %r", m)
             emitter.emit(m, store=store)
         except IndexError:

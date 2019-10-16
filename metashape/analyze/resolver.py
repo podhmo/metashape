@@ -5,7 +5,6 @@ from metashape.types import T
 from metashape.marker import is_marked
 from . import typeinfo
 from .core import Member
-from .walker import Walker  # xxx
 
 
 class Resolver:
@@ -25,10 +24,6 @@ class Resolver:
 
     def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
         return typeinfo.detect(typ)
-
-    def resolve_walker(self, d: t.Dict[str, t.Any]) -> "Walker":
-        members = [v for _, v in sorted(d.items()) if self.is_member(v)]
-        return Walker(members)
 
 
 def get_doc(ob: object, *, verbose: bool = False) -> str:

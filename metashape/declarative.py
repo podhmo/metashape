@@ -1,10 +1,10 @@
 import typing as t
 from .marker import mark  # noqa
+from .types import MetaData
 
 # TODO: rename to prepare.py?
 
 T = t.TypeVar("T")
-MetaData = t.Optional[t.Dict[str, t.Any]]
 
 
 class _Field(t.Generic[T]):
