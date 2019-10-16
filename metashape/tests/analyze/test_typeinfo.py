@@ -10,21 +10,30 @@ class _Person:
     name: str
 
 
-def atom(*, raw, underlying, is_optional=False, custom=None):
+def atom(*, raw, underlying=None, normalized=None, is_optional=False, custom=None):
     return {
         "raw": raw,
-        "underlying": underlying,
+        "underlying": underlying or raw,
+        "normalized": normalized or raw or underlying,
         "is_optional": is_optional,
         "custom": custom,
     }
 
 
 def container(
-    *, container, raw, is_optional=False, is_composite=False, raw_args=None, args=None
+    *,
+    container,
+    raw,
+    normalized=None,
+    is_optional=False,
+    is_composite=False,
+    raw_args=None,
+    args=None
 ):
     raw_args = raw_args or [atom(raw=x, underlying=x) for x in args]
     return {
         "raw": raw,
+        "normalized": normalized or raw,
         "args": tuple(raw_args),
         "container": container,
         "is_optional": is_optional,
@@ -55,13 +64,17 @@ def test_omit_optional(typ, want, omitted):
     [
         (int, atom(raw=int, underlying=int)),
         (str, atom(raw=str, underlying=str)),
-        (t.Optional[str], atom(raw=t.Optional[str], underlying=str, is_optional=True)),
+        (
+            t.Optional[str],
+            atom(raw=t.Optional[str], normalized=str, underlying=str, is_optional=True),
+        ),
         # container
         (t.List[str], container(raw=t.List[str], container="list", args=[str])),
         (
             t.Optional[t.List[str]],
             container(
                 raw=t.Optional[t.List[str]],
+                normalized=t.List[str],
                 container="list",
                 args=[str],
                 is_optional=True,
@@ -72,11 +85,23 @@ def test_omit_optional(typ, want, omitted):
             container(
                 raw=t.List[t.Optional[str]],
                 container="list",
-                raw_args=[atom(raw=t.Optional[str], underlying=str, is_optional=True)],
+                raw_args=[
+                    atom(
+                        raw=t.Optional[str],
+                        normalized=str,
+                        underlying=str,
+                        is_optional=True,
+                    )
+                ],
             ),
         ),
-        (list, container(raw=list, container="list", args=[t.Any])),
-        (t.Tuple[str], container(raw=t.Tuple[str], container="tuple", args=[str])),
+        (list, container(raw=list, normalized=t.Sequence, container="list", args=[t.Any])),
+        (
+            t.Tuple[str],
+            container(
+                raw=t.Tuple[str], container="tuple", args=[str]
+            ),
+        ),
         (
             t.Tuple[str, int],
             container(raw=t.Tuple[str, int], container="tuple", args=[str, int]),
@@ -89,6 +114,7 @@ def test_omit_optional(typ, want, omitted):
             t.Optional[t.Dict[str, int]],
             container(
                 raw=t.Optional[t.Dict[str, int]],
+                normalized=t.Dict[str, int],
                 container="dict",
                 args=[str, int],
                 is_optional=True,
@@ -98,10 +124,16 @@ def test_omit_optional(typ, want, omitted):
             t.Optional[t.Dict[str, t.Optional[int]]],
             container(
                 raw=t.Optional[t.Dict[str, t.Optional[int]]],
+                normalized=t.Dict[str, t.Optional[int]],
                 container="dict",
                 raw_args=[
                     atom(raw=str, underlying=str),
-                    atom(raw=t.Optional[int], underlying=int, is_optional=True),
+                    atom(
+                        raw=t.Optional[int],
+                        normalized=int,
+                        underlying=int,
+                        is_optional=True,
+                    ),
                 ],
                 is_optional=True,
             ),
@@ -112,6 +144,7 @@ def test_omit_optional(typ, want, omitted):
             t.Optional[_Person],
             atom(
                 raw=t.Optional[_Person],
+                normalized=_Person,
                 underlying=_Person,
                 custom=_Person,
                 is_optional=True,
@@ -140,6 +173,7 @@ def test_omit_optional(typ, want, omitted):
             t.Optional[t.Union[t.Optional[_Person], t.Optional[str]]],
             container(
                 raw=t.Optional[t.Union[t.Optional[_Person], t.Optional[str]]],
+                normalized=t.Union[_Person, str],
                 container="union",
                 is_composite=True,
                 is_optional=True,
@@ -153,13 +187,21 @@ def test_omit_optional(typ, want, omitted):
         (_MyString, atom(raw=_MyString, underlying=str)),
         (
             t.Optional[_MyString],
-            atom(raw=t.Optional[_MyString], underlying=str, is_optional=True),
+            atom(
+                raw=t.Optional[_MyString],
+                normalized=_MyString,
+                underlying=str,
+                is_optional=True,
+            ),
         ),
         (tx.Literal["A", "B"], atom(raw=tx.Literal["A", "B"], underlying=str)),
         (
             t.Optional[tx.Literal["A", "B"]],
             atom(
-                raw=t.Optional[tx.Literal["A", "B"]], underlying=str, is_optional=True
+                raw=t.Optional[tx.Literal["A", "B"]],
+                normalized=tx.Literal["A", "B"],
+                underlying=str,
+                is_optional=True,
             ),
         ),
     ],

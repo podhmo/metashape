@@ -13,6 +13,7 @@ ContainerType = tx.Literal["list", "tuple", "dict", "union"]
 
 class Container(tx.TypedDict, total=True):
     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
+    normalized: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.List[int]
     container: ContainerType
     args: t.Tuple[TypeInfo, ...]
 
@@ -22,7 +23,10 @@ class Container(tx.TypedDict, total=True):
 
 class Atom(tx.TypedDict, total=True):
     raw: t.Type[t.Any]  # t.Optional[int] -> t.Optional[int]
-    underlying: t.Type[t.Any]  # t.Optionall[int] -> int
+    normalized: t.Type[
+        t.Any
+    ]  # t.Optional[tx.Literal["a", "b"]] -> tx.Literal["a", "b"]
+    underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
 
     is_optional: bool  # t.Optional[int] -> True, int -> False
     custom: t.Optional[
@@ -36,12 +40,14 @@ TypeInfo = t.Union[Atom, Container]
 def _make_atom(
     *,
     raw: t.Type[t.Any],
+    normalized: t.Type[t.Any],
     underlying: t.Type[t.Any],
     is_optional: bool = False,
     custom: t.Optional[t.Any] = None,
 ) -> Atom:
     return {
         "raw": raw,
+        "normalized": normalized,
         "underlying": underlying,
         "is_optional": is_optional,
         "custom": custom,
@@ -52,12 +58,14 @@ def _make_container(
     *,
     container: ContainerType,
     raw: t.Type[t.Any],
+    normalized: t.Type[t.Any],
     args: t.Tuple["TypeInfo", ...],
     is_optional: bool = False,
     is_composite: bool = False,
 ) -> Container:
     return {
         "raw": raw,
+        "normalized": normalized,
         "args": tuple(args),
         "container": container,
         "is_optional": is_optional,
@@ -116,13 +124,17 @@ def detect(
         elif issubclass(typ, t.Sequence):
             return _make_container(
                 raw=raw,
+                normalized=t.Tuple if issubclass(typ, tuple) else t.Sequence,
                 container="tuple" if issubclass(typ, tuple) else "list",
                 args=(detect(_anytype),),
             )
         elif issubclass(typ, t.Mapping):
             childinfo = detect(_anytype)
             return _make_container(
-                raw=raw, container="dict", args=(childinfo, childinfo)
+                raw=raw,
+                normalized=t.Mapping,
+                container="dict",
+                args=(childinfo, childinfo),
             )
         else:
             underlying = typ  # xxx
@@ -139,6 +151,7 @@ def detect(
                     return _make_container(
                         container="union",
                         raw=raw,
+                        normalized=typ,
                         args=tuple([detect(t) for t in args]),
                         is_optional=is_optional,
                         is_composite=True,
@@ -147,9 +160,11 @@ def detect(
                 is_optional = _nonetype in args
                 if is_optional:
                     args = [x for x in args if x != _nonetype]
+                    typ = t.Union[tuple(args)]
                 return _make_container(
                     container="union",
                     raw=raw,
+                    normalized=typ,
                     args=tuple([detect(t) for t in args]),
                     is_optional=is_optional,
                     is_composite=True,
@@ -159,11 +174,12 @@ def detect(
             underlying = typ.__origin__
             if underlying == tx.Literal:
                 args = typing_inspect.get_args(typ)
-                underlying = type(args[0])  # TODO: meta info
+                underlying = type(args[0])
             elif issubclass(underlying, t.Sequence):
                 args = typing_inspect.get_args(typ)
                 return _make_container(
                     raw=raw,
+                    normalized=typ,
                     container="tuple" if issubclass(underlying, tuple) else "list",
                     args=tuple([detect(t) for t in args]),
                     is_optional=is_optional,
@@ -172,6 +188,7 @@ def detect(
                 args = typing_inspect.get_args(typ)
                 return _make_container(
                     raw=raw,
+                    normalized=typ,
                     container="dict",
                     args=tuple([detect(t) for t in args]),
                     is_optional=is_optional,
@@ -185,7 +202,11 @@ def detect(
     if underlying not in _primitives:
         custom = underlying
     return _make_atom(
-        raw=raw, underlying=underlying, is_optional=is_optional, custom=custom
+        raw=raw,
+        normalized=typ,
+        underlying=underlying,
+        is_optional=is_optional,
+        custom=custom,
     )
 
 
