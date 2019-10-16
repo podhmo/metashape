@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def compile(walker: Walker, *, output: t.IO = sys.stdout) -> None:
-    from metashape.flavors.openapi import emit  # TODO: dispatch
+    from metashape.drivers.openapi import emit  # TODO: dispatch
 
     logger.debug("collect members: %d", len(walker.walk_module()))
 

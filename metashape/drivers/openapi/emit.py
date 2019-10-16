@@ -7,13 +7,11 @@ from metashape.analyze import typeinfo
 from . import detect
 
 logger = logging.getLogger(__name__)
+Store = t.Dict[str, t.Any]
 
-# TODO: support format
 # TODO: some validations
 # TODO: additionalProperties
 # TODO: conflict name
-
-Store = t.Dict[str, t.Any]
 
 
 class Emitter:
