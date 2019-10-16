@@ -1,8 +1,7 @@
 import typing as t
-import json
 import logging
 from metashape.langhelpers import make_dict
-from metashape.analyze.walker import Walker, Member
+from metashape.analyze import Walker, Member, Context
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -15,19 +14,20 @@ Store = t.Dict[str, t.Any]
 
 
 class Emitter:
-    def __init__(self, walker: Walker) -> None:
+    def __init__(self, walker: Walker, ctx: Context) -> None:
         self.walker = walker
+        self.ctx = ctx
 
     def emit(self, member: Member, *, store=Store) -> None:
         walker = self.walker
         resolver = self.walker.resolver
-        context = self.walker.context
+        ctx = self.ctx
 
         typename = resolver.resolve_name(member)
 
         required = []
         properties = make_dict()
-        description = resolver.resolve_doc(member, verbose=context.verbose)
+        description = resolver.resolve_doc(member, verbose=ctx.verbose)
 
         schema = make_dict(
             properties=properties, required=required, description=description
@@ -47,7 +47,7 @@ class Emitter:
 
             # TODO: self recursion check (warning)
             if resolver.is_member(fieldtype):
-                self.walker.q.append(fieldtype)
+                self.ctx.q.append(fieldtype)
 
                 properties[fieldname] = {
                     "$ref": f"#/schemas/components/{resolver.resolve_name(fieldtype)}"
@@ -67,18 +67,19 @@ class Emitter:
         store["components"]["schemas"][typename] = schema
 
 
-def emit(walker: Walker, *, output: t.IO) -> None:
+def emit(walker: Walker, *, output: t.IO[str]) -> None:
     store = make_dict(components=make_dict(schemas=make_dict()))
-    emitter = Emitter(walker)
+    ctx = walker.context
+    emitter = Emitter(walker, ctx)
 
     for m in walker.walk_module():
-        walker.q.append(m)
+        ctx.q.append(m)
 
     while True:
         try:
-            m = walker.q.popleft()
+            m = ctx.q.popleft()
             logger.info("walk type: %r", m)
             emitter.emit(m, store=store)
         except IndexError:
             break
-    return json.dump(store, output, indent=2, ensure_ascii=False)
+    return ctx.dumper.dump(store, output, format="json")
