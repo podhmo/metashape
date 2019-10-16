@@ -16,8 +16,12 @@ class Resolver:
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
-    def resolve_name(self, member: Member) -> str:
-        return member.__name__  # type: ignore
+    def resolve_name(self, member: t.Union[Member, t.ForwardRef]) -> str:
+        name = getattr(member, "__name__", None)
+        if name is not None:
+            return name
+        # for ForwardRef
+        return member.__forward_arg__  # type: ignore
 
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)

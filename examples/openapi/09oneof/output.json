@@ -1,0 +1,109 @@
+{
+  "components": {
+    "schemas": {
+      "Cat": {
+        "properties": {
+          "hunts": {
+            "type": "boolean"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hunts",
+          "age",
+          "$type"
+        ]
+      },
+      "Dog": {
+        "properties": {
+          "bark": {
+            "type": "boolean"
+          },
+          "breed": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bark",
+          "breed",
+          "age",
+          "$type"
+        ]
+      },
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "memo": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "memoList": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/components/Person"
+            }
+          },
+          "pets": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/schemas/components/Dog"
+                },
+                {
+                  "$ref": "#/schemas/components/Cat"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "$type"
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "memo",
+          "memoList",
+          "parents",
+          "pets"
+        ]
+      }
+    }
+  }
+}
