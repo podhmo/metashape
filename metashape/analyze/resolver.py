@@ -42,7 +42,7 @@ class DefaultResolver(Resolver):
         return typeinfo.detect(typ)
 
     def resolve_walker(self, d: t.Dict[str, t.Any]) -> "DefaultWalker":
-        members = [v for v in d.values() if self.is_member(v)]
+        members = [v for _, v in sorted(d.items()) if self.is_member(v)]
         return DefaultWalker(members)
 
 

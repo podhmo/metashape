@@ -37,7 +37,7 @@ def main(*, argv: t.Optional[t.List[str]] = None) -> None:
     parser.add_argument("filename")
     parser.add_argument("--aggressive", action="store_true")
     parser.add_argument(
-        "--logging", choices=list(logging._nameToLevel.keys()), default="DEBUG"
+        "--logging", choices=list(logging._nameToLevel.keys()), default="INFO"
     )
     args = parser.parse_args(argv)
 

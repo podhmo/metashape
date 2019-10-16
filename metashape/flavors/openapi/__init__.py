@@ -1,24 +1,22 @@
 import typing as t
 import json
+import logging
 from metashape.langhelpers import make_dict
 from metashape.analyze import Accessor, Member
 from . import detect
 
+logger = logging.getLogger(__name__)
+
 # TODO: support format
-# TODO: support description
-# TDOO: support $ref
-# TDOO: nested $ref
 # TODO: t.Union -> oneOf with discriminator
-# TODO: string literarl type -> enum
 
 
 Store = t.Dict[str, t.Any]
 
 
 class Emitter:
-    def __init__(self, accessor: Accessor, *, store: Store) -> None:
+    def __init__(self, accessor: Accessor) -> None:
         self.accessor = accessor
-        self.store = store
 
     def emit(self, member: Member, *, store=Store) -> None:
         resolver = self.accessor.resolver
@@ -36,7 +34,14 @@ class Emitter:
         )
 
         for fieldname, fieldtype, metadata in walker.walk_type(member):
+            logger.info(
+                "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
+                fieldname,
+                fieldtype,
+                (metadata or {}).keys(),
+            )
             info = resolver.resolve_type_info(fieldtype)
+            logger.debug("walk prop: 	info=%r", info)
             if not info["is_optional"]:
                 required.append(fieldname)
 
@@ -66,15 +71,16 @@ def emit(accessor: Accessor, *, output: t.IO) -> None:
     walker = accessor.walker
 
     store = make_dict(components=make_dict(schemas=make_dict()))
-    emitter = Emitter(accessor, store=store)
+    emitter = Emitter(accessor)
 
     for m in walker.walk_module():
         accessor.q.append(m)
 
     while True:
         try:
-            emitter.emit(m, store=store)
             m = accessor.q.popleft()
+            logger.info("walk type: %r", m)
+            emitter.emit(m, store=store)
         except IndexError:
             break
     return json.dump(store, output, indent=2, ensure_ascii=False)

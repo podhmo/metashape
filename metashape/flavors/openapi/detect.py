@@ -25,7 +25,7 @@ def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> str:
             return "integer"
         elif issubclass(typ, float):
             return "number"
-    logger.info("unexpected type: %r", typ)
+    logger.warning("unexpected type: %r", typ)
     return unknown
 
 
