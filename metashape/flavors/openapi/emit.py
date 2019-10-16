@@ -33,32 +33,40 @@ class Emitter:
             properties=properties, required=required, description=description
         )
 
-        for fieldname, fieldtype, metadata in walker.walk_type(member):
+        for field_name, field_type, metadata in walker.walk_type(member):
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                fieldname,
-                fieldtype,
+                field_name,
+                field_type,
                 (metadata or {}).keys(),
             )
-            info = resolver.resolve_type_info(fieldtype)
+            info = resolver.resolve_type_info(field_type)
             logger.debug("walk prop: 	info=%r", info)
             if not info["is_optional"]:
-                required.append(fieldname)
+                required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(fieldtype):
-                self.ctx.q.append(fieldtype)
+            if resolver.is_member(field_type):
+                self.ctx.q.append(field_type)
 
-                properties[fieldname] = {
-                    "$ref": f"#/schemas/components/{resolver.resolve_name(fieldtype)}"
+                properties[field_name] = {
+                    "$ref": f"#/schemas/components/{resolver.resolve_name(field_type)}"
                 }  # todo: lazy
                 continue
 
             # todo: array support
-            prop = properties[fieldname] = {"type": detect.schema_type(info)}
+            prop = properties[field_name] = {"type": detect.schema_type(info)}
             enum = detect.enum(info)
             if enum:
                 prop["enum"] = enum
+            if prop["type"] == "array":
+                if info["args"][0]["custom"] is None:
+                    prop["items"] = detect.schema_type(info["args"][0])
+                else:
+                    custom_type = info["args"][0]["custom"]
+                    prop["items"] = {
+                        "$ref": f"#/schemas/components/{resolver.resolve_name(custom_type)}"
+                    }  # todo: lazy
 
         if len(required) <= 0:
             schema.pop("required")

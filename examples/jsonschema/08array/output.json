@@ -1,0 +1,31 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/components/Person"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": "string"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "parents"
+        ]
+      }
+    }
+  }
+}

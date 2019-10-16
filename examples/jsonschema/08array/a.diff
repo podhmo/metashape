@@ -1,0 +1,26 @@
+--- 00runcode/output.json
++++ 08array/output.json
+@@ -8,11 +8,22 @@
+           },
+           "age": {
+             "type": "integer"
++          },
++          "parents": {
++            "type": "array",
++            "items": {
++              "$ref": "#/schemas/components/Person"
++            }
++          },
++          "skills": {
++            "type": "array",
++            "items": "string"
+           }
+         },
+         "required": [
+           "name",
+-          "age"
++          "age",
++          "parents"
+         ]
+       }
+     }
