@@ -17,7 +17,7 @@
        "Person": {
          "properties": {
            "name": {
-@@ -8,6 +18,15 @@
+@@ -8,11 +18,22 @@
            },
            "age": {
              "type": "integer"
@@ -26,10 +26,18 @@
 +            "$ref": "#/schemas/components/Person"
 +          },
 +          "mother": {
-+            "$ref": "#/schemas/components/Person"
++            "type": "object"
 +          },
 +          "extra": {
 +            "$ref": "#/schemas/components/Extra"
            }
          },
          "required": [
+           "name",
+-          "age"
++          "age",
++          "father",
++          "extra"
+         ]
+       }
+     }

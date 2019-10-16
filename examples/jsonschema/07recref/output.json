@@ -23,7 +23,7 @@
             "$ref": "#/schemas/components/Person"
           },
           "mother": {
-            "$ref": "#/schemas/components/Person"
+            "type": "object"
           },
           "extra": {
             "$ref": "#/schemas/components/Extra"
@@ -31,7 +31,9 @@
         },
         "required": [
           "name",
-          "age"
+          "age",
+          "father",
+          "extra"
         ]
       }
     }

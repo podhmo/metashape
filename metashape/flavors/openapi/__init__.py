@@ -36,7 +36,11 @@ class Emitter:
         )
 
         for fieldname, fieldtype, metadata in walker.walk_type(member):
-            # TODO: support
+            info = resolver.resolve_type_info(fieldtype)
+            if not info["is_optional"]:
+                required.append(fieldname)
+
+            # TODO: self recursion check (warning)
             if resolver.is_member(fieldtype):
                 self.accessor.q.append(fieldtype)
 
@@ -45,16 +49,11 @@ class Emitter:
                 }  # todo: lazy
                 continue
 
-            info = resolver.resolve_type_info(fieldtype)
-
             # todo: array support
             prop = properties[fieldname] = {"type": detect.schema_type(info)}
             enum = detect.enum(info)
             if enum:
                 prop["enum"] = enum
-
-            if not info["is_optional"]:
-                required.append(fieldname)
 
         if len(required) <= 0:
             schema.pop("required")

@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 06ref/output.json
-@@ -8,12 +8,25 @@
+@@ -8,11 +8,25 @@
            },
            "age": {
              "type": "integer"
@@ -11,8 +11,10 @@
          },
          "required": [
            "name",
-           "age"
-         ]
+-          "age"
++          "age",
++          "extra"
++        ]
 +      },
 +      "Extra": {
 +        "properties": {
@@ -22,7 +24,6 @@
 +        },
 +        "required": [
 +          "memo"
-+        ]
+         ]
        }
      }
-   }

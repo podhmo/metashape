@@ -10,7 +10,6 @@ JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", 
 
 
 def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> str:
-    # todo: accessor
     if "container" in info:
         if info["container"] in ("list", "tuple"):
             return "array"

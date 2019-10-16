@@ -15,7 +15,8 @@
         },
         "required": [
           "name",
-          "age"
+          "age",
+          "extra"
         ]
       },
       "Extra": {

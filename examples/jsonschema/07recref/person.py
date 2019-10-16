@@ -1,8 +1,11 @@
+import typing as t
+
+
 class Person:
     name: str
     age: int
-    father: "Person"  # todo: optional
-    mother: "Person"
+    father: "Person"  # invalid: infinite recursion is occured
+    mother: t.Optional["Person"]
     extra: "Extra"
 
 
