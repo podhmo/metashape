@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-install_requires = ["typing_extensions", "magicalimport", "dictknife"]
+install_requires = ["typing_inspect", "typing_extensions", "magicalimport", "dictknife"]
 dev_requires = ["black", "flake8"]
 tests_requires = ["pytest"]
 
