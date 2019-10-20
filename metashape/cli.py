@@ -1,5 +1,5 @@
 import typing as t
-from metashape.types import T
+from metashape.types import T, EmitFunc
 from metashape import shortcuts
 from metashape.shortcuts import compile  # todo: rename
 
@@ -8,7 +8,8 @@ def run(
     filename: str,
     *,
     aggressive: bool = False,
-    is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
+    is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None,
+    emit: t.Optional[EmitFunc] = None,
 ) -> None:
     from magicalimport import import_module  # type:ignore
 
@@ -21,10 +22,12 @@ def run(
         )  # noqa
 
     walker = shortcuts.get_walker_from_dict(m.__dict__, is_member=is_member)
-    compile(walker)
+    compile(walker, emit=emit)
 
 
-def main(*, argv: t.Optional[t.List[str]] = None) -> None:
+def main(
+    *, argv: t.Optional[t.List[str]] = None, emit: t.Optional[EmitFunc] = None
+) -> None:
     import argparse
     import logging
 
@@ -39,4 +42,4 @@ def main(*, argv: t.Optional[t.List[str]] = None) -> None:
 
     params = vars(args)
     logging.basicConfig(level=params.pop("logging"))
-    run(**params)
+    run(emit=emit, **params)
