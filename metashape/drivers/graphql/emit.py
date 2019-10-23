@@ -13,7 +13,6 @@ from metashape.analyze import Context as AnalyzingContext
 from . import detect
 
 logger = logging.getLogger(__name__)
-Store = t.Dict[str, t.Any]
 
 # https://graphql.org/learn/schema/
 # https://www.apollographql.com/docs/apollo-server/schema/schema/
