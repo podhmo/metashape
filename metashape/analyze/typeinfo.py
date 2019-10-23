@@ -32,6 +32,7 @@ class Atom(tx.TypedDict, total=True):
     custom: t.Optional[
         t.Type[t.Any]
     ]  # int -> None, Person -> Person, t.List[int] -> None
+    supertypes = t.List[t.Type[t.Any]]
 
 
 TypeInfo = t.Union[Atom, Container]
@@ -44,6 +45,7 @@ def _make_atom(
     underlying: t.Type[t.Any],
     is_optional: bool = False,
     custom: t.Optional[t.Any] = None,
+    supertypes: t.Optional[t.List[t.Type[t.Any]]],
 ) -> Atom:
     return {
         "raw": raw,
@@ -51,6 +53,7 @@ def _make_atom(
         "underlying": underlying,
         "is_optional": is_optional,
         "custom": custom,
+        "supertypes": supertypes or [],
     }
 
 
@@ -196,7 +199,9 @@ def detect(
             else:
                 raise ValueError(f"unsuported type %{typ}")
 
+    supertypes = []
     while hasattr(underlying, "__supertype__"):
+        supertypes.append(underlying)  # todo: fullname?
         underlying = underlying.__supertype__
 
     if underlying not in _primitives:
@@ -207,6 +212,7 @@ def detect(
         underlying=underlying,
         is_optional=is_optional,
         custom=custom,
+        supertypes=supertypes,
     )
 
 

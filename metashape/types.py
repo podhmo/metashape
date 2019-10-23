@@ -1,7 +1,7 @@
 import typing as t
 
 T = t.TypeVar("T")
-
+ID = t.NewType("ID", str)
 MetaData = t.Optional[t.Dict[str, t.Any]]
 
 # TODO: more strict definition

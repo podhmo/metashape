@@ -1,21 +1,14 @@
---- 00runcode/schema.graphql	2019-10-23 16:11:36.752325708 +0900
-+++ 03array/schema.graphql	2019-10-23 16:26:27.418067288 +0900
-@@ -1,6 +1,14 @@
--type Todo {
--  id: !String
+--- 00runcode/schema.graphql	2019-10-23 16:45:43.547261882 +0900
++++ 03array/schema.graphql	2019-10-23 16:45:50.683703381 +0900
+@@ -1,3 +1,11 @@
 +type Board {
 +  lanes: [Lane]!
 +  mlanes: [Lane!]!
 +}
 +type Lane {
-   name: String
--  description: String
--  priority: Integer
++  name: String
 +  todos: [Todo]
 +}
-+type Todo {
-+  id: String
-+  name: String!
-+  description: String!
-+  priority: Integer!
- }
+ type Todo {
+   id: String
+   name: String!

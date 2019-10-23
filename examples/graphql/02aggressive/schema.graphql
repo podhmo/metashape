@@ -1,6 +1,6 @@
 type Todo {
-  id: !String
-  name: String
-  description: String
-  priority: Integer
+  id: String
+  name: String!
+  description: String!
+  priority: Int!
 }

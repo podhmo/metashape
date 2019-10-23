@@ -16,11 +16,9 @@ Store = t.Dict[str, t.Any]
 # https://graphql.org/learn/schema/
 # https://www.apollographql.com/docs/apollo-server/schema/schema/
 #
-# TODO: support Array types
 # TODO: suport arguments
 # TODO: support Query
 # TODO: support Mutation
-# TODO: support scalar types, perfectly
 # TODO: support enumuration types
 # TODO: support interfaces
 # TODO: support input types
