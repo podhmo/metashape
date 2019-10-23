@@ -1,10 +1,12 @@
+from __future__ import annotations
 import typing as t
 import logging
-from functools import partial
 import dataclasses
+from dictknife import loading
 from metashape.langhelpers import make_dict
-from metashape.analyze import ModuleWalker, Member, Context
+from metashape.analyze import ModuleWalker, Member
 from metashape.analyze import typeinfo
+from metashape.analyze import Context as AnalyzingContext
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ Store = t.Dict[str, t.Any]
 # TODO: drop discriminator
 
 
-class _State:  # TODO: rename to context?
+class Context:  # TODO: rename to context?
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Status:
         has_query: bool = False
@@ -31,18 +33,26 @@ class _State:  # TODO: rename to context?
             default_factory=lambda: make_dict(definitions=make_dict())
         )
 
-    def __init__(self) -> None:
-        self.status = _State.Status()
-        self.result = _State.Result()
+    def __init__(self, walker: ModuleWalker) -> None:
+        self.status = Context.Status()
+        self.result = Context.Result()
+        self.walker = walker
+        self.internal = walker.context
+
+    status: Context.Status
+    result: Context.Result
+    walker: ModuleWalker
+    internal: AnalyzingContext
 
 
 class Scanner:
-    def __init__(self, walker: ModuleWalker, state: _State) -> None:
-        self.walker = walker
-        self.state = state
+    ctx: Context
+
+    def __init__(self, ctx: Context) -> None:
+        self.ctx = ctx
 
     def _build_ref_data(self, field_type: t.Union[t.Type[t.Any], t.ForwardRef]) -> dict:
-        resolver = self.walker.resolver
+        resolver = self.ctx.walker.resolver
         return {
             "$ref": f"#/definitions/{resolver.resolve_name(field_type)}"
         }  # todo: lazy
@@ -59,16 +69,16 @@ class Scanner:
         return prop
 
     def scan(self, member: Member) -> None:
-        walker = self.walker
-        resolver = self.walker.resolver
-        ctx = self.walker.context
-        state = self.state
+        ctx = self.ctx
+        walker = self.ctx.walker
+        resolver = self.ctx.walker.resolver
+        internalctx = self.ctx.internal
 
         typename = resolver.resolve_name(member)
 
         required = []
         properties = make_dict()
-        description = resolver.resolve_doc(member, verbose=ctx.verbose)
+        description = resolver.resolve_doc(member, verbose=internalctx.option.verbose)
 
         schema = make_dict(
             properties=properties, required=required, description=description
@@ -116,20 +126,19 @@ class Scanner:
             schema.pop("required")
         if not description:
             schema.pop("description")
-        state.status.schemas[typename] = state.result.store["definitions"][
+        ctx.status.schemas[typename] = ctx.result.store["definitions"][
             typename
         ] = schema
 
 
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
-    state = _State()
-    ctx = walker.context
-    scanner = Scanner(walker, state=state)
+    ctx = Context(walker)
+    scanner = Scanner(ctx)
 
     try:
         for m in walker.walk():
             logger.info("walk type: %r", m)
             scanner.scan(m)
     finally:
-        ctx.callbacks.teardown()  # xxx:
-    return ctx.dumper.dump(state.result.store, output, format="json")
+        ctx.internal.callbacks.teardown()  # xxx:
+    return loading.dump(ctx.result.store, output, format="json")

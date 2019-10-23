@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing as t
 from collections import deque
+import dataclasses
 from metashape.langhelpers import reify
 from metashape.types import T
 
@@ -12,10 +13,14 @@ class Context:
     # option parameters
     # state (history)
     # factory of utility objects
+    @dataclasses.dataclass(frozen=False)
+    class Option:
+        strict: bool = True
+        verbose: bool = False
 
-    def __init__(self, strict: bool = True, verbose: bool = False):
-        self.strict = strict
-        self.verbose = verbose
+    @reify
+    def option(self) -> Context.Option:
+        return self.__class__.Option()
 
     @reify
     def q(self) -> _Queue:
@@ -24,12 +29,6 @@ class Context:
     @reify
     def callbacks(self) -> _Callbacks:
         return _Callbacks()
-
-    @reify
-    def dumper(self) -> t.Any:  # type: ignore
-        from dictknife import loading
-
-        return loading
 
 
 class _Queue(t.Generic[T]):

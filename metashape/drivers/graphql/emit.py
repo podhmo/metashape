@@ -1,9 +1,11 @@
+from __future__ import annotations
 import typing as t
 import logging
 import dataclasses
 from functools import partial
-from metashape.langhelpers import make_dict
+from metashape.langhelpers import make_dict, reify
 from metashape.analyze import ModuleWalker, Member
+from metashape.analyze import Context as AnalyzingContext
 
 # from metashape.analyze import typeinfo
 from . import detect
@@ -25,7 +27,7 @@ Store = t.Dict[str, t.Any]
 # TODO: support union types
 
 
-class _State:  # TODO: rename to context?
+class Context:
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Status:
         has_query: bool = False
@@ -35,19 +37,32 @@ class _State:  # TODO: rename to context?
     class Result:
         types: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
-    def __init__(self) -> None:
-        self.status = _State.Status()
-        self.result = _State.Result()
+    def __init__(self, walker: ModuleWalker) -> None:
+        self.status = Context.Status()
+        self.result = Context.Result()
+        self.walker = walker
+        self.internal = walker.context
+
+    @reify
+    def dumper(self) -> _Dumper:
+        return _Dumper()
+
+    status: Context.Status
+    result: Context.Result
+    walker: ModuleWalker
+    internal: AnalyzingContext
 
 
 class Scanner:
-    def __init__(self, walker: ModuleWalker) -> None:
-        self.walker = walker
+    ctx: Context
 
-    def scan(self, member: Member, *, state: _State) -> None:
-        walker = self.walker
-        resolver = self.walker.resolver
-        result = state.result
+    def __init__(self, ctx: Context) -> None:
+        self.ctx = ctx
+
+    def scan(self, member: Member) -> None:
+        walker = self.ctx.walker
+        resolver = self.ctx.walker.resolver
+        result = self.ctx.result
 
         schema = make_dict()
         typename = resolver.resolve_name(member)
@@ -70,23 +85,23 @@ class Scanner:
 
 
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
-    ctx = walker.context
-    state = _State()
-    scanner = Scanner(walker)
+    ctx = Context(walker)
+    scanner = Scanner(ctx)
 
     try:
         for m in walker.walk():
             logger.info("walk type: %r", m)
-            scanner.scan(m, state=state)
+            scanner.scan(m)
     finally:
-        ctx.callbacks.teardown()  # xxx:
-    Emiter().emit(state, output)  # xxx
+        ctx.internal.callbacks.teardown()  # xxx:
+
+    ctx.dumper.dump(ctx, output)  # xxx
 
 
-class Emiter:
-    def emit(self, state, o: t.IO[str]) -> None:
+class _Dumper:
+    def dump(self, ctx, o: t.IO[str]) -> None:
         p = partial(print, file=o)
-        status = state.status
+        status = ctx.status
         if status.has_query or status.has_query:
             p("schema {")
             if status.has_query:
@@ -102,7 +117,7 @@ class Emiter:
             p("")
 
         # types
-        for name, definition in state.result.types.items():
+        for name, definition in ctx.result.types.items():
             p(f"type {name} {{")
             for fieldname, fieldvalue in definition.items():
                 p(f"  {fieldname}: {fieldvalue['type']}")
