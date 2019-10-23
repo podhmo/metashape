@@ -1,0 +1,14 @@
+type Board {
+  lanes: [Lane]!
+  mlanes: [Lane!]!
+}
+type Lane {
+  name: String
+  todos: [Todo]
+}
+type Todo {
+  id: String
+  name: String!
+  description: String!
+  priority: Integer!
+}

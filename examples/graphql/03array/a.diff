@@ -1,0 +1,21 @@
+--- 00runcode/schema.graphql	2019-10-23 16:11:36.752325708 +0900
++++ 03array/schema.graphql	2019-10-23 16:26:27.418067288 +0900
+@@ -1,6 +1,14 @@
+-type Todo {
+-  id: !String
++type Board {
++  lanes: [Lane]!
++  mlanes: [Lane!]!
++}
++type Lane {
+   name: String
+-  description: String
+-  priority: Integer
++  todos: [Todo]
++}
++type Todo {
++  id: String
++  name: String!
++  description: String!
++  priority: Integer!
+ }

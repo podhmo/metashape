@@ -76,10 +76,7 @@ class Scanner:
             )
             info = resolver.resolve_type_info(field_type)
             logger.debug("walk prop: 	info=%r", info)
-            prop = schema[field_name] = {"type": detect.schema_type(info)}
-
-            if not info["is_optional"]:
-                prop["type"] = f"!{prop['type']}"
+            schema[field_name] = {"type": detect.schema_type(info)}
 
         result.types[typename] = schema
 
