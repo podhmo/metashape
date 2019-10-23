@@ -1,6 +1,6 @@
---- 00runcode/schema.graphql	2019-10-23 21:02:42.278301163 +0900
-+++ 05enum/schema.graphql	2019-10-23 21:02:42.691631439 +0900
-@@ -1,6 +1,14 @@
+--- 00runcode/schema.graphql	2019-10-23 21:04:59.402827627 +0900
++++ 05enum/schema.graphql	2019-10-23 21:04:59.812818855 +0900
+@@ -1,5 +1,13 @@
 +enum Kind {
 +  epic
 +  story
@@ -9,10 +9,8 @@
 +
  type Todo {
    id: String
--  name: String!
 +  kind: Kind
 +  kind2: Kind
-+  name: String
+   name: String
    description: String!
    priority: Int!
- }

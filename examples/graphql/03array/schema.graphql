@@ -8,7 +8,7 @@ type Lane {
 }
 type Todo {
   id: String
-  name: String!
+  name: String
   description: String!
   priority: Int!
 }

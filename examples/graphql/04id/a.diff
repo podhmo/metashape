@@ -1,13 +1,11 @@
---- 00runcode/schema.graphql	2019-10-23 21:02:42.278301163 +0900
-+++ 04id/schema.graphql	2019-10-23 21:02:42.608298722 +0900
-@@ -1,6 +1,8 @@
+--- 00runcode/schema.graphql	2019-10-23 21:04:59.402827627 +0900
++++ 04id/schema.graphql	2019-10-23 21:04:59.729487304 +0900
+@@ -1,5 +1,7 @@
 +type ID {
 +}
  type Todo {
 -  id: String
--  name: String!
 +  id: ID
-+  name: String
+   name: String
    description: String!
    priority: Int!
- }
