@@ -1,6 +1,7 @@
 import typing as t
 import logging
 from functools import partial
+import dataclasses
 from metashape.langhelpers import make_dict
 from metashape.analyze import ModuleWalker, Member, Context
 from metashape.analyze import typeinfo
@@ -17,28 +18,28 @@ Store = t.Dict[str, t.Any]
 # TODO: drop discriminator
 
 
+class _State:  # TODO: rename to context?
+    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
+    class Status:
+        has_query: bool = False
+        has_mutation: bool = False
+        schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
+
+    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
+    class Result:
+        store: t.Dict[str, t.Any] = dataclasses.field(
+            default_factory=lambda: make_dict(definitions=make_dict())
+        )
+
+    def __init__(self) -> None:
+        self.status = _State.Status()
+        self.result = _State.Result()
+
+
 class Scanner:
-    DISCRIMINATOR_FIELD = "$type"
-
-    def __init__(self, walker: ModuleWalker) -> None:
+    def __init__(self, walker: ModuleWalker, state: _State) -> None:
         self.walker = walker
-
-        self._schemas = {}
-
-    def _as_discriminator(self, name: str, fieldname: str) -> None:
-        schema = self._schemas.get(name)
-        if schema is None:
-            return
-        props = schema.get("properties")
-        if props is None:
-            return
-        if fieldname in props:
-            return
-        props[fieldname] = {"type": "string"}  # xxx
-        if "required" in schema:
-            schema["required"].append(fieldname)
-        else:
-            schema["required"] = [fieldname]
+        self.state = state
 
     def _build_ref_data(self, field_type: t.Union[t.Type[t.Any], t.ForwardRef]) -> dict:
         resolver = self.walker.resolver
@@ -47,37 +48,21 @@ class Scanner:
         }  # todo: lazy
 
     def _build_one_of_data(self, info: typeinfo.TypeInfo) -> dict:
-        resolver = self.walker.resolver
-        ctx = self.walker.context
-
         candidates = []
-        need_discriminator = True
 
         for x in info["args"]:
             if x["custom"] is None:
-                need_discriminator = False
                 candidates.append({"type": detect.schema_type(x)})
             else:
                 candidates.append(self._build_ref_data(x["custom"]))
         prop = {"oneOf": candidates}  # todo: discriminator
-
-        if need_discriminator:
-            prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
-            # update schema
-            for x in info["args"]:
-                ctx.callbacks.append(
-                    partial(
-                        self._as_discriminator,
-                        resolver.resolve_name(x["custom"]),
-                        self.DISCRIMINATOR_FIELD,
-                    )
-                )
         return prop
 
-    def scan(self, member: Member, *, store=Store) -> None:
+    def scan(self, member: Member) -> None:
         walker = self.walker
         resolver = self.walker.resolver
-        ctx = self.ctx
+        ctx = self.walker.context
+        state = self.state
 
         typename = resolver.resolve_name(member)
 
@@ -131,18 +116,20 @@ class Scanner:
             schema.pop("required")
         if not description:
             schema.pop("description")
-        self._schemas[typename] = store["definitions"][typename] = schema
+        state.status.schemas[typename] = state.result.store["definitions"][
+            typename
+        ] = schema
 
 
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
-    store = make_dict(definitions=make_dict())
+    state = _State()
     ctx = walker.context
-    scanner = Scanner(walker, ctx)
+    scanner = Scanner(walker, state=state)
 
     try:
         for m in walker.walk():
             logger.info("walk type: %r", m)
-            scanner.scan(m, store=store)
+            scanner.scan(m)
     finally:
         ctx.callbacks.teardown()  # xxx:
-    return ctx.dumper.dump(store, output, format="json")
+    return ctx.dumper.dump(state.result.store, output, format="json")
