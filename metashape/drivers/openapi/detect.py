@@ -10,13 +10,13 @@ JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", 
 
 
 def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> JSONSchemaType:
-    if "container" in info:
-        if info["container"] in ("list", "tuple"):
+    if isinstance(info, typeinfo.Container):
+        if info.container in ("list", "tuple"):
             return "array"
-        elif info["container"] == "dict":
+        elif info.container == "dict":
             return "object"
-    elif "underlying" in info:
-        typ = info["underlying"]
+    else:  # Atom
+        typ = info.underlying
         if issubclass(typ, str):
             return "string"
         elif issubclass(typ, bool):
@@ -30,7 +30,7 @@ def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> JSONSche
 
 
 def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
-    typ = info["normalized"]
+    typ = info.normalized
     origin = getattr(typ, "__origin__", None)  # xxx
     if origin != tx.Literal:
         return ()

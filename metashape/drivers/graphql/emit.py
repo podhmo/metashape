@@ -36,7 +36,7 @@ class _LazyType:
         self.info = info
 
     def __str__(self) -> str:
-        typ = self.info.get("normalized")
+        typ = self.info.normalized
         return self.enum_type_to_name.get(typ) or detect.schema_type(self.info)
 
 

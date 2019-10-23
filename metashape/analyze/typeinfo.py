@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing as t
 from functools import lru_cache
+import dataclasses
 import typing_extensions as tx
 import typing_inspect
 
@@ -11,69 +12,33 @@ import typing_inspect
 ContainerType = tx.Literal["list", "tuple", "dict", "union"]
 
 
-class Container(tx.TypedDict, total=True):
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class Container:
     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
     normalized: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.List[int]
     container: ContainerType
     args: t.Tuple[TypeInfo, ...]
 
-    is_optional: bool  # t.Optional[int] -> True, int -> False
-    is_composite: bool  # t.Union -> True, dict -> False
+    is_optional: bool = False  # t.Optional[int] -> True, int -> False
+    is_composite: bool = False  # t.Union -> True, dict -> False
 
 
-class Atom(tx.TypedDict, total=True):
+@dataclasses.dataclass(frozen=True, unsafe_hash=False)
+class Atom:
     raw: t.Type[t.Any]  # t.Optional[int] -> t.Optional[int]
     normalized: t.Type[
         t.Any
     ]  # t.Optional[tx.Literal["a", "b"]] -> tx.Literal["a", "b"]
     underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
 
-    is_optional: bool  # t.Optional[int] -> True, int -> False
+    is_optional: bool = False  # t.Optional[int] -> True, int -> False
     custom: t.Optional[
         t.Type[t.Any]
-    ]  # int -> None, Person -> Person, t.List[int] -> None
-    supertypes = t.List[t.Type[t.Any]]
+    ] = None  # int -> None, Person -> Person, t.List[int] -> None
+    supertypes: t.List[t.Type[t.Any]] = dataclasses.field(default_factory=list)
 
 
 TypeInfo = t.Union[Atom, Container]
-
-
-def _make_atom(
-    *,
-    raw: t.Type[t.Any],
-    normalized: t.Type[t.Any],
-    underlying: t.Type[t.Any],
-    is_optional: bool = False,
-    custom: t.Optional[t.Any] = None,
-    supertypes: t.Optional[t.List[t.Type[t.Any]]],
-) -> Atom:
-    return {
-        "raw": raw,
-        "normalized": normalized,
-        "underlying": underlying,
-        "is_optional": is_optional,
-        "custom": custom,
-        "supertypes": supertypes or [],
-    }
-
-
-def _make_container(
-    *,
-    container: ContainerType,
-    raw: t.Type[t.Any],
-    normalized: t.Type[t.Any],
-    args: t.Tuple["TypeInfo", ...],
-    is_optional: bool = False,
-    is_composite: bool = False,
-) -> Container:
-    return {
-        "raw": raw,
-        "normalized": normalized,
-        "args": tuple(args),
-        "container": container,
-        "is_optional": is_optional,
-        "is_composite": is_composite,
-    }
 
 
 @lru_cache(maxsize=128, typed=False)
@@ -102,6 +67,16 @@ def omit_optional(
     return t.Union[tuple(args)], True
 
 
+def is_composite(info: TypeInfo) -> bool:
+    # for performance (skip isinstance)
+    return getattr(info, "is_composite", False)
+
+
+def get_custom(info: TypeInfo) -> t.Optional[t.Type[t.Any]]:
+    # for performance (skip isinstance)
+    return getattr(info, "custom", None)
+
+
 # todo: rename
 @lru_cache(maxsize=128, typed=False)
 def typeinfo(
@@ -125,7 +100,7 @@ def typeinfo(
         elif issubclass(typ, str):
             underlying = typ
         elif issubclass(typ, t.Sequence):
-            return _make_container(
+            return Container(
                 raw=raw,
                 normalized=t.Tuple if issubclass(typ, tuple) else t.Sequence,
                 container="tuple" if issubclass(typ, tuple) else "list",
@@ -133,7 +108,7 @@ def typeinfo(
             )
         elif issubclass(typ, t.Mapping):
             childinfo = typeinfo(_anytype)
-            return _make_container(
+            return Container(
                 raw=raw,
                 normalized=t.Mapping,
                 container="dict",
@@ -151,7 +126,7 @@ def typeinfo(
                     is_optional = True
                     typ = underlying = args[0]
                 else:
-                    return _make_container(
+                    return Container(
                         container="union",
                         raw=raw,
                         normalized=typ,
@@ -164,7 +139,7 @@ def typeinfo(
                 if is_optional:
                     args = [x for x in args if x != _nonetype]
                     typ = t.Union[tuple(args)]
-                return _make_container(
+                return Container(
                     container="union",
                     raw=raw,
                     normalized=typ,
@@ -180,7 +155,7 @@ def typeinfo(
                 underlying = type(args[0])
             elif issubclass(underlying, t.Sequence):
                 args = typing_inspect.get_args(typ)
-                return _make_container(
+                return Container(
                     raw=raw,
                     normalized=typ,
                     container="tuple" if issubclass(underlying, tuple) else "list",
@@ -189,7 +164,7 @@ def typeinfo(
                 )
             elif issubclass(underlying, t.Mapping):
                 args = typing_inspect.get_args(typ)
-                return _make_container(
+                return Container(
                     raw=raw,
                     normalized=typ,
                     container="dict",
@@ -206,7 +181,7 @@ def typeinfo(
 
     if underlying not in _primitives:
         custom = underlying
-    return _make_atom(
+    return Atom(
         raw=raw,
         normalized=typ,
         underlying=underlying,

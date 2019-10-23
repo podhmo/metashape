@@ -59,11 +59,11 @@ class Scanner:
     def _build_one_of_data(self, info: typeinfo.TypeInfo) -> dict:
         candidates = []
 
-        for x in info["args"]:
-            if x["custom"] is None:
+        for x in info.args:
+            if x.custom is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(x["custom"]))
+                candidates.append(self._build_ref_data(x.custom))
         prop = {"oneOf": candidates}  # todo: discriminator
         return prop
 
@@ -92,7 +92,7 @@ class Scanner:
             )
             info = resolver.resolve_type_info(field_type)
             logger.debug("walk prop: 	info=%r", info)
-            if not info["is_optional"]:
+            if not info.is_optional:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
@@ -102,7 +102,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(field_type)
                 continue
 
-            if info.get("is_composite", False):
+            if typeinfo.is_composite(info):
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -111,14 +111,14 @@ class Scanner:
                     prop["enum"] = enum
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(info["args"]) == 1
-                first = info["args"][0]
-                if first.get("is_composite", False):
+                assert len(info.args) == 1
+                first = info.args[0]
+                if typeinfo.is_composite(first):
                     prop["items"] = self._build_one_of_data(first)
-                elif first["custom"] is None:
+                elif typeinfo.get_custom(first) is None:
                     prop["items"] = detect.schema_type(first)
                 else:
-                    custom_type = first["custom"]
+                    custom_type = typeinfo.get_custom(first)
                     prop["items"] = self._build_ref_data(custom_type)
 
         if len(required) <= 0:

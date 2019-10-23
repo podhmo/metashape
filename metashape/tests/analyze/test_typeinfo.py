@@ -20,14 +20,16 @@ def atom(
     custom=None,
     supertypes=None
 ):
-    return {
-        "raw": raw,
-        "underlying": underlying or raw,
-        "normalized": normalized or raw or underlying,
-        "is_optional": is_optional,
-        "custom": custom,
-        "supertypes": supertypes or [],
-    }
+    from metashape.analyze.typeinfo import Atom
+
+    return Atom(
+        raw=raw,
+        underlying=underlying or raw,
+        normalized=normalized or raw or underlying,
+        is_optional=is_optional,
+        custom=custom,
+        supertypes=supertypes or [],
+    )
 
 
 def container(
@@ -40,15 +42,17 @@ def container(
     raw_args=None,
     args=None
 ):
+    from metashape.analyze.typeinfo import Container
+
     raw_args = raw_args or [atom(raw=x, underlying=x) for x in args]
-    return {
-        "raw": raw,
-        "normalized": normalized or raw,
-        "args": tuple(raw_args),
-        "container": container,
-        "is_optional": is_optional,
-        "is_composite": is_composite,
-    }
+    return Container(
+        raw=raw,
+        normalized=normalized or raw,
+        args=tuple(raw_args),
+        container=container,
+        is_optional=is_optional,
+        is_composite=is_composite,
+    )
 
 
 @pytest.mark.parametrize(
