@@ -2,7 +2,7 @@ import typing as t
 import logging
 from functools import partial
 from metashape.langhelpers import make_dict
-from metashape.analyze import Walker, Member, Context
+from metashape.analyze import ModuleWalker, Member, Context
 
 # from metashape.analyze import typeinfo
 from . import detect
@@ -25,7 +25,7 @@ Store = t.Dict[str, t.Any]
 
 
 class Emitter:
-    def __init__(self, walker: Walker, ctx: Context) -> None:
+    def __init__(self, walker: ModuleWalker, ctx: Context) -> None:
         self.walker = walker
         self.ctx = ctx
 
@@ -40,12 +40,11 @@ class Emitter:
     def emit(self, member: Member, *, store=Store) -> None:
         walker = self.walker
         resolver = self.walker.resolver
-        ctx = self.ctx
 
         schema = make_dict()
         typename = resolver.resolve_name(member)
 
-        for field_name, field_type, metadata in walker.walk_type(member):
+        for field_name, field_type, metadata in walker.for_type(member).walk():
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 field_name,
@@ -61,21 +60,15 @@ class Emitter:
         self._types[typename] = store["types"][typename] = schema
 
 
-def emit(walker: Walker, *, output: t.IO[str]) -> None:
+def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     store = make_dict(types=make_dict())
     ctx = walker.context
     emitter = Emitter(walker, ctx)
 
-    for m in walker.walk_module():
-        ctx.q.append(m)
+    for m in walker.walk():
+        logger.info("walk type: %r", m)
+        emitter.emit(m, store=store)
 
-    while True:
-        try:
-            m = ctx.q.popleft()
-            logger.info("walk type: %r", m)
-            emitter.emit(m, store=store)
-        except IndexError:
-            break
     emitter.teardown()  # xxx:
     Dumper().dump(store, output)  # xxx
 

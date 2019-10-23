@@ -2,7 +2,8 @@ from __future__ import annotations
 import typing as t
 from collections import deque
 from metashape.langhelpers import reify
-from .core import Member
+from metashape.types import T
+
 
 Store = t.Dict[str, t.Any]
 
@@ -23,18 +24,18 @@ class Context:
         return loading
 
 
-class _Queue:
-    q: t.Deque[Member]
-    seen: t.Set[Member]
+class _Queue(t.Generic[T]):
+    q: t.Deque[T]
+    seen: t.Set[T]
 
     def __init__(self) -> None:
         self.q = deque()
         self.seen = set()
 
-    def append(self, x: Member) -> None:
+    def append(self, x: T) -> None:
         self.q.append(x)
 
-    def popleft(self) -> Member:  # raise IndexError
+    def popleft(self) -> T:  # raise IndexError
         while True:
             x = self.q.popleft()
             if x in self.seen:

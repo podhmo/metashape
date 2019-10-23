@@ -2,7 +2,7 @@ import typing as t
 import logging
 from functools import partial
 from metashape.langhelpers import make_dict
-from metashape.analyze import Walker, Member, Context
+from metashape.analyze import ModuleWalker, Member, Context
 from metashape.analyze import typeinfo
 from . import detect
 
@@ -20,7 +20,7 @@ Store = t.Dict[str, t.Any]
 class Emitter:
     DISCRIMINATOR_FIELD = "$type"
 
-    def __init__(self, walker: Walker, ctx: Context) -> None:
+    def __init__(self, walker: ModuleWalker, ctx: Context) -> None:
         self.walker = walker
         self.ctx = ctx
 
@@ -94,7 +94,7 @@ class Emitter:
             properties=properties, required=required, description=description
         )
 
-        for field_name, field_type, metadata in walker.walk_type(member):
+        for field_name, field_type, metadata in walker.for_type(member).walk():
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 field_name,
@@ -108,7 +108,7 @@ class Emitter:
 
             # TODO: self recursion check (warning)
             if resolver.is_member(field_type):
-                self.ctx.q.append(field_type)
+                walker.append(field_type)
 
                 properties[field_name] = self._build_ref_data(field_type)
                 continue
@@ -139,20 +139,14 @@ class Emitter:
         self._schemas[typename] = store["definitions"][typename] = schema
 
 
-def emit(walker: Walker, *, output: t.IO[str]) -> None:
+def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     store = make_dict(definitions=make_dict())
     ctx = walker.context
     emitter = Emitter(walker, ctx)
 
-    for m in walker.walk_module():
-        ctx.q.append(m)
+    for m in walker.walk():
+        logger.info("walk type: %r", m)
+        emitter.emit(m, store=store)
 
-    while True:
-        try:
-            m = ctx.q.popleft()
-            logger.info("walk type: %r", m)
-            emitter.emit(m, store=store)
-        except IndexError:
-            break
     emitter.teardown()  # xxx:
     return ctx.dumper.dump(store, output, format="json")
