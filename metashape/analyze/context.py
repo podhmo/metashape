@@ -9,6 +9,10 @@ Store = t.Dict[str, t.Any]
 
 
 class Context:
+    # option parameters
+    # state (history)
+    # factory of utility objects
+
     def __init__(self, strict: bool = True, verbose: bool = False):
         self.strict = strict
         self.verbose = verbose
@@ -16,6 +20,10 @@ class Context:
     @reify
     def q(self) -> _Queue:
         return _Queue()
+
+    @reify
+    def callbacks(self) -> _Callbacks:
+        return _Callbacks()
 
     @reify
     def dumper(self) -> t.Any:  # type: ignore
@@ -42,3 +50,18 @@ class _Queue(t.Generic[T]):
                 continue
             self.seen.add(x)
             return x
+
+
+class _Callbacks:
+    callbacks = t.List[t.Callable[..., None]]
+
+    def __init__(self):
+        self.callbacks = []
+
+    def teardown(self) -> None:
+        callbacks, self.callbacks = self.callbacks, []
+        for cb in callbacks:
+            cb()
+
+    def append(self, cb: t.Callable[..., None]) -> None:
+        self.callbacks.append(cb)

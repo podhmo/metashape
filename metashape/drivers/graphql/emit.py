@@ -25,17 +25,10 @@ Store = t.Dict[str, t.Any]
 
 
 class Emitter:
-    def __init__(self, walker: ModuleWalker, ctx: Context) -> None:
+    def __init__(self, walker: ModuleWalker) -> None:
         self.walker = walker
-        self.ctx = ctx
 
         self._types = {}
-        self.callbacks = []
-
-    def teardown(self) -> None:
-        callbacks, self.callbacks = self.callbacks, []
-        for callback in callbacks:
-            callback()
 
     def emit(self, member: Member, *, store=Store) -> None:
         walker = self.walker
@@ -63,13 +56,14 @@ class Emitter:
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     store = make_dict(types=make_dict())
     ctx = walker.context
-    emitter = Emitter(walker, ctx)
+    emitter = Emitter(walker)
 
-    for m in walker.walk():
-        logger.info("walk type: %r", m)
-        emitter.emit(m, store=store)
-
-    emitter.teardown()  # xxx:
+    try:
+        for m in walker.walk():
+            logger.info("walk type: %r", m)
+            emitter.emit(m, store=store)
+    finally:
+        ctx.callbacks.teardown()  # xxx:
     Dumper().dump(store, output)  # xxx
 
 

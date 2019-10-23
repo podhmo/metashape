@@ -20,17 +20,10 @@ Store = t.Dict[str, t.Any]
 class Emitter:
     DISCRIMINATOR_FIELD = "$type"
 
-    def __init__(self, walker: ModuleWalker, ctx: Context) -> None:
+    def __init__(self, walker: ModuleWalker) -> None:
         self.walker = walker
-        self.ctx = ctx
 
         self._schemas = {}
-        self.callbacks = []
-
-    def teardown(self) -> None:
-        callbacks, self.callbacks = self.callbacks, []
-        for callback in callbacks:
-            callback()
 
     def _as_discriminator(self, name: str, fieldname: str) -> None:
         schema = self._schemas.get(name)
@@ -55,6 +48,8 @@ class Emitter:
 
     def _build_one_of_data(self, info: typeinfo.TypeInfo) -> dict:
         resolver = self.walker.resolver
+        ctx = self.walker.context
+
         candidates = []
         need_discriminator = True
 
@@ -70,7 +65,7 @@ class Emitter:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             # update schema
             for x in info["args"]:
-                self.callbacks.append(
+                ctx.callbacks.append(
                     partial(
                         self._as_discriminator,
                         resolver.resolve_name(x["custom"]),
@@ -144,9 +139,10 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     ctx = walker.context
     emitter = Emitter(walker, ctx)
 
-    for m in walker.walk():
-        logger.info("walk type: %r", m)
-        emitter.emit(m, store=store)
-
-    emitter.teardown()  # xxx:
+    try:
+        for m in walker.walk():
+            logger.info("walk type: %r", m)
+            emitter.emit(m, store=store)
+    finally:
+        ctx.callbacks.teardown()  # xxx:
     return ctx.dumper.dump(store, output, format="json")
