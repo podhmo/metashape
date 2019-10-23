@@ -17,6 +17,7 @@ class Context:
     class Option:
         strict: bool = True
         verbose: bool = False
+        output_format: str = "json"
 
     @reify
     def option(self) -> Context.Option:

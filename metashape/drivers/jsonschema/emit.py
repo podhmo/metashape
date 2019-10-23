@@ -141,4 +141,6 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
             scanner.scan(m)
     finally:
         ctx.internal.callbacks.teardown()  # xxx:
-    return loading.dump(ctx.result.store, output, format="json")
+    return loading.dump(
+        ctx.result.store, output, format=ctx.internal.option.output_format
+    )
