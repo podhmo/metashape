@@ -3,11 +3,13 @@ import typing as t
 import logging
 import dataclasses
 from functools import partial
+import typing_inspect
+from metashape.marker import guess_mark
 from metashape.langhelpers import make_dict, reify
 from metashape.analyze import ModuleWalker, Member
+from metashape.analyze import typeinfo
 from metashape.analyze import Context as AnalyzingContext
 
-# from metashape.analyze import typeinfo
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,18 @@ Store = t.Dict[str, t.Any]
 # TODO: support union types
 
 
+class _LazyType:
+    def __init__(
+        self, enum_type_to_name: t.Dict[t.Type[t.Any], str], info: typeinfo.TypeInfo
+    ):
+        self.enum_type_to_name = enum_type_to_name
+        self.info = info
+
+    def __str__(self) -> str:
+        typ = self.info.get("normalized")
+        return self.enum_type_to_name.get(typ) or detect.schema_type(self.info)
+
+
 class Context:
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Status:
@@ -33,7 +47,10 @@ class Context:
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Result:
-        types: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
+        enum_type_to_name: t.Dict[t.Any, str] = dataclasses.field(
+            default_factory=make_dict
+        )
+        name_to_type: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     def __init__(self, walker: ModuleWalker) -> None:
         self.status = Context.Status()
@@ -58,6 +75,7 @@ class Scanner:
         self.ctx = ctx
 
     def scan(self, member: Member) -> None:
+        ctx = self.ctx
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
@@ -74,9 +92,9 @@ class Scanner:
             )
             info = resolver.resolve_type_info(field_type)
             logger.debug("walk prop: 	info=%r", info)
-            schema[field_name] = {"type": detect.schema_type(info)}
+            schema[field_name] = {"type": _LazyType(result.enum_type_to_name, info)}
 
-        result.types[typename] = schema
+        result.name_to_type[typename] = schema
 
 
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
@@ -84,9 +102,12 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk():
+        for m in walker.walk(kinds=["custom", "enum"]):
             logger.info("walk type: %r", m)
-            scanner.scan(m)
+            if guess_mark(m) == "enum":
+                ctx.result.enum_type_to_name[m] = m.__name__
+            else:
+                scanner.scan(m)
     finally:
         ctx.internal.callbacks.teardown()  # xxx:
 
@@ -111,8 +132,16 @@ class _Dumper:
             p("}")
             p("")
 
-        # types
-        for name, definition in ctx.result.types.items():
+        # enum
+        for definition, name in ctx.result.enum_type_to_name.items():
+            p(f"enum {name} {{")
+            for x in typing_inspect.get_args(definition):
+                p(f"  {x}")
+            p("}")
+            p("")
+
+        # type
+        for name, definition in ctx.result.name_to_type.items():
             p(f"type {name} {{")
             for fieldname, fieldvalue in definition.items():
                 p(f"  {fieldname}: {fieldvalue['type']}")

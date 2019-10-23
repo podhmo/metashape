@@ -2,6 +2,7 @@ from metashape.declarative import mark
 from metashape.shortcuts import compile_with
 from metashape.drivers.jsonschema import emit
 
+
 @mark
 class Person:
     name: str

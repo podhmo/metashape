@@ -1,0 +1,14 @@
+enum Kind {
+  epic
+  story
+  task
+}
+
+type Todo {
+  id: String
+  kind: Kind
+  kind2: Kind
+  name: String
+  description: String!
+  priority: Int!
+}

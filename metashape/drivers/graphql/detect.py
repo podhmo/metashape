@@ -9,6 +9,8 @@ def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
     typ = info["underlying"]
     if info["supertypes"] and info["supertypes"][0] == ID:
         return "ID"
+    elif info["custom"] is not None:  # t.Type?
+        return typ.__name__
 
     if issubclass(typ, str):
         return "String"
@@ -18,8 +20,6 @@ def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
         return "Float"
     elif issubclass(typ, int):
         return "Int"
-    elif info["custom"] is not None:  # t.Type?
-        return typ.__name__
     logger.warning("unexpected type: %r", info)
     raise ValueError("unsupported %r", info)
 

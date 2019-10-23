@@ -32,10 +32,12 @@ def run(
 
     m = import_module(filename)
     if aggressive:
-        for k, v in m.__dict__.items():
+        for name, v in list(m.__dict__.items()):
             kind = guess_kind_aggressive(v)
             if kind is not None:
-                mark(v, kind=guess_kind_aggressive(v))
+                if kind == "enum":
+                    v.__name__ = name  # xxx TODO: use tx.Annotated
+                mark(v, kind=kind)
     walker = shortcuts.get_walker_from_dict(m.__dict__)
     compile(walker, emit=emit)
 

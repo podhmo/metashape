@@ -1,6 +1,6 @@
 OUTFILE := schema.graphql
 
-default: 00 01 02 03 04
+default: 00 01 02 03 04 05
 
 typing:
 	mypy --strict .
@@ -18,5 +18,8 @@ typing:
 	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 04:
+	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+05:
 	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
