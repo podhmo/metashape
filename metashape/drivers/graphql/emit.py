@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # https://graphql.org/learn/schema/
 # https://www.apollographql.com/docs/apollo-server/schema/schema/
 #
+# TODO: comments
 # TODO: suport arguments
 # TODO: support Query
 # TODO: support Mutation
