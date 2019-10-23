@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+import typing_extensions as tx
 import logging
 import dataclasses
 from functools import partial
@@ -20,10 +21,10 @@ logger = logging.getLogger(__name__)
 # TODO: suport arguments
 # TODO: support Query
 # TODO: support Mutation
-# TODO: support enumuration types
 # TODO: support interfaces
 # TODO: support input types
 # TODO: support union types
+# TODO: support new scalar types
 
 
 class _LazyType:
@@ -101,9 +102,9 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(kinds=["custom", "enum"]):
+        for m in walker.walk(kinds=[object, tx.Literal]):
             logger.info("walk type: %r", m)
-            if guess_mark(m) == "enum":
+            if guess_mark(m) == tx.Literal:
                 ctx.result.enum_type_to_name[m] = m.__name__
             else:
                 scanner.scan(m)

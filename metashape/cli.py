@@ -10,13 +10,13 @@ def guess_kind_aggressive(x: t.Type) -> t.Optional[Kind]:
     # is custom class?
     if hasattr(x, "__name__"):
         if not hasattr(x, "__loader__") and hasattr(x, "__annotations__"):
-            return "custom"
+            return object
         else:
             return None
 
     # is tx.Literal?
     if hasattr(x, "__origin__") and x.__origin__ is tx.Literal:
-        return "enum"
+        return tx.Literal
 
     return None
 
@@ -35,7 +35,7 @@ def run(
         for name, v in list(m.__dict__.items()):
             kind = guess_kind_aggressive(v)
             if kind is not None:
-                if kind == "enum":
+                if kind == tx.Literal:
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
     walker = shortcuts.get_walker_from_dict(m.__dict__)
