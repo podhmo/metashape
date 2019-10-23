@@ -1,5 +1,6 @@
 import typing as t
 import logging
+from functools import partial
 from metashape.langhelpers import make_dict
 from metashape.analyze import Walker, Member, Context
 
@@ -8,6 +9,19 @@ from . import detect
 
 logger = logging.getLogger(__name__)
 Store = t.Dict[str, t.Any]
+
+# https://graphql.org/learn/schema/
+# https://www.apollographql.com/docs/apollo-server/schema/schema/
+#
+# TODO: support Array types
+# TODO: suport arguments
+# TODO: support Query
+# TODO: support Mutation
+# TODO: support scalar types, perfectly
+# TODO: support enumuration types
+# TODO: support interfaces
+# TODO: support input types
+# TODO: support union types
 
 
 class Emitter:
@@ -68,18 +82,19 @@ def emit(walker: Walker, *, output: t.IO[str]) -> None:
 
 class Dumper:
     def dump(self, store, o: t.IO[str]) -> None:
-        print("schema {", file=o)
-        for name in store["types"]:
-            print(f"  {name}: {name}", file=o)  # lower?
-        print("}", file=o)
-        print("", file=o)
+        p = partial(print, file=o)
+        p("schema {")
+        p("  query: Query")  # TODO: has query?
+        p("  mutation: Mutation")  # TODO: has mutation?
+        p("}")
+        p("")
 
-        print("type Query {", file=o)
-        print("}", file=o)
-        print("", file=o)
+        p("type Query {")
+        p("}")
+        p("")
 
         for name, definition in store["types"].items():
-            print(f"type {name} {{", file=o)
+            p(f"type {name} {{")
             for fieldname, fieldvalue in definition.items():
-                print(f"  {fieldname}: {fieldvalue['type']}", file=o)
-            print("}", file=o)
+                p(f"  {fieldname}: {fieldvalue['type']}")
+            p("}")

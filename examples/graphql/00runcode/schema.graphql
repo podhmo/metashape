@@ -1,5 +1,6 @@
 schema {
-  Todo: Todo
+  query: Query
+  mutation: Mutation
 }
 
 type Query {
