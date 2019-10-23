@@ -27,7 +27,7 @@ class Resolver:
         return get_doc(ob, verbose=verbose)
 
     def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        return typeinfo.detect(typ)
+        return typeinfo.typeinfo(typ)
 
 
 def get_doc(ob: object, *, verbose: bool = False) -> str:

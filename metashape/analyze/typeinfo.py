@@ -104,7 +104,7 @@ def omit_optional(
 
 # todo: rename
 @lru_cache(maxsize=128, typed=False)
-def detect(
+def typeinfo(
     typ: t.Type[t.Any],
     *,
     is_optional: bool = False,
@@ -129,10 +129,10 @@ def detect(
                 raw=raw,
                 normalized=t.Tuple if issubclass(typ, tuple) else t.Sequence,
                 container="tuple" if issubclass(typ, tuple) else "list",
-                args=(detect(_anytype),),
+                args=(typeinfo(_anytype),),
             )
         elif issubclass(typ, t.Mapping):
-            childinfo = detect(_anytype)
+            childinfo = typeinfo(_anytype)
             return _make_container(
                 raw=raw,
                 normalized=t.Mapping,
@@ -155,7 +155,7 @@ def detect(
                         container="union",
                         raw=raw,
                         normalized=typ,
-                        args=tuple([detect(t) for t in args]),
+                        args=tuple([typeinfo(t) for t in args]),
                         is_optional=is_optional,
                         is_composite=True,
                     )
@@ -168,7 +168,7 @@ def detect(
                     container="union",
                     raw=raw,
                     normalized=typ,
-                    args=tuple([detect(t) for t in args]),
+                    args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                     is_composite=True,
                 )
@@ -184,7 +184,7 @@ def detect(
                     raw=raw,
                     normalized=typ,
                     container="tuple" if issubclass(underlying, tuple) else "list",
-                    args=tuple([detect(t) for t in args]),
+                    args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )
             elif issubclass(underlying, t.Mapping):
@@ -193,7 +193,7 @@ def detect(
                     raw=raw,
                     normalized=typ,
                     container="dict",
-                    args=tuple([detect(t) for t in args]),
+                    args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )
             else:
@@ -224,7 +224,7 @@ if __name__ == "__main__":
             from magicalimport import import_symbol
 
             x = import_symbol(path)
-            pprint(detect(x))
+            pprint(typeinfo(x))
 
         import argparse
 

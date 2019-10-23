@@ -246,7 +246,7 @@ def test_omit_optional(typ, want, omitted):
     ],
 )
 def test_resolve_type_info(msg: str, typ, want):
-    from metashape.analyze.typeinfo import detect as callFUT
+    from metashape.analyze.typeinfo import typeinfo as callFUT
 
     got = callFUT(typ)
     assert got == want

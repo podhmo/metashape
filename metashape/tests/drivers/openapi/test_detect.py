@@ -40,7 +40,7 @@ class Person:
 def test_schema_type(input, want):
     from metashape.drivers.openapi.detect import schema_type as callFUT
 
-    info = typeinfo.detect(input)
+    info = typeinfo.typeinfo(input)
     got = callFUT(info)
     assert got == want
 
@@ -57,6 +57,6 @@ def test_schema_type(input, want):
 def test_enum(input, want):
     from metashape.drivers.openapi.detect import enum as callFUT
 
-    info = typeinfo.detect(input)
+    info = typeinfo.typeinfo(input)
     got = callFUT(info)
     assert got == want
