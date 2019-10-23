@@ -14,7 +14,7 @@ Store = t.Dict[str, t.Any]
 # TODO: conflict name
 
 
-class Emitter:
+class Scanner:
     DISCRIMINATOR_FIELD = "$type"
 
     def __init__(self, walker: ModuleWalker) -> None:
@@ -69,7 +69,7 @@ class Emitter:
                 )
         return prop
 
-    def emit(self, member: Member, *, store=Store) -> None:
+    def scan(self, member: Member, *, store=Store) -> None:
         walker = self.walker
         resolver = self.walker.resolver
         ctx = self.walker.context
@@ -132,12 +132,12 @@ class Emitter:
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     store = make_dict(components=make_dict(schemas=make_dict()))
     ctx = walker.context
-    emitter = Emitter(walker)
+    scanner = Scanner(walker)
 
     try:
         for m in walker.walk():
             logger.info("walk type: %r", m)
-            emitter.emit(m, store=store)
+            scanner.scan(m, store=store)
     finally:
         ctx.callbacks.teardown()  # xxx:
     return ctx.dumper.dump(store, output, format="json")
