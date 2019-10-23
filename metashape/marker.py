@@ -1,16 +1,18 @@
 import typing as t
-from .types import T
+from .types import T, Kind
 
 
 # TODO: remove
-
-
 def is_marked(cls: t.Type[T]) -> bool:
-    return hasattr(cls, "_shape_mark")
+    return getattr(cls, "_metashape_mark", None) is not None
 
 
-def mark(cls: t.Type[T]) -> t.Type[T]:
+def guess_mark(cls: t.Type[T]) -> t.Optional[Kind]:
+    return getattr(cls, "_metashape_mark", None)
+
+
+def mark(cls: t.Type[T], *, kind: Kind = "custom") -> t.Type[T]:
     if is_marked(cls):
         return cls
-    setattr(cls, "_shape_mark", True)
+    setattr(cls, "_metashape_mark", kind)
     return cls

@@ -37,6 +37,6 @@ def compile(
     output: t.IO = sys.stdout,
     emit: t.Optional[EmitFunc] = None
 ) -> None:
-    emit = emit or import_symbol("metashape.drivers.openapi:emit")
+    emit = emit or import_symbol("metashape.drivers.raw:emit")  # xxx:
     logger.debug("collect members: %d", len(walker))
     emit(walker, output=output)

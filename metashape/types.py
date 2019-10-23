@@ -1,5 +1,7 @@
 import typing as t
+import typing_extensions as tx
 
+Kind = tx.Literal["custom", "enum"]
 T = t.TypeVar("T")
 ID = t.NewType("ID", str)
 MetaData = t.Optional[t.Dict[str, t.Any]]

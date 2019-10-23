@@ -1,0 +1,12 @@
+from __future__ import annotations
+import typing as t
+import logging
+from metashape.marker import guess_mark
+from metashape.analyze import ModuleWalker
+
+logger = logging.getLogger(__name__)
+
+
+def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
+    for m in walker.walk():
+        print(guess_mark(m), m, file=output)

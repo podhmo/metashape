@@ -1,7 +1,8 @@
 from __future__ import annotations
 import typing as t
 import logging
-from metashape.types import MetaData
+from metashape.marker import guess_mark
+from metashape.types import MetaData, Kind
 from metashape.langhelpers import reify
 from metashape.declarative import get_metadata  # TODO: move
 from .core import Member
@@ -31,7 +32,7 @@ class ModuleWalker:
     def __len__(self) -> int:
         return len(self._members)
 
-    def walk(self) -> t.Iterable[Member]:
+    def walk(self, *, kinds: t.List[Kind] = ["custom"]) -> t.Iterable[Member]:
         ctx = self.context
         for m in self._members:
             self.context.q.append(m)
@@ -39,7 +40,8 @@ class ModuleWalker:
         while True:
             try:
                 m = ctx.q.popleft()
-                yield m
+                if guess_mark(m) in kinds:
+                    yield m
             except IndexError:
                 break
 

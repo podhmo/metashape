@@ -1,20 +1,18 @@
 {
-  "components": {
-    "schemas": {
-      "Person": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "age": {
-            "type": "integer"
-          }
+  "definitions": {
+    "Person": {
+      "properties": {
+        "name": {
+          "type": "string"
         },
-        "required": [
-          "name",
-          "age"
-        ]
-      }
+        "age": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "age"
+      ]
     }
   }
 }

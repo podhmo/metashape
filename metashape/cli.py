@@ -1,7 +1,24 @@
 import typing as t
-from metashape.types import T, EmitFunc
+import typing_extensions as tx
+from metashape.types import T, EmitFunc, Kind
 from metashape import shortcuts
+from metashape.marker import mark
 from metashape.shortcuts import compile  # todo: rename
+
+
+def guess_kind_aggressive(x: t.Type) -> t.Optional[Kind]:
+    # is custom class?
+    if hasattr(x, "__name__"):
+        if not hasattr(x, "__loader__") and hasattr(x, "__annotations__"):
+            return "custom"
+        else:
+            return None
+
+    # is tx.Literal?
+    if hasattr(x, "__origin__") and x.__origin__ is tx.Literal:
+        return "enum"
+
+    return None
 
 
 def run(
@@ -15,13 +32,11 @@ def run(
 
     m = import_module(filename)
     if aggressive:
-        is_member = (
-            lambda x: hasattr(x, "__name__")
-            and not hasattr(x, "__loader__")
-            and hasattr(x, "__annotations__")
-        )  # noqa
-
-    walker = shortcuts.get_walker_from_dict(m.__dict__, is_member=is_member)
+        for k, v in m.__dict__.items():
+            kind = guess_kind_aggressive(v)
+            if kind is not None:
+                mark(v, kind=guess_kind_aggressive(v))
+    walker = shortcuts.get_walker_from_dict(m.__dict__)
     compile(walker, emit=emit)
 
 
