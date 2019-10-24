@@ -32,7 +32,7 @@ class ModuleWalker:
     def __len__(self) -> int:
         return len(self._members)
 
-    def walk(self, *, kinds: t.List[Kind] = [object]) -> t.Iterable[Member]:
+    def walk(self, *, kinds: t.List[Kind] = ["object"]) -> t.Iterable[Member]:
         ctx = self.context
         for m in self._members:
             self.context.q.append(m)

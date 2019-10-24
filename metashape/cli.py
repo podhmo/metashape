@@ -35,7 +35,7 @@ def run(
         for name, v in list(m.__dict__.items()):
             kind = guess_kind_aggressive(v)
             if kind is not None:
-                if kind == tx.Literal:
+                if kind == "enum":
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
     walker = shortcuts.get_walker_from_dict(m.__dict__)
