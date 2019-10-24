@@ -24,7 +24,7 @@ class Context:
         return self.__class__.Option()
 
     @reify
-    def q(self) -> _Queue:
+    def q(self) -> _Queue[t.Any]:  # xxx
         return _Queue()
 
     @reify
@@ -53,13 +53,16 @@ class _Queue(t.Generic[T]):
 
 
 class _Callbacks:
-    callbacks = t.List[t.Callable[..., None]]
+    callbacks: t.List[t.Any]
 
-    def __init__(self):
-        self.callbacks = []
+    def __init__(self) -> None:
+        self.callbacks = []  # type: t.List[t.Any]
 
     def teardown(self) -> None:
-        callbacks, self.callbacks = self.callbacks, []
+        self.callbacks, callbacks = (
+            [],
+            self.callbacks,
+        )  # type: t.List[t.Any], t.List[t.Any]
         for cb in callbacks:
             cb()
 
