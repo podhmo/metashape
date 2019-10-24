@@ -67,14 +67,16 @@ def omit_optional(
     return t.Union[tuple(args)], True
 
 
+# TODO: move to method
 def is_composite(info: TypeInfo) -> bool:
     # for performance (skip isinstance)
-    return getattr(info, "is_composite", False)
+    return getattr(info, "is_composite", False)  # type: ignore
 
 
+# TODO: move to method
 def get_custom(info: TypeInfo) -> t.Optional[t.Type[t.Any]]:
     # for performance (skip isinstance)
-    return getattr(info, "custom", None)
+    return getattr(info, "custom", None)  # type: ignore
 
 
 # todo: rename
@@ -102,7 +104,7 @@ def typeinfo(
         elif issubclass(typ, t.Sequence):
             return Container(
                 raw=raw,
-                normalized=t.Tuple if issubclass(typ, tuple) else t.Sequence,
+                normalized=tuple if issubclass(typ, tuple) else t.Sequence,
                 container="tuple" if issubclass(typ, tuple) else "list",
                 args=(typeinfo(_anytype),),
             )
