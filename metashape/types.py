@@ -3,8 +3,9 @@ import typing_extensions as tx
 
 Kind = tx.Literal["object", "enum"]
 T = t.TypeVar("T")
-ID = t.NewType("ID", str)
+ID = t.NewType("ID", str)  # TODO: move?
 MetaData = t.Optional[t.Dict[str, t.Any]]
+
 
 # TODO: more strict definition
 IsMemberFunc = t.Callable[[t.Type[T]], bool]
