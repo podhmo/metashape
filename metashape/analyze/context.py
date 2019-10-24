@@ -53,16 +53,13 @@ class _Queue(t.Generic[T]):
 
 
 class _Callbacks:
-    callbacks: t.List[t.Any]
+    callbacks: t.List[t.Callable[..., None]]
 
     def __init__(self) -> None:
-        self.callbacks = []  # type: t.List[t.Any]
+        self.callbacks = []
 
     def teardown(self) -> None:
-        self.callbacks, callbacks = (
-            [],
-            self.callbacks,
-        )  # type: t.List[t.Any], t.List[t.Any]
+        self.callbacks, callbacks = [], self.callbacks
         for cb in callbacks:
             cb()
 
