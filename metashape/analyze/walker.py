@@ -2,10 +2,9 @@ from __future__ import annotations
 import typing as t
 import logging
 from metashape.marker import guess_mark
-from metashape.types import MetaData, Kind
+from metashape.types import MetaData, Kind, Member
 from metashape.langhelpers import reify
 from metashape.declarative import get_metadata  # TODO: move
-from .core import Member
 from .resolver import Resolver
 from .context import Context
 
