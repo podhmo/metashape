@@ -10,7 +10,7 @@ ID = t.NewType("ID", str)  # TODO: move?
 
 # TODO: more strict definition
 Member = t.Type[t.Any]
-IsMemberFunc = t.Callable[[t.Type[T]], bool]
+IsMemberFunc = t.Callable[[t.Type[t.Any]], bool]
 
 
 class _ForwardRef(tx.Protocol):
