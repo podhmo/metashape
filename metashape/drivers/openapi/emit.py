@@ -4,10 +4,11 @@ import logging
 import dataclasses
 from functools import partial
 from dictknife import loading
+from metashape.types import Member
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze import ModuleWalker, Member
 from metashape.analyze import typeinfo
-from metashape.analyze import Context as AnalyzingContext
+from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.context import Context as AnalyzingContext
 
 from . import detect
 

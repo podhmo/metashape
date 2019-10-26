@@ -3,10 +3,11 @@ import typing as t
 import logging
 import dataclasses
 from dictknife import loading
+from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict
-from metashape.analyze import ModuleWalker, Member
 from metashape.analyze import typeinfo
-from metashape.analyze import Context as AnalyzingContext
+from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.context import Context as AnalyzingContext
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -50,20 +51,23 @@ class Scanner:
     def __init__(self, ctx: Context) -> None:
         self.ctx = ctx
 
-    def _build_ref_data(self, field_type: t.Union[t.Type[t.Any], t.ForwardRef]) -> dict:
+    def _build_ref_data(
+        self, field_type: t.Union[t.Type[t.Any], _ForwardRef]
+    ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         return {
             "$ref": f"#/definitions/{resolver.resolve_name(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: typeinfo.TypeInfo) -> dict:
-        candidates = []
+    def _build_one_of_data(self, info: typeinfo.TypeInfo) -> t.Dict[str, t.Any]:
+        candidates: t.List[t.Dict[str, t.Any]] = []
 
-        for x in info.args:
-            if x.custom is None:
+        for x in typeinfo.get_args(info):
+            custom = typeinfo.get_custom(x)
+            if custom is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(x.custom))
+                candidates.append(self._build_ref_data(custom))
         prop = {"oneOf": candidates}  # todo: discriminator
         return prop
 
@@ -75,11 +79,11 @@ class Scanner:
 
         typename = resolver.resolve_name(member)
 
-        required = []
-        properties = make_dict()
+        required: t.List[str] = []
+        properties: t.Dict[str, t.Any] = make_dict()
         description = resolver.resolve_doc(member, verbose=internalctx.option.verbose)
 
-        schema = make_dict(
+        schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
         )
 
@@ -111,15 +115,17 @@ class Scanner:
                     prop["enum"] = enum
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(info.args) == 1
-                first = info.args[0]
+                assert len(typeinfo.get_args(info)) == 1
+                first = typeinfo.get_args(info)[0]
                 if typeinfo.is_composite(first):
                     prop["items"] = self._build_one_of_data(first)
-                elif typeinfo.get_custom(first) is None:
-                    prop["items"] = detect.schema_type(first)
                 else:
-                    custom_type = typeinfo.get_custom(first)
-                    prop["items"] = self._build_ref_data(custom_type)
+                    custom = typeinfo.get_custom(first)
+                    if custom is None:
+                        prop["items"] = detect.schema_type(first)
+                    else:
+                        custom_type = custom
+                        prop["items"] = self._build_ref_data(custom_type)
 
         if len(required) <= 0:
             schema.pop("required")
@@ -140,6 +146,4 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
             scanner.scan(m)
     finally:
         ctx.internal.callbacks.teardown()  # xxx:
-    return loading.dump(
-        ctx.result.store, output, format=ctx.internal.option.output_format
-    )
+    loading.dump(ctx.result.store, output, format=ctx.internal.option.output_format)

@@ -79,6 +79,12 @@ def get_custom(info: TypeInfo) -> t.Optional[t.Type[t.Any]]:
     return getattr(info, "custom", None)  # type: ignore
 
 
+# TODO: move to method
+def get_args(info: TypeInfo) -> t.List[TypeInfo]:
+    # for performance (skip isinstance)
+    return getattr(info, "args", None) or []  # type: ignore
+
+
 # todo: rename
 @lru_cache(maxsize=128, typed=False)
 def typeinfo(
