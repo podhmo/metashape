@@ -1,7 +1,7 @@
 import typing as t
 from metashape.declarative import mark
 from metashape.shortcuts import compile_with
-from metashape.drivers.graphql import emit
+from metashape.outputs.graphql import emit
 
 
 @mark

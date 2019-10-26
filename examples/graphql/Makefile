@@ -9,17 +9,17 @@ typing:
 	python $@*/main.py | tee `echo $@*`/${OUTFILE}
 
 01:
-	python -m metashape.drivers.graphql $@*/*.py | tee `echo $@*`/${OUTFILE}
+	python -m metashape.outputs.graphql $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 02:
-	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 03:
-	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 04:
-	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 05:
-	python -m metashape.drivers.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff

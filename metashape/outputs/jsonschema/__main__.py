@@ -1,5 +1,5 @@
 if __name__ == "__main__":
     from metashape.cli import main
-    from metashape.drivers.raw.emit import emit
+    from metashape.outputs.jsonschema.emit import emit
 
     main(emit=emit)

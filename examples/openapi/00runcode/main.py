@@ -1,6 +1,6 @@
 from metashape.declarative import mark
 from metashape.shortcuts import compile_with
-from metashape.drivers.openapi import emit
+from metashape.outputs.openapi import emit
 
 
 @mark

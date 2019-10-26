@@ -39,7 +39,7 @@ class Person:
     ],
 )
 def test_schema_type(input, want):
-    from metashape.drivers.openapi.detect import schema_type as callFUT
+    from metashape.outputs.openapi.detect import schema_type as callFUT
 
     info = typeinfo.typeinfo(input)
     got = callFUT(info)
@@ -56,7 +56,7 @@ def test_schema_type(input, want):
     ],
 )
 def test_enum(input, want):
-    from metashape.drivers.openapi.detect import enum as callFUT
+    from metashape.outputs.openapi.detect import enum as callFUT
 
     info = typeinfo.typeinfo(input)
     got = callFUT(info)
