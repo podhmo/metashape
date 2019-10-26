@@ -5,7 +5,7 @@ from metashape.types import ID
 logger = logging.getLogger(__name__)
 
 
-def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
+def _underlying_schema_type(info: typeinfo.Atom) -> str:
     typ = info.underlying
     if info.supertypes and info.supertypes[0] == ID:
         return "ID"

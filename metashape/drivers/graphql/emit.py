@@ -5,11 +5,12 @@ import logging
 import dataclasses
 from functools import partial
 import typing_inspect
+from metashape.types import Member
 from metashape.marker import guess_mark
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze import ModuleWalker, Member
 from metashape.analyze import typeinfo
-from metashape.analyze import Context as AnalyzingContext
+from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.context import Context as AnalyzingContext
 
 from . import detect
 
@@ -116,7 +117,7 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
 
 
 class _Dumper:
-    def dump(self, ctx, o: t.IO[str]) -> None:
+    def dump(self, ctx: Context, o: t.IO[str]) -> None:
         p = partial(print, file=o)
         status = ctx.status
         if status.has_query or status.has_query:
