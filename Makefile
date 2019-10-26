@@ -11,7 +11,7 @@ lint:
 
 typing:
 #	pip install -e .[dev]
-	mypy --strict --ignore-missing-imports metashape
+	mypy --strict --strict-equality --ignore-missing-imports metashape
 
 examples:
 	$(MAKE) -C examples/openapi
