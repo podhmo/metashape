@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 import logging
 from metashape.marker import guess_mark
-from metashape.analyze import ModuleWalker
+from metashape.analyze.walker import ModuleWalker
 
 logger = logging.getLogger(__name__)
 

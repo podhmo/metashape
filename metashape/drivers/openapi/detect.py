@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", "array"]
 
 
-def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> JSONSchemaType:
+def schema_type(
+    info: typeinfo.TypeInfo, *, unknown: JSONSchemaType = "object"
+) -> JSONSchemaType:
     if isinstance(info, typeinfo.Container):
         if info.container in ("list", "tuple"):
             return "array"
@@ -31,7 +33,7 @@ def schema_type(info: typeinfo.TypeInfo, *, unknown: str = "object") -> JSONSche
 
 def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
     typ = info.normalized
-    origin = getattr(typ, "__origin__", None)  # xxx
+    origin = getattr(typ, "__origin__", None)
     if origin != tx.Literal:
-        return ()
-    return typing_inspect.get_args(typ)
+        return ()  # type:ignore
+    return typing_inspect.get_args(typ)  # type:ignore

@@ -3,7 +3,7 @@ import typing as t
 from collections import deque
 import dataclasses
 from metashape.langhelpers import reify
-from metashape.types import T
+from metashape.types import T, Member
 
 
 Store = t.Dict[str, t.Any]
@@ -24,7 +24,7 @@ class Context:
         return self.__class__.Option()
 
     @reify
-    def q(self) -> _Queue:
+    def q(self) -> _Queue[Member]:
         return _Queue()
 
     @reify
@@ -53,13 +53,13 @@ class _Queue(t.Generic[T]):
 
 
 class _Callbacks:
-    callbacks = t.List[t.Callable[..., None]]
+    callbacks: t.List[t.Callable[..., None]]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.callbacks = []
 
     def teardown(self) -> None:
-        callbacks, self.callbacks = self.callbacks, []
+        self.callbacks, callbacks = [], self.callbacks
         for cb in callbacks:
             cb()
 

@@ -1,10 +1,9 @@
 import typing as t
 import inspect
 
-from metashape.types import T
+from metashape.types import T, Member, _ForwardRef
 from metashape.marker import is_marked
 from . import typeinfo
-from .core import Member
 
 
 class Resolver:
@@ -16,12 +15,12 @@ class Resolver:
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
-    def resolve_name(self, member: t.Union[Member, t.ForwardRef]) -> str:
-        name = getattr(member, "__name__", None)
+    def resolve_name(self, member: t.Union[Member, _ForwardRef]) -> str:
+        name = getattr(member, "__name__", None)  # type: t.Optional[str]
         if name is not None:
             return name
         # for ForwardRef
-        return member.__forward_arg__  # type: ignore
+        return member.__forward_arg__
 
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)

@@ -5,6 +5,7 @@ inspired by
 - https://github.com/cuelang/cue
 - https://github.com/awslabs/smithy
 - https://www.hashicorp.com/sentinel/
+- https://github.com/encode/typesystem
 - some swagger tools
 - some graphql tools
 - jsonschema
