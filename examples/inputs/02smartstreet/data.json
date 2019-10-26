@@ -1,0 +1,90 @@
+{
+  "data": [
+    {
+      "analysis": {
+        "active": "Y",
+        "dpv_cmra": "N",
+        "dpv_footnotes": "AABB",
+        "dpv_match_code": "Y",
+        "dpv_vacant": "N"
+      },
+      "candidate_index": 0,
+      "components": {
+        "city_name": "Baltimore",
+        "delivery_point": "01",
+        "delivery_point_check_digit": "3",
+        "plus4_code": "3737",
+        "primary_number": "1",
+        "state_abbreviation": "MD",
+        "street_name": "Rosedale",
+        "street_predirection": "N",
+        "street_suffix": "St",
+        "zipcode": "21229"
+      },
+      "delivery_line_1": "1 N Rosedale St",
+      "delivery_point_barcode": "212293737013",
+      "input_index": 0,
+      "last_line": "Baltimore MD 21229-3737",
+      "metadata": {
+        "carrier_route": "C047",
+        "congressional_district": "07",
+        "county_fips": "24510",
+        "county_name": "Baltimore City",
+        "dst": true,
+        "elot_sequence": "0059",
+        "elot_sort": "A",
+        "latitude": 39.28602,
+        "longitude": -76.6689,
+        "precision": "Zip9",
+        "rdi": "Residential",
+        "record_type": "S",
+        "time_zone": "Eastern",
+        "utc_offset": -5,
+        "zip_type": "Standard"
+      }
+    },
+    {
+      "analysis": {
+        "active": "Y",
+        "dpv_cmra": "N",
+        "dpv_footnotes": "AABB",
+        "dpv_match_code": "Y",
+        "dpv_vacant": "N"
+      },
+      "candidate_index": 1,
+      "components": {
+        "city_name": "Baltimore",
+        "delivery_point": "01",
+        "delivery_point_check_digit": "1",
+        "plus4_code": "3739",
+        "primary_number": "1",
+        "state_abbreviation": "MD",
+        "street_name": "Rosedale",
+        "street_predirection": "S",
+        "street_suffix": "St",
+        "zipcode": "21229"
+      },
+      "delivery_line_1": "1 S Rosedale St",
+      "delivery_point_barcode": "212293739011",
+      "input_index": 0,
+      "last_line": "Baltimore MD 21229-3739",
+      "metadata": {
+        "carrier_route": "C047",
+        "congressional_district": "07",
+        "county_fips": "24510",
+        "county_name": "Baltimore City",
+        "dst": true,
+        "elot_sequence": "0064",
+        "elot_sort": "A",
+        "latitude": 39.2858,
+        "longitude": -76.66889,
+        "precision": "Zip9",
+        "rdi": "Residential",
+        "record_type": "S",
+        "time_zone": "Eastern",
+        "utc_offset": -5,
+        "zip_type": "Standard"
+      }
+    }
+  ]
+}
