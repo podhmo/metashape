@@ -82,7 +82,7 @@ def get_custom(info: TypeInfo) -> t.Optional[t.Type[t.Any]]:
 # TODO: move to method
 def get_args(info: TypeInfo) -> t.List[TypeInfo]:
     # for performance (skip isinstance)
-    return getattr(info, "args", None) or []  # type: ignore
+    return getattr(info, "args", None) or []
 
 
 # todo: rename
