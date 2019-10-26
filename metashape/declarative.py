@@ -25,4 +25,4 @@ def get_metadata(cls: t.Type[t.Any], name: str) -> t.Optional[MetaData]:
     prop = cls.__dict__.get(name)
     if prop is None:
         return None
-    return prop.metadata  # type: ignore
+    return getattr(prop, "metadata", None)  # type: ignore
