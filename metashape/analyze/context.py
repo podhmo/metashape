@@ -3,7 +3,7 @@ import typing as t
 from collections import deque
 import dataclasses
 from metashape.langhelpers import reify
-from metashape.types import T
+from metashape.types import T, Member
 
 
 Store = t.Dict[str, t.Any]
@@ -24,7 +24,7 @@ class Context:
         return self.__class__.Option()
 
     @reify
-    def q(self) -> _Queue[t.Any]:  # xxx
+    def q(self) -> _Queue[Member]:
         return _Queue()
 
     @reify
