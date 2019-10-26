@@ -106,7 +106,7 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     try:
         for m in walker.walk(kinds=["object", "enum"]):
             logger.info("walk type: %r", m)
-            if guess_mark(m) == tx.Literal:
+            if guess_mark(m) == "enum":
                 ctx.result.enum_type_to_name[m] = m.__name__
             else:
                 scanner.scan(m)
