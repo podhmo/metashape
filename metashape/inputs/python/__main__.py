@@ -20,7 +20,7 @@ def run(filename: str, _name: t.Optional[str] = None) -> None:
             i += 1
 
 
-def main(argv: t.Optional[str] = None) -> None:
+def main(argv: t.Optional[t.List[str]] = None) -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description=None)

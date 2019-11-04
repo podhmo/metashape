@@ -14,7 +14,7 @@ def get_walker(
     recursive: bool = False,
     sort: bool = False,
 ) -> ModuleWalker:
-    if hasattr(target, "items"):
+    if isinstance(target, dict):
         d = target
     elif isinstance(target, (list, tuple)):
         d = {x.__name__: x for x in target}
@@ -50,10 +50,10 @@ def _mark_recursive(
     *,
     seen: t.Set[t.Type[t.Any]],
     guess_member: GuessMemberFunc,
-) -> None:
+) -> t.Iterable[t.Type[t.Any]]:
     from collections import deque
 
-    q = deque()
+    q: t.Deque[t.Type[t.Any]] = deque()
     for m in members:
         q.append(m)
 
@@ -94,16 +94,16 @@ def _mark_recursive(
                     yield x.normalized
 
 
-def _guess_kind_aggressive(x: t.Type[t.Any]) -> t.Optional[Kind]:
+def _guess_kind_aggressive(cls: t.Type[t.Any]) -> t.Optional[Kind]:
     # is custom class?
-    if hasattr(x, "__name__"):
-        if not hasattr(x, "__loader__") and hasattr(x, "__annotations__"):
+    if hasattr(cls, "__name__"):
+        if not hasattr(cls, "__loader__") and hasattr(cls, "__annotations__"):
             return "object"
         else:
             return None
 
     # is tx.Literal?
-    if hasattr(x, "__origin__") and x.__origin__ is tx.Literal:
+    if hasattr(cls, "__origin__") and cls.__origin__ is tx.Literal:
         return "enum"
 
     return None
