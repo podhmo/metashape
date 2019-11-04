@@ -72,26 +72,17 @@ def _mark_recursive(
                 continue
 
             info = w.resolver.resolve_type_info(typ)
-            if info.normalized in seen:
-                continue
-
-            args = typeinfo.get_args(info)  # xxx
-            if not args:
-                kind = guess_member(info.normalized)
-                if kind is not None:
-                    mark(info.normalized, kind=kind)
-                    yield info.normalized
-                    q.append(info.normalized)
-                continue
-
-            for x in args:
+            for x in typeinfo.get_args(info) or [info]:
                 if x.normalized in seen:
                     continue
+
                 kind = guess_member(x.normalized)
-                if kind is not None:
-                    mark(x.normalized, kind=kind)
-                    yield x.normalized
-                    q.append(x.normalized)
+                if kind is None:
+                    continue
+
+                mark(x.normalized, kind=kind)
+                yield x.normalized
+                q.append(x.normalized)
 
 
 def _guess_kind_aggressive(cls: t.Type[t.Any]) -> t.Optional[Kind]:
