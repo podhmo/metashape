@@ -13,6 +13,7 @@ Member = t.Type[t.Any]
 IsMemberFunc = t.Callable[[t.Type[t.Any]], bool]
 GuessMemberFunc = t.Callable[[t.Type[t.Any]], t.Optional[Kind]]
 
+
 class _ForwardRef(tx.Protocol):
     @property
     def __forward_arg__(self) -> str:

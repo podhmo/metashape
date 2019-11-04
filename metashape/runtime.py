@@ -93,6 +93,7 @@ def _mark_recursive(
                     yield x.normalized
                     q.append(x.normalized)
 
+
 def _guess_kind_aggressive(cls: t.Type[t.Any]) -> t.Optional[Kind]:
     # is custom class?
     if hasattr(cls, "__name__"):
