@@ -84,7 +84,7 @@ class Scanner:
     ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         return {
-            "$ref": f"#/schemas/components/{resolver.resolve_name(field_type)}"
+            "$ref": f"#/components/schemas/{resolver.resolve_name(field_type)}"
         }  # todo: lazy
 
     def _build_one_of_data(self, info: typeinfo.Container) -> t.Dict[str, t.Any]:
