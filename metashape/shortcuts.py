@@ -7,6 +7,7 @@ from .marker import is_marked
 from .analyze.walker import ModuleWalker
 from .analyze.resolver import Resolver
 
+# TODO: remove this module?
 
 logger = logging.getLogger(__name__)
 
