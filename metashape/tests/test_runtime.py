@@ -14,7 +14,7 @@ class A:
 
 class B:
     d: D
-    es: t.Tuple[E]
+    es: t.Optional[E]
     i: I
 
 class C:
