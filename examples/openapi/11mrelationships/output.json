@@ -1,0 +1,51 @@
+{
+  "components": {
+    "schemas": {
+      "Tweet": {
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/User"
+          },
+          "favorited": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "required": [
+          "text",
+          "author",
+          "favorited"
+        ]
+      },
+      "User": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tweets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tweet"
+            }
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tweet"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "tweets",
+          "favorites"
+        ]
+      }
+    }
+  }
+}

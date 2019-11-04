@@ -148,10 +148,10 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(field_type):
-                walker.append(field_type)
+            if resolver.is_member(info.normalized):
+                walker.append(info.normalized)
 
-                properties[field_name] = self._build_ref_data(field_type)
+                properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
             if typeinfo.is_composite(info) and isinstance(info, typeinfo.Container):

@@ -9,7 +9,7 @@ import typing_inspect
 # TODO: support inheritance
 # TODO: extract description
 
-ContainerType = tx.Literal["list", "tuple", "dict", "union"]
+ContainerType = tx.Literal["list", "tuple", "dict", "set", "union"]
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -176,6 +176,15 @@ def typeinfo(
                     raw=raw,
                     normalized=typ,
                     container="dict",
+                    args=tuple([typeinfo(t) for t in args]),
+                    is_optional=is_optional,
+                )
+            elif issubclass(underlying, t.Set):
+                args = typing_inspect.get_args(typ)
+                return Container(
+                    raw=raw,
+                    normalized=typ,
+                    container="set",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )

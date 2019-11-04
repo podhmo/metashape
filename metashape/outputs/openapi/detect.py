@@ -13,7 +13,7 @@ def schema_type(
     info: typeinfo.TypeInfo, *, unknown: JSONSchemaType = "object"
 ) -> JSONSchemaType:
     if isinstance(info, typeinfo.Container):
-        if info.container in ("list", "tuple"):
+        if info.container in ("list", "tuple", "set"):
             return "array"
         elif info.container == "dict":
             return "object"

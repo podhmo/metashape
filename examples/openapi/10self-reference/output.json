@@ -1,0 +1,36 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "spouse": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "friends": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "manager": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "friends",
+          "employees"
+        ]
+      }
+    }
+  }
+}
