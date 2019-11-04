@@ -10,7 +10,7 @@
             "type": "integer"
           },
           "extra": {
-            "$ref": "#/schemas/components/Extra"
+            "$ref": "#/components/schemas/Extra"
           }
         },
         "required": [

@@ -20,13 +20,13 @@
             "type": "integer"
           },
           "father": {
-            "$ref": "#/schemas/components/Person"
+            "$ref": "#/components/schemas/Person"
           },
           "mother": {
             "type": "object"
           },
           "extra": {
-            "$ref": "#/schemas/components/Extra"
+            "$ref": "#/components/schemas/Extra"
           }
         },
         "required": [

@@ -8,7 +8,7 @@
 +          "parents": {
 +            "type": "array",
 +            "items": {
-+              "$ref": "#/schemas/components/Person"
++              "$ref": "#/components/schemas/Person"
 +            }
 +          },
 +          "skills": {
