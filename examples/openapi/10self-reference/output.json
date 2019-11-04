@@ -7,7 +7,7 @@
             "type": "string"
           },
           "spouse": {
-            "type": "object"
+            "$ref": "#/components/schemas/Person"
           },
           "friends": {
             "type": "array",
@@ -16,7 +16,7 @@
             }
           },
           "manager": {
-            "type": "object"
+            "$ref": "#/components/schemas/Person"
           },
           "employees": {
             "type": "array",
