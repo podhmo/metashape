@@ -1,16 +1,18 @@
 import typing as t
 import typing_extensions as tx
-from metashape.marker import mark, is_marked
-from metashape.types import Kind
+from metashape.marker import mark, is_marked, guess_mark
+from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
+from metashape.analyze import typeinfo  # TODO: remove
 
 
 def get_walker(
     target: t.Union[t.Type[t.Any], t.List[t.Type[t.Any]], t.Dict[str, t.Type[t.Any]]],
     *,
     aggressive: bool = False,
-    sort: bool = False
+    recursive: bool = False,
+    sort: bool = False,
 ) -> ModuleWalker:
     if hasattr(target, "items"):
         d = target
@@ -29,7 +31,67 @@ def get_walker(
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
-    return ModuleWalker(members, resolver=Resolver())
+    w = ModuleWalker(members, resolver=Resolver())
+    if recursive:
+        if aggressive:
+            guess_member = _guess_kind_aggressive
+        else:
+            guess_member = guess_mark
+        w._members = list(
+            _mark_recursive(w, w._members, seen=set(), guess_member=guess_member)
+        )  # xxx:
+    return w
+
+
+# TODO: move to walker's code
+def _mark_recursive(
+    w: ModuleWalker,
+    members: t.List[Member],
+    *,
+    seen: t.Set[t.Type[t.Any]],
+    guess_member: GuessMemberFunc,
+) -> None:
+    from collections import deque
+
+    q = deque()
+    for m in members:
+        q.append(m)
+
+    while True:
+        try:
+            m = q.popleft()
+        except IndexError:
+            break
+        if m in seen:
+            continue
+        seen.add(m)
+        yield m
+
+        for _, typ, _ in w.for_type(m).walk():
+            if typ in seen:
+                continue
+
+            info = w.resolver.resolve_type_info(typ)
+            if info.normalized in seen:
+                continue
+            seen.add(info.normalized)
+
+            args = typeinfo.get_args(info)  # xxx
+            if not args:
+                kind = guess_member(info.normalized)
+                if kind is not None:
+                    mark(info.normalized, kind=kind)
+                    yield info.normalized
+                continue
+
+            for x in args:
+                if x.normalized in seen:
+                    continue
+                seen.add(x.normalized)
+                kind = guess_member(x.normalized)
+                if kind is not None:
+                    mark(x.normalized, kind=kind)
+                    yield x.normalized
 
 
 def _guess_kind_aggressive(x: t.Type[t.Any]) -> t.Optional[Kind]:

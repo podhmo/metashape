@@ -42,12 +42,15 @@ class ModuleWalker:
         while True:
             try:
                 m = ctx.q.popleft()
-                if ignore_private and m.__name__.startswith("_"):
-                    continue
-                if guess_mark(m) in kinds:
-                    yield m
             except IndexError:
                 break
+
+            if ignore_private and m.__name__.startswith("_"):
+                continue
+
+            if not guess_mark(m) in kinds:
+                continue
+            yield m
 
 
 class TypeWalker:
