@@ -18,12 +18,12 @@ class Resolver:
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
-    def resolve_name(self, member: t.Union[Member, _ForwardRef]) -> t.Optional[str]:
+    def resolve_name(self, member: t.Union[Member, _ForwardRef]) -> str:
         try:
             return get_name(member)
         except AttributeError as e:
             logger.info("resolve_name: %r", e)
-            return None
+            return ""
 
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)

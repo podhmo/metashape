@@ -45,9 +45,11 @@ class ModuleWalker:
             except IndexError:
                 break
 
+            name = self.resolver.resolve_name(m)
+            if not name:
+                continue
             if ignore_private:
-                name = self.resolver.resolve_name(m)
-                if name and name.startswith("_"):
+                if name.startswith("_"):
                     continue
 
             if not guess_mark(m) in kinds:
