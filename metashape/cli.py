@@ -1,9 +1,12 @@
 import typing as t
-from magicalimport import import_module
+import sys
+import logging
+from magicalimport import import_module, import_symbol
 
 from metashape.types import T, EmitFunc
-from metashape.shortcuts import compile  # todo: rename
 from metashape.runtime import get_walker
+
+logger = logging.getLogger(__name__)
 
 
 def run(
@@ -15,7 +18,9 @@ def run(
 ) -> None:
     m = import_module(filename)
     walker = get_walker(m.__dict__, sort=True, aggressive=aggressive, recursive=True)
-    compile(walker, emit=emit)
+    emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
+    logger.debug("collect members: %d", len(walker))
+    emit(walker, output=sys.stdout)
 
 
 def main(

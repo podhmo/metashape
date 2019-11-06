@@ -16,19 +16,11 @@ def compile_with(
     members: t.List[Member],
     *,
     is_member: t.Optional[IsMemberFunc] = None,
-    emit: t.Optional[EmitFunc] = None
+    emit: t.Optional[EmitFunc] = None,
+    output: t.IO[str] = sys.stdout,
 ) -> None:
     is_member = is_member or is_marked
     w = ModuleWalker(members, resolver=Resolver(is_member=is_member))
-    compile(w, emit=emit)
-
-
-def compile(
-    walker: ModuleWalker,
-    *,
-    output: t.IO[str] = sys.stdout,
-    emit: t.Optional[EmitFunc] = None
-) -> None:
     emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
-    logger.debug("collect members: %d", len(walker))
-    emit(walker, output=output)
+    logger.debug("collect members: %d", len(w))
+    emit(w, output=output)
