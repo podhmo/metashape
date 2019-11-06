@@ -19,10 +19,3 @@ class _Field(t.Generic[T]):
 
 def field(*, default: T, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
     return t.cast(T, _Field(default, metadata=metadata))  # xxx: HACK
-
-
-def get_metadata(cls: t.Type[t.Any], name: str) -> t.Optional[MetaData]:
-    prop = cls.__dict__.get(name)
-    if prop is None:
-        return None
-    return getattr(prop, "metadata", None)  # type: ignore

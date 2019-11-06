@@ -4,9 +4,10 @@ import logging
 from metashape.marker import guess_mark
 from metashape.types import MetaData, Kind, Member
 from metashape.langhelpers import reify
-from metashape.declarative import get_metadata  # TODO: move
+from metashape._access import iterate_props  # TODO: move
 from .resolver import Resolver
 from .context import Context
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,4 @@ class TypeWalker:
         self.parent = parent
 
     def walk(self) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
-        typ = self.typ
-        for fieldname, fieldtype in t.get_type_hints(typ).items():
-            yield fieldname, fieldtype, get_metadata(typ, fieldname)
+        return iterate_props(self.typ)
