@@ -1,6 +1,7 @@
 import typing as t
-from .marker import mark  # noqa
+from .marker import mark  # noqa F401
 from .types import MetaData, T
+from .constants import ORIGINAL_NAME  # noqa F401
 
 shape = mark  # this is better name?
 
