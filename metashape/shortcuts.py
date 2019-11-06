@@ -12,14 +12,6 @@ from .analyze.resolver import Resolver
 logger = logging.getLogger(__name__)
 
 
-def get_walker_from_dict(
-    d: t.Dict[str, t.Any], *, is_member: t.Optional[IsMemberFunc] = None
-) -> ModuleWalker:
-    is_member = is_member or is_marked
-    members = [v for _, v in sorted(d.items()) if is_member(v)]
-    return ModuleWalker(members, resolver=Resolver(is_member=is_member))
-
-
 def compile_with(
     members: t.List[Member],
     *,
