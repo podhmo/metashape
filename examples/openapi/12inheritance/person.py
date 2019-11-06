@@ -1,6 +1,13 @@
 from __future__ import annotations
 import typing as t
 
+# spec
+# - the information about inheritance is squached
+# - private instance variables are ignored (the name starts with "_")
+# - private classes are ignored (the name starts with "_")
+# - TODO: support property?
+# - TODO: metadata for inheritance?
+
 
 class BasePerson:
     name: str
