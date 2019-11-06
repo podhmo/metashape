@@ -1,6 +1,7 @@
 import typing as t
-from .marker import mark  # noqa
+from .marker import mark  # noqa F401
 from .types import MetaData, T
+from .constants import ORIGINAL_NAME  # noqa F401
 
 shape = mark  # this is better name?
 
@@ -17,5 +18,5 @@ class _Field(t.Generic[T]):
         return self.default
 
 
-def field(*, default: T, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
+def field(default: T, *, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
     return t.cast(T, _Field(default, metadata=metadata))  # xxx: HACK

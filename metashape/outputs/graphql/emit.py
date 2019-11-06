@@ -82,19 +82,11 @@ class Scanner:
         internalctx = self.ctx.internal
 
         schema = make_dict()
-        typename = resolver.resolve_name(member)
+        typename = resolver.resolve_typename(member)
 
-        for field_name, field_type, metadata in walker.for_type(member).walk(
+        for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=internalctx.option.ignore_private
         ):
-            logger.info(
-                "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                field_name,
-                field_type,
-                (metadata or {}).keys(),
-            )
-            info = resolver.resolve_type_info(field_type)
-            logger.debug("walk prop: 	info=%r", info)
             schema[field_name] = {"type": _LazyType(result.enum_type_to_name, info)}
 
         result.name_to_type[typename] = schema

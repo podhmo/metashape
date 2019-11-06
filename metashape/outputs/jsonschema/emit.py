@@ -56,7 +56,7 @@ class Scanner:
     ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         return {
-            "$ref": f"#/definitions/{resolver.resolve_name(field_type)}"
+            "$ref": f"#/definitions/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
     def _build_one_of_data(self, info: typeinfo.TypeInfo) -> t.Dict[str, t.Any]:
@@ -77,7 +77,7 @@ class Scanner:
         resolver = self.ctx.walker.resolver
         internalctx = self.ctx.internal
 
-        typename = resolver.resolve_name(member)
+        typename = resolver.resolve_typename(member)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
@@ -87,25 +87,17 @@ class Scanner:
             properties=properties, required=required, description=description
         )
 
-        for field_name, field_type, metadata in walker.for_type(member).walk(
+        for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=internalctx.option.ignore_private
         ):
-            logger.info(
-                "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                field_name,
-                field_type,
-                (metadata or {}).keys(),
-            )
-            info = resolver.resolve_type_info(field_type)
-            logger.debug("walk prop: 	info=%r", info)
             if not info.is_optional:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(field_type):
-                walker.append(field_type)
+            if resolver.is_member(info.normalized):
+                walker.append(info.normalized)
 
-                properties[field_name] = self._build_ref_data(field_type)
+                properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
             if typeinfo.is_composite(info):

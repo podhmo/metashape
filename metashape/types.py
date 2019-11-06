@@ -1,12 +1,11 @@
 import typing as t
 import typing_extensions as tx
+from .constants import ID  # noqa F401
 
 T = t.TypeVar("T")
 
 Kind = tx.Literal["object", "enum"]
 MetaData = t.Optional[t.Dict[str, t.Any]]
-
-ID = t.NewType("ID", str)  # TODO: move?
 
 # TODO: more strict definition
 Member = t.Type[t.Any]
