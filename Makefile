@@ -1,5 +1,7 @@
 test:
 	pytest -vv --show-capture=all
+ci:
+	$(MAKE) test lint typing format
 
 format:
 #	pip install -e .[dev]
