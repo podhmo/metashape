@@ -18,5 +18,5 @@ class _Field(t.Generic[T]):
         return self.default
 
 
-def field(*, default: T, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
+def field(default: T, *, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
     return t.cast(T, _Field(default, metadata=metadata))  # xxx: HACK

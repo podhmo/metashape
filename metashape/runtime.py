@@ -2,12 +2,13 @@ import typing as t
 import typing_extensions as tx
 import sys
 import logging
+import inspect
 from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
-from metashape.analyze import typeinfo  # TODO: remove
 
+from metashape.analyze import typeinfo  # TODO: remove
 from metashape.outputs.raw.emit import emit as _emit_print_only
 
 
@@ -44,7 +45,7 @@ def get_walker(
 
     if aggressive:
         for name, v in list(d.items()):
-            kind = _guess_kind_aggressive(v)
+            kind = _guess_kind(v)
             if kind is not None:
                 if kind == "enum":
                     v.__name__ = name  # xxx TODO: use tx.Annotated
@@ -55,7 +56,7 @@ def get_walker(
     w = ModuleWalker(members, resolver=Resolver())
     if recursive:
         if aggressive:
-            guess_member = _guess_kind_aggressive
+            guess_member = _guess_kind
         else:
             guess_member = guess_mark
         w._members = list(
@@ -105,13 +106,14 @@ def _mark_recursive(
                 q.append(x.normalized)
 
 
-def _guess_kind_aggressive(cls: t.Type[t.Any]) -> t.Optional[Kind]:
+def _guess_kind(cls: t.Type[t.Any]) -> t.Optional[Kind]:
     # is custom class?
     if hasattr(cls, "__name__"):
         if not hasattr(cls, "__loader__") and hasattr(cls, "__annotations__"):
+            if not inspect.isclass(cls):
+                return None
             return "object"
-        else:
-            return None
+        return None
 
     # is tx.Literal?
     if hasattr(cls, "__origin__") and cls.__origin__ is tx.Literal:
