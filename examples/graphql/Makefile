@@ -1,4 +1,5 @@
 OUTFILE := schema.graphql
+DIFF := diff -u --label left --label right
 
 default: 00 01 02 03 04 05
 
@@ -10,16 +11,16 @@ typing:
 
 01:
 	python -m metashape.outputs.graphql $@*/*.py | tee `echo $@*`/${OUTFILE}
-	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+	${DIFF} `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 02:
 	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
-	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+	${DIFF} `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 03:
 	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
-	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+	${DIFF} `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 04:
 	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
-	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+	${DIFF} `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 05:
 	python -m metashape.outputs.graphql --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
-	diff -u `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
+	${DIFF} `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff

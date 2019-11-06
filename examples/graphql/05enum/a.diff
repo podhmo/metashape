@@ -1,5 +1,5 @@
---- 00runcode/schema.graphql	2019-10-23 21:04:59.402827627 +0900
-+++ 05enum/schema.graphql	2019-10-23 21:04:59.812818855 +0900
+--- left
++++ right
 @@ -1,5 +1,13 @@
 +enum Kind {
 +  epic
