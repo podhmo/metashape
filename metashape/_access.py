@@ -28,7 +28,9 @@ def get_metadata(cls: t.Type[t.Any], name: str) -> t.Optional[MetaData]:
 
 
 def iterate_props(
-    typ: t.Type[t.Any]
+    typ: t.Type[t.Any], *, ignore_private: bool = True
 ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
     for fieldname, fieldtype in t.get_type_hints(typ).items():
+        if ignore_private and fieldname.startswith("_"):
+            continue
         yield fieldname, fieldtype, get_metadata(typ, fieldname)

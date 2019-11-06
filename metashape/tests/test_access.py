@@ -12,6 +12,8 @@ import pytest
             "ActualPerson",
             {"name": str, "age": t.Optional[int], "nickname": t.Optional[str]},
         ),
+        ("ignore-private", "WithPrivate", {"name": str}),
+        # TODO: property?
     ],
 )
 def test_iterate_props(msg, clsname, want):
@@ -25,6 +27,11 @@ def test_iterate_props(msg, clsname, want):
     class ActualPerson(Person):
         age: t.Optional[int]
         nickname: t.Optional[str]
+
+    class WithPrivate:
+        name: str
+        _private_val: str
+        __dunder_val__: str
 
     target_class = locals()[clsname]  # xxx:
     got = {name: typ for name, typ, _ in _callFUT(target_class)}
