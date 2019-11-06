@@ -150,7 +150,10 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.normalized):
+            if (
+                resolver.is_member(info.normalized)
+                and resolver.resolve_name(info.normalized) is not None
+            ):
                 walker.append(info.normalized)
 
                 properties[field_name] = self._build_ref_data(info.normalized)

@@ -45,8 +45,10 @@ class ModuleWalker:
             except IndexError:
                 break
 
-            if ignore_private and m.__name__.startswith("_"):
-                continue
+            if ignore_private:
+                name = self.resolver.resolve_name(m)
+                if name and name.startswith("_"):
+                    continue
 
             if not guess_mark(m) in kinds:
                 continue
@@ -61,4 +63,8 @@ class TypeWalker:
     def walk(
         self, *, ignore_private: bool = False
     ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
-        return iterate_props(self.typ, ignore_private=ignore_private)
+        try:
+            yield from iterate_props(self.typ, ignore_private=ignore_private)
+        except TypeError as e:
+            logger.info("iterate props: %r", e)
+            return []
