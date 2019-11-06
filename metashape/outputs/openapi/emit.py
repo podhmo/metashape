@@ -190,7 +190,7 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk():
+        for m in walker.walk(ignore_private=ctx.internal.option.ignore_private):
             logger.info("walk type: %r", m)
             scanner.scan(m)
     finally:
