@@ -1,5 +1,5 @@
 from metashape.declarative import mark
-from metashape.shortcuts import compile_with
+from metashape.runtime import emit_with
 from metashape.outputs.openapi import emit
 
 
@@ -10,4 +10,4 @@ class Person:
 
 
 # main
-compile_with([Person], emit=emit)
+emit_with([Person], emit=emit)

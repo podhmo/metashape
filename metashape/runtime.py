@@ -1,10 +1,30 @@
 import typing as t
 import typing_extensions as tx
+import sys
+import logging
 from metashape.marker import mark, is_marked, guess_mark
-from metashape.types import Kind, Member, GuessMemberFunc
+from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc, IsMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze import typeinfo  # TODO: remove
+
+from metashape.outputs.raw.emit import emit as _emit_print_only
+
+
+logger = logging.getLogger(__name__)
+
+
+def emit_with(
+    members: t.List[Member],
+    *,
+    emit: EmitFunc = _emit_print_only,
+    is_member: t.Optional[IsMemberFunc] = None,
+    output: t.IO[str] = sys.stdout,
+) -> None:
+    is_member = is_member or is_marked
+    w = ModuleWalker(members, resolver=Resolver(is_member=is_member))
+    logger.debug("collect members: %d", len(w))
+    emit(w, output=output)
 
 
 def get_walker(
