@@ -1,6 +1,5 @@
 from __future__ import annotations
 import typing as t
-import typing_extensions as tx
 import logging
 import dataclasses
 from functools import partial
@@ -77,7 +76,6 @@ class Scanner:
         self.ctx = ctx
 
     def scan(self, member: Member) -> None:
-        ctx = self.ctx
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
