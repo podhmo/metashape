@@ -88,11 +88,10 @@ def _mark_recursive(
         seen.add(m)
         yield m
 
-        for _, typ, _ in w.for_type(m).walk():
-            if typ in seen:
+        for _, info, _ in w.for_type(m).walk():
+            if info.normalized in seen:
                 continue
 
-            info = w.resolver.resolve_type_info(typ)
             for x in typeinfo.get_args(info) or [info]:
                 if x.normalized in seen:
                     continue

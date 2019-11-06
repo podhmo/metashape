@@ -135,17 +135,9 @@ class Scanner:
             properties=properties, required=required, description=description
         )
 
-        for field_name, field_type, metadata in walker.for_type(member).walk(
+        for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=internalctx.option.ignore_private
         ):
-            logger.info(
-                "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                field_name,
-                field_type,
-                (metadata or {}).keys(),
-            )
-            info = resolver.resolve_type_info(field_type)
-            logger.debug("walk prop: 	info=%r", info)
             if not info.is_optional:
                 required.append(field_name)
 
