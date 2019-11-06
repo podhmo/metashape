@@ -41,6 +41,9 @@ class _Queue(t.Generic[T]):
         self.q = deque()
         self.seen = set()
 
+    def __contains__(self, x: T) -> bool:
+        return x in self.seen
+
     def append(self, x: T) -> None:
         self.q.append(x)
 

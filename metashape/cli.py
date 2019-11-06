@@ -1,26 +1,12 @@
 import typing as t
-import typing_extensions as tx
-from magicalimport import import_module
+import sys
+import logging
+from magicalimport import import_module, import_symbol
 
-from metashape.types import T, EmitFunc, Kind
-from metashape import shortcuts
-from metashape.marker import mark
-from metashape.shortcuts import compile  # todo: rename
+from metashape.types import T, EmitFunc
+from metashape.runtime import get_walker
 
-
-def guess_kind_aggressive(x: t.Type[t.Any]) -> t.Optional[Kind]:
-    # is custom class?
-    if hasattr(x, "__name__"):
-        if not hasattr(x, "__loader__") and hasattr(x, "__annotations__"):
-            return "object"
-        else:
-            return None
-
-    # is tx.Literal?
-    if hasattr(x, "__origin__") and x.__origin__ is tx.Literal:
-        return "enum"
-
-    return None
+logger = logging.getLogger(__name__)
 
 
 def run(
@@ -31,15 +17,10 @@ def run(
     emit: t.Optional[EmitFunc] = None,
 ) -> None:
     m = import_module(filename)
-    if aggressive:
-        for name, v in list(m.__dict__.items()):
-            kind = guess_kind_aggressive(v)
-            if kind is not None:
-                if kind == "enum":
-                    v.__name__ = name  # xxx TODO: use tx.Annotated
-                mark(v, kind=kind)
-    walker = shortcuts.get_walker_from_dict(m.__dict__)
-    compile(walker, emit=emit)
+    walker = get_walker(m.__dict__, sort=True, aggressive=aggressive, recursive=True)
+    emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
+    logger.debug("collect members: %d", len(walker))
+    emit(walker, output=sys.stdout)
 
 
 def main(

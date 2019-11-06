@@ -1,7 +1,8 @@
 test:
 	pytest -vv --show-capture=all
 ci:
-	$(MAKE) test lint typing format
+	pytest --show-capture=all --cov=metashape --no-cov-on-fail --cov-report term-missing
+	$(MAKE) lint typing
 
 format:
 #	pip install -e .[dev]

@@ -42,12 +42,19 @@ class ModuleWalker:
         while True:
             try:
                 m = ctx.q.popleft()
-                if ignore_private and m.__name__.startswith("_"):
-                    continue
-                if guess_mark(m) in kinds:
-                    yield m
             except IndexError:
                 break
+
+            name = self.resolver.resolve_name(m)
+            if not name:
+                continue
+            if ignore_private:
+                if name.startswith("_"):
+                    continue
+
+            if not guess_mark(m) in kinds:
+                continue
+            yield m
 
 
 class TypeWalker:
@@ -58,4 +65,8 @@ class TypeWalker:
     def walk(
         self, *, ignore_private: bool = False
     ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
-        return iterate_props(self.typ, ignore_private=ignore_private)
+        try:
+            yield from iterate_props(self.typ, ignore_private=ignore_private)
+        except TypeError as e:
+            logger.info("iterate props: %r", e)
+            return []

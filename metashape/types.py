@@ -11,6 +11,7 @@ ID = t.NewType("ID", str)  # TODO: move?
 # TODO: more strict definition
 Member = t.Type[t.Any]
 IsMemberFunc = t.Callable[[t.Type[t.Any]], bool]
+GuessMemberFunc = t.Callable[[t.Type[t.Any]], t.Optional[Kind]]
 
 
 class _ForwardRef(tx.Protocol):

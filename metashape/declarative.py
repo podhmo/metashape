@@ -2,7 +2,7 @@ import typing as t
 from .marker import mark  # noqa
 from .types import MetaData, T
 
-# TODO: rename to prepare.py?
+shape = mark  # this is better name?
 
 
 class _Field(t.Generic[T]):
