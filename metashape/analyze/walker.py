@@ -45,7 +45,7 @@ class ModuleWalker:
             except IndexError:
                 break
 
-            name = self.resolver.resolve_name(m)
+            name = self.resolver.resolve_typename(m)
             if not name:
                 continue
             if ignore_private:

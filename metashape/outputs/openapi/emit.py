@@ -84,7 +84,7 @@ class Scanner:
     ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         return {
-            "$ref": f"#/components/schemas/{resolver.resolve_name(field_type)}"
+            "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
     def _build_one_of_data(self, info: typeinfo.Container) -> t.Dict[str, t.Any]:
@@ -112,7 +112,7 @@ class Scanner:
                 internalctx.callbacks.append(
                     partial(
                         self.fixer.fix_discriminator,
-                        resolver.resolve_name(custom),
+                        resolver.resolve_typename(custom),
                         self.DISCRIMINATOR_FIELD,
                     )
                 )
@@ -123,7 +123,7 @@ class Scanner:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         internalctx = self.ctx.internal
-        typename = resolver.resolve_name(member)
+        typename = resolver.resolve_typename(member)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
@@ -150,7 +150,7 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.normalized) and resolver.resolve_name(
+            if resolver.is_member(info.normalized) and resolver.resolve_typename(
                 info.normalized
             ):
                 walker.append(info.normalized)

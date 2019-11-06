@@ -82,7 +82,7 @@ class Scanner:
         internalctx = self.ctx.internal
 
         schema = make_dict()
-        typename = resolver.resolve_name(member)
+        typename = resolver.resolve_typename(member)
 
         for field_name, field_type, metadata in walker.for_type(member).walk(
             ignore_private=internalctx.option.ignore_private

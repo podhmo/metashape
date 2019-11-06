@@ -18,7 +18,7 @@ class Resolver:
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
-    def resolve_name(self, member: t.Union[Member, _ForwardRef]) -> str:
+    def resolve_typename(self, member: t.Union[Member, _ForwardRef]) -> str:
         try:
             return get_name(member)
         except AttributeError as e:

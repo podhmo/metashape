@@ -56,7 +56,7 @@ class Scanner:
     ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         return {
-            "$ref": f"#/definitions/{resolver.resolve_name(field_type)}"
+            "$ref": f"#/definitions/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
     def _build_one_of_data(self, info: typeinfo.TypeInfo) -> t.Dict[str, t.Any]:
@@ -77,7 +77,7 @@ class Scanner:
         resolver = self.ctx.walker.resolver
         internalctx = self.ctx.internal
 
-        typename = resolver.resolve_name(member)
+        typename = resolver.resolve_typename(member)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
