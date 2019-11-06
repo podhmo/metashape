@@ -18,11 +18,12 @@ def emit_with(
     members: t.List[Member],
     *,
     emit: EmitFunc = _emit_print_only,
-    is_member: t.Optional[IsMemberFunc] = None,
+    aggressive: bool = False,
+    recursive: bool = False,
+    sort: bool = False,
     output: t.IO[str] = sys.stdout,
 ) -> None:
-    is_member = is_member or is_marked
-    w = ModuleWalker(members, resolver=Resolver(is_member=is_member))
+    w = get_walker(members, aggressive=aggressive, recursive=recursive, sort=sort)
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
 
