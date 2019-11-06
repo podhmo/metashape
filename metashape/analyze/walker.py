@@ -55,5 +55,7 @@ class TypeWalker:
         self.typ = typ
         self.parent = parent
 
-    def walk(self) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
-        return iterate_props(self.typ)
+    def walk(
+        self, *, ignore_private: bool = False
+    ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
+        return iterate_props(self.typ, ignore_private=ignore_private)
