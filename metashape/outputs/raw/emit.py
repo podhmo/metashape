@@ -8,5 +8,5 @@ logger = logging.getLogger(__name__)
 
 
 def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
-    for m in walker.walk():
+    for m in walker.walk(ignore_private=walker.context.option.ignore_private):
         print(guess_mark(m), m, file=output)

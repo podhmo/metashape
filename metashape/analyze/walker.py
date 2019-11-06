@@ -32,7 +32,9 @@ class ModuleWalker:
     def __len__(self) -> int:
         return len(self._members)
 
-    def walk(self, *, kinds: t.List[Kind] = ["object"]) -> t.Iterable[Member]:
+    def walk(
+        self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False
+    ) -> t.Iterable[Member]:
         ctx = self.context
         for m in self._members:
             self.context.q.append(m)
@@ -40,6 +42,8 @@ class ModuleWalker:
         while True:
             try:
                 m = ctx.q.popleft()
+                if ignore_private and m.__name__.startswith("_"):
+                    continue
                 if guess_mark(m) in kinds:
                     yield m
             except IndexError:
@@ -51,5 +55,7 @@ class TypeWalker:
         self.typ = typ
         self.parent = parent
 
-    def walk(self) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
-        return iterate_props(self.typ)
+    def walk(
+        self, *, ignore_private: bool = False
+    ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
+        return iterate_props(self.typ, ignore_private=ignore_private)

@@ -79,11 +79,14 @@ class Scanner:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
+        internalctx = self.ctx.internal
 
         schema = make_dict()
         typename = resolver.resolve_name(member)
 
-        for field_name, field_type, metadata in walker.for_type(member).walk():
+        for field_name, field_type, metadata in walker.for_type(member).walk(
+            ignore_private=internalctx.option.ignore_private
+        ):
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 field_name,

@@ -87,7 +87,9 @@ class Scanner:
             properties=properties, required=required, description=description
         )
 
-        for field_name, field_type, metadata in walker.for_type(member).walk():
+        for field_name, field_type, metadata in walker.for_type(member).walk(
+            ignore_private=internalctx.option.ignore_private
+        ):
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 field_name,
@@ -141,7 +143,7 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk():
+        for m in walker.walk(ignore_private=ctx.internal.option.ignore_private):
             logger.info("walk type: %r", m)
             scanner.scan(m)
     finally:

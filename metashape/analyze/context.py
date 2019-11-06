@@ -17,6 +17,7 @@ class Context:
     class Option:
         strict: bool = True
         verbose: bool = False
+        ignore_private: bool = True
         output_format: str = "json"
 
     @reify
