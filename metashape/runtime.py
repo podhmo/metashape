@@ -3,7 +3,7 @@ import typing_extensions as tx
 import sys
 import logging
 from metashape.marker import mark, is_marked, guess_mark
-from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc, IsMemberFunc
+from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze import typeinfo  # TODO: remove
