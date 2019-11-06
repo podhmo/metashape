@@ -2,6 +2,7 @@ from __future__ import annotations
 import typing as t
 import logging
 from metashape.marker import guess_mark
+from metashape.constants import ORIGINAL_NAME
 from metashape.types import MetaData, Kind, Member
 from metashape.langhelpers import reify
 from metashape._access import iterate_props  # TODO: move
@@ -68,18 +69,22 @@ class TypeWalker:
     ) -> t.Iterable[t.Tuple[str, TypeInfo, t.Optional[MetaData]]]:
         resolver = self.parent.resolver
         try:
-            for field_name, field_type, metadata in iterate_props(
+            for name, field_type, metadata in iterate_props(
                 self.typ, ignore_private=ignore_private
             ):
+                metadata = metadata or {}
                 logger.info(
                     "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                    field_name,
+                    name,
                     field_type,
-                    (metadata or {}).keys(),
+                    metadata.keys(),
                 )
                 info = resolver.resolve_type_info(field_type)
                 logger.debug("walk prop: 	info=%r", info)
-                yield field_name, info, metadata
+                if ORIGINAL_NAME in metadata:
+                    name = metadata[ORIGINAL_NAME]
+
+                yield name, info, metadata
         except TypeError as e:
             logger.info("iterate props: %r", e)
             return []

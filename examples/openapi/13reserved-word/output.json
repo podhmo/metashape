@@ -61,7 +61,7 @@
               "$ref": "#/components/schemas/Column"
             }
           },
-          "def_": {
+          "def": {
             "type": "string"
           },
           "is_additional": {
@@ -72,7 +72,7 @@
           "table",
           "columns",
           "parent_columns",
-          "def_",
+          "def",
           "is_additional"
         ],
         "description": "Relation is the struct for table relation"
@@ -85,7 +85,7 @@
           "type": {
             "type": "string"
           },
-          "def_": {
+          "def": {
             "type": "string"
           },
           "table": {
@@ -106,7 +106,7 @@
         "required": [
           "name",
           "type",
-          "def_",
+          "def",
           "columns",
           "reference_columns"
         ],
@@ -132,7 +132,7 @@
           "name": {
             "type": "string"
           },
-          "def_": {
+          "def": {
             "type": "string"
           },
           "table": {
@@ -145,7 +145,7 @@
         },
         "required": [
           "name",
-          "def_",
+          "def",
           "columns"
         ],
         "description": "Index is the struct for database index"
@@ -185,7 +185,7 @@
               "$ref": "#/components/schemas/Trigger"
             }
           },
-          "def_": {
+          "def": {
             "type": "string"
           }
         },
@@ -197,7 +197,7 @@
           "indexes",
           "constraints",
           "triggers",
-          "def_"
+          "def"
         ],
         "description": "Table is the struct for database table"
       },
@@ -235,13 +235,13 @@
           "name": {
             "type": "string"
           },
-          "def_": {
+          "def": {
             "type": "string"
           }
         },
         "required": [
           "name",
-          "def_"
+          "def"
         ],
         "description": "Trigger is the struct for database trigger"
       }
