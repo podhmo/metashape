@@ -14,7 +14,7 @@ def run(
     emit: t.Optional[EmitFunc] = None,
 ) -> None:
     m = import_module(filename)
-    walker = get_walker(m.__dict__, sort=True, aggressive=aggressive)
+    walker = get_walker(m.__dict__, sort=True, aggressive=aggressive, recursive=True)
     compile(walker, emit=emit)
 
 
