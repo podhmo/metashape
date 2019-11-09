@@ -3,6 +3,7 @@ import typing_extensions as tx
 import sys
 import logging
 import inspect
+import types
 from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
@@ -16,32 +17,68 @@ logger = logging.getLogger(__name__)
 
 
 def emit_with(
-    members: t.List[Member],
+    target: t.Union[
+        None,
+        types.ModuleType,
+        t.Type[t.Any],
+        t.List[t.Type[t.Any]],
+        t.Dict[str, t.Type[t.Any]],
+    ] = None,
     *,
     emit: EmitFunc = _emit_print_only,
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
+    only: t.Optional[t.List[str]] = None,
     output: t.IO[str] = sys.stdout,
+    here: t.Optional[str] = None,  # module name
 ) -> None:
-    w = get_walker(members, aggressive=aggressive, recursive=recursive, sort=sort)
+    w = get_walker(
+        target,
+        aggressive=aggressive,
+        recursive=recursive,
+        sort=sort,
+        only=only,
+        here=here,
+    )
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
 
 
 def get_walker(
-    target: t.Union[t.Type[t.Any], t.List[t.Type[t.Any]], t.Dict[str, t.Type[t.Any]]],
+    target: t.Union[
+        None,
+        types.ModuleType,
+        t.Type[t.Any],
+        t.List[t.Type[t.Any]],
+        t.Dict[str, t.Type[t.Any]],
+    ] = None,
     *,
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
+    only: t.Optional[t.List[str]] = None,
+    here: t.Optional[str] = None,  # module name
 ) -> ModuleWalker:
-    if isinstance(target, dict):
+    if target is None and here is not None:
+        try:
+            target = sys.modules[here]
+        except KeyError:
+            raise ValueError("supported only module name")
+
+    if isinstance(target, types.ModuleType):
+        d = target.__dict__
+        if aggressive and only is None:
+            only = [target.__name__]
+    elif isinstance(target, dict):
         d = target
     elif isinstance(target, (list, tuple)):
         d = {x.__name__: x for x in target}
     else:
         d = {target.__name__: target}
+
+    if only is not None:
+        d = {k: v for k, v in d.items() if getattr(v, "__module__", "") in only}
 
     if aggressive:
         for name, v in list(d.items()):
