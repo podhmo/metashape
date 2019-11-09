@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 def emit_with(
     target: t.Union[
-        str,  # module name
+        None,
         types.ModuleType,
         t.Type[t.Any],
         t.List[t.Type[t.Any]],
         t.Dict[str, t.Type[t.Any]],
-    ],
+    ] = None,
     *,
     emit: EmitFunc = _emit_print_only,
     aggressive: bool = False,
@@ -31,9 +31,15 @@ def emit_with(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     output: t.IO[str] = sys.stdout,
+    here: t.Optional[str] = None,  # module name
 ) -> None:
     w = get_walker(
-        target, aggressive=aggressive, recursive=recursive, sort=sort, only=only
+        target,
+        aggressive=aggressive,
+        recursive=recursive,
+        sort=sort,
+        only=only,
+        here=here,
     )
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
@@ -41,21 +47,22 @@ def emit_with(
 
 def get_walker(
     target: t.Union[
-        str,  # module name
+        None,
         types.ModuleType,
         t.Type[t.Any],
         t.List[t.Type[t.Any]],
         t.Dict[str, t.Type[t.Any]],
-    ],
+    ] = None,
     *,
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
+    here: t.Optional[str] = None,  # module name
 ) -> ModuleWalker:
-    if isinstance(target, str):
+    if target is None and here is not None:
         try:
-            target = sys.modules[target]
+            target = sys.modules[here]
         except KeyError:
             raise ValueError("supported only module name")
 
