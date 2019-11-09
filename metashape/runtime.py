@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 def emit_with(
     target: t.Union[
+        str,  # module name
         types.ModuleType,
         t.Type[t.Any],
         t.List[t.Type[t.Any]],
@@ -40,6 +41,7 @@ def emit_with(
 
 def get_walker(
     target: t.Union[
+        str,  # module name
         types.ModuleType,
         t.Type[t.Any],
         t.List[t.Type[t.Any]],
@@ -51,6 +53,12 @@ def get_walker(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
 ) -> ModuleWalker:
+    if isinstance(target, str):
+        try:
+            target = sys.modules[target]
+        except KeyError:
+            raise ValueError("supported only module name")
+
     if isinstance(target, types.ModuleType):
         d = target.__dict__
         if aggressive and only is None:
