@@ -4,7 +4,7 @@ from .constants import ID  # noqa F401
 
 T = t.TypeVar("T")
 
-Kind = tx.Literal["object", "enum"]
+Kind = tx.Literal["object", "enum", "ignore"]
 MetaData = t.Optional[t.Dict[str, t.Any]]
 
 # TODO: more strict definition

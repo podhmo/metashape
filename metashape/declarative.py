@@ -1,9 +1,11 @@
 import typing as t
+from functools import partial
 from .marker import mark  # noqa F401
 from .types import MetaData, T
 from .constants import ORIGINAL_NAME  # noqa F401
 
 shape = mark  # this is better name?
+ignore = partial(mark, kind="ignore")
 
 
 class _Field(t.Generic[T]):
