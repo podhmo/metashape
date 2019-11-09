@@ -22,9 +22,12 @@ def emit_with(
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
+    only: t.Optional[t.List[str]] = None,
     output: t.IO[str] = sys.stdout,
 ) -> None:
-    w = get_walker(members, aggressive=aggressive, recursive=recursive, sort=sort)
+    w = get_walker(
+        members, aggressive=aggressive, recursive=recursive, sort=sort, only=only
+    )
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
 
@@ -35,6 +38,7 @@ def get_walker(
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
+    only: t.Optional[t.List[str]] = None,
 ) -> ModuleWalker:
     if isinstance(target, dict):
         d = target
@@ -42,6 +46,9 @@ def get_walker(
         d = {x.__name__: x for x in target}
     else:
         d = {target.__name__: target}
+
+    if only is not None:
+        d = {k: v for k, v in d.items() if getattr(v, "__module__", "") in only}
 
     if aggressive:
         for name, v in list(d.items()):
