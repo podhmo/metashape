@@ -17,7 +17,7 @@ def run(
     emit: t.Optional[EmitFunc] = None,
 ) -> None:
     m = import_module(filename)
-    walker = get_walker(m.__dict__, sort=True, aggressive=aggressive, recursive=True)
+    walker = get_walker(m, sort=True, aggressive=aggressive, recursive=True)
     emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
     logger.debug("collect members: %d", len(walker))
     emit(walker, output=sys.stdout)
