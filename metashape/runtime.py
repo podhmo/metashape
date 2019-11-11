@@ -32,6 +32,7 @@ def emit_with(
     only: t.Optional[t.List[str]] = None,
     output: t.IO[str] = sys.stdout,
     here: t.Optional[str] = None,  # module name
+    _depth: int = 2,  # xxx: for black magic
 ) -> None:
     w = get_walker(
         target,
@@ -40,6 +41,7 @@ def emit_with(
         sort=sort,
         only=only,
         here=here,
+        _depth=_depth,
     )
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
@@ -59,12 +61,20 @@ def get_walker(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     here: t.Optional[str] = None,  # module name
+    _depth: int = 1,  # xxx: for black magic
 ) -> ModuleWalker:
-    if target is None and here is not None:
-        try:
-            target = sys.modules[here]
-        except KeyError:
-            raise ValueError("supported only module name")
+    if target is None:
+        if aggressive and here is None:
+            logger.info("aggressive=True and here=False, guessing here... this is unsafe action")
+            # extract caller module (black magic)
+            frame = sys._getframe(_depth)
+            here = frame.f_globals["__name__"]
+
+        if here is not None:
+            try:
+                target = sys.modules[here]
+            except KeyError:
+                raise ValueError("supported only module name")
 
     if isinstance(target, types.ModuleType):
         d = target.__dict__
