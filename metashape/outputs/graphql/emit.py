@@ -92,8 +92,9 @@ class Scanner:
         result.name_to_type[typename] = schema
 
 
-def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
+def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
     ctx = Context(walker)
+    output = output or walker.config.option.output
     scanner = Scanner(ctx)
 
     try:
