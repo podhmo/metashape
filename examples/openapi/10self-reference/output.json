@@ -29,7 +29,8 @@
           "name",
           "friends",
           "employees"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }

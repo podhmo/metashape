@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 07recref/output.json
-@@ -8,11 +8,32 @@
+@@ -8,11 +8,33 @@
            },
            "age": {
              "type": "integer"
@@ -21,7 +21,8 @@
 +          "age",
 +          "father",
 +          "extra"
-+        ]
++        ],
++        "additionalProperties": false
 +      },
 +      "Extra": {
 +        "properties": {
@@ -31,6 +32,6 @@
 +        },
 +        "required": [
 +          "memo"
-         ]
+         ],
+         "additionalProperties": false
        }
-     }

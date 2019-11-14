@@ -21,6 +21,6 @@
 -          "age"
 +          "age",
 +          "parents"
-         ]
+         ],
+         "additionalProperties": false
        }
-     }

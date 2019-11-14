@@ -26,6 +26,6 @@
 -          "age"
 +          "age",
 +          "personality"
-         ]
+         ],
+         "additionalProperties": false
        }
-     }

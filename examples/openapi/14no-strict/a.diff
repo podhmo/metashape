@@ -1,0 +1,12 @@
+--- 00runcode/output.json
++++ 14no-strict/output.json
+@@ -13,8 +13,7 @@
+         "required": [
+           "name",
+           "age"
+-        ],
+-        "additionalProperties": false
++        ]
+       }
+     }
+   }

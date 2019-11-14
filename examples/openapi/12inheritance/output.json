@@ -13,7 +13,8 @@
         "required": [
           "name",
           "age"
-        ]
+        ],
+        "additionalProperties": false
       },
       "Person": {
         "properties": {
@@ -32,7 +33,8 @@
         },
         "required": [
           "name"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }

@@ -62,7 +62,8 @@
           "memoList",
           "parents",
           "pets"
-        ]
+        ],
+        "additionalProperties": false
       },
       "Dog": {
         "properties": {
@@ -84,7 +85,8 @@
           "breed",
           "age",
           "$type"
-        ]
+        ],
+        "additionalProperties": false
       },
       "Cat": {
         "properties": {
@@ -102,7 +104,8 @@
           "hunts",
           "age",
           "$type"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }

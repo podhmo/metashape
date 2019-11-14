@@ -24,7 +24,8 @@
           "age",
           "father",
           "extra"
-        ]
+        ],
+        "additionalProperties": false
       },
       "Extra": {
         "properties": {
@@ -34,7 +35,8 @@
         },
         "required": [
           "memo"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }

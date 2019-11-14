@@ -8,16 +8,12 @@
           },
           "age": {
             "type": "integer"
-          },
-          "nickname": {
-            "type": "string"
           }
         },
         "required": [
           "name",
           "age"
-        ],
-        "additionalProperties": false
+        ]
       }
     }
   }
