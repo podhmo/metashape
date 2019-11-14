@@ -9,7 +9,7 @@ from metashape.marker import guess_mark
 from metashape.langhelpers import make_dict, reify
 from metashape.analyze import typeinfo
 from metashape.analyze.walker import ModuleWalker
-from metashape.analyze.context import Context as AnalyzingContext
+from metashape.analyze.config import Config as AnalyzingConfig
 
 from . import detect
 
@@ -57,7 +57,7 @@ class Context:
         self.status = Context.Status()
         self.result = Context.Result()
         self.walker = walker
-        self.internal = walker.context
+        self.config = walker.config
 
     @reify
     def dumper(self) -> _Dumper:
@@ -66,7 +66,7 @@ class Context:
     status: Context.Status
     result: Context.Result
     walker: ModuleWalker
-    internal: AnalyzingContext
+    config: AnalyzingConfig
 
 
 class Scanner:
@@ -79,13 +79,13 @@ class Scanner:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
-        internalctx = self.ctx.internal
+        cfg = self.ctx.config
 
         schema = make_dict()
         typename = resolver.resolve_typename(member)
 
         for field_name, info, metadata in walker.for_type(member).walk(
-            ignore_private=internalctx.option.ignore_private
+            ignore_private=cfg.option.ignore_private
         ):
             schema[field_name] = {"type": _LazyType(result.enum_type_to_name, info)}
 
@@ -104,7 +104,7 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
             else:
                 scanner.scan(m)
     finally:
-        ctx.internal.callbacks.teardown()  # xxx:
+        ctx.config.callbacks.teardown()  # xxx:
 
     ctx.dumper.dump(ctx, output)  # xxx
 

@@ -7,7 +7,7 @@ from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict
 from metashape.analyze import typeinfo
 from metashape.analyze.walker import ModuleWalker
-from metashape.analyze.context import Context as AnalyzingContext
+from metashape.analyze.config import Config as AnalyzingConfig
 from . import detect
 
 logger = logging.getLogger(__name__)
@@ -37,12 +37,12 @@ class Context:  # TODO: rename to context?
         self.status = Context.Status()
         self.result = Context.Result()
         self.walker = walker
-        self.internal = walker.context
+        self.config = walker.config
 
     status: Context.Status
     result: Context.Result
     walker: ModuleWalker
-    internal: AnalyzingContext
+    config: AnalyzingConfig
 
 
 class Scanner:
@@ -75,20 +75,20 @@ class Scanner:
         ctx = self.ctx
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
-        internalctx = self.ctx.internal
+        cfg = self.ctx.config
 
         typename = resolver.resolve_typename(member)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description = resolver.resolve_doc(member, verbose=internalctx.option.verbose)
+        description = resolver.resolve_doc(member, verbose=cfg.option.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
         )
 
         for field_name, info, metadata in walker.for_type(member).walk(
-            ignore_private=internalctx.option.ignore_private
+            ignore_private=cfg.option.ignore_private
         ):
             if not info.is_optional:
                 required.append(field_name)
@@ -135,9 +135,9 @@ def emit(walker: ModuleWalker, *, output: t.IO[str]) -> None:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(ignore_private=ctx.internal.option.ignore_private):
+        for m in walker.walk(ignore_private=ctx.config.option.ignore_private):
             logger.info("walk type: %r", m)
             scanner.scan(m)
     finally:
-        ctx.internal.callbacks.teardown()  # xxx:
-    loading.dump(ctx.result.store, output, format=ctx.internal.option.output_format)
+        ctx.config.callbacks.teardown()  # xxx:
+    loading.dump(ctx.result.store, output, format=ctx.config.option.output_format)

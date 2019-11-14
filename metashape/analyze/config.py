@@ -10,7 +10,7 @@ from metashape.types import T, Member
 Store = t.Dict[str, t.Any]
 
 
-class Context:
+class Config:
     # option parameters
     # state (history)
     # factory of utility objects
@@ -24,7 +24,7 @@ class Context:
         sort: bool = True  # default false?
         output: t.IO[str] = sys.stdout  # xxx:
 
-    def __init__(self, option: t.Optional[Context.Option] = None):
+    def __init__(self, option: t.Optional[Config.Option] = None):
         self.option = option or self.__class__.Option()
 
     @reify
