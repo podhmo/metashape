@@ -54,6 +54,7 @@ class ModuleWalker:
 
             if not guess_mark(m) in kinds:
                 continue
+            logger.info("walk type: %r", m)
             yield m
 
 

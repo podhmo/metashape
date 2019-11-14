@@ -191,7 +191,6 @@ def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
 
     try:
         for m in walker.walk(ignore_private=ctx.config.option.ignore_private):
-            logger.info("walk type: %r", m)
             scanner.scan(m)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
