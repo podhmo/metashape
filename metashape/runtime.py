@@ -59,7 +59,11 @@ def get_walker(
         d = {target.__name__: target}
 
     if only is not None:
-        d = {k: v for k, v in d.items() if getattr(v, "__module__", "") in only}
+        d = {
+            k: v
+            for k, v in d.items()
+            if getattr(v, "__module__", "") in only or hasattr(v, "__origin__")
+        }  # xxx: for supporting enum, see __origin__
 
     if aggressive:
         for name, v in list(d.items()):

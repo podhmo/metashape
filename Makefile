@@ -18,6 +18,9 @@ typing:
 
 examples:
 	$(MAKE) -C examples/openapi
+	$(MAKE) -C examples/jsonschema
+	$(MAKE) -C examples/graphql
+	$(MAKE) -C examples/inputs
 
 build:
 #	pip install wheel
