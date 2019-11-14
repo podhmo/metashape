@@ -31,6 +31,7 @@ def emit_with(
     only: t.Optional[t.List[str]] = None,
     _depth: int = 2,  # xxx: for black magic
 ) -> None:
+    context = context or Context()
     w = get_walker(
         target, context=context, aggressive=aggressive, only=only, _depth=_depth
     )
