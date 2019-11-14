@@ -127,9 +127,7 @@ class Scanner:
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description: str = resolver.resolve_doc(
-            member, verbose=cfg.option.verbose
-        )
+        description: str = resolver.resolve_doc(member, verbose=cfg.option.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
@@ -184,9 +182,8 @@ class Scanner:
         ] = schema
 
 
-def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
+def scan(walker: ModuleWalker,) -> Context:
     ctx = Context(walker)
-    output = output or walker.config.option.output
     scanner = Scanner(ctx)
 
     try:
@@ -194,4 +191,10 @@ def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
             scanner.scan(m)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
+    return ctx
+
+
+def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
+    output = output or walker.config.option.output
+    ctx = scan(walker)
     loading.dump(ctx.result.store, output, format=ctx.config.option.output_format)

@@ -133,9 +133,8 @@ class Scanner:
         ] = schema
 
 
-def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
+def scan(walker: ModuleWalker) -> Context:
     ctx = Context(walker)
-    output = output or walker.config.option.output
     scanner = Scanner(ctx)
 
     try:
@@ -143,4 +142,10 @@ def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
             scanner.scan(m)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
+    return ctx
+
+
+def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
+    output = output or walker.config.option.output
+    ctx = scan(walker)
     loading.dump(ctx.result.store, output, format=ctx.config.option.output_format)

@@ -1,1 +1,1 @@
-from .emit import emit  # noqa
+from .emit import emit, scan  # noqa
