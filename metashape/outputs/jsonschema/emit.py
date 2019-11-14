@@ -125,6 +125,9 @@ class Scanner:
             schema.pop("required")
         if not description:
             schema.pop("description")
+        if cfg.option.strict and "additionalProperties" not in schema:
+            schema["additionalProperties"] = False
+
         ctx.status.schemas[typename] = ctx.result.store["definitions"][
             typename
         ] = schema
