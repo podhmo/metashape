@@ -73,7 +73,9 @@ def get_walker(
             except KeyError:
                 raise ValueError("supported only module name")
 
-    if isinstance(target, types.ModuleType):
+    if target is None:
+        raise ValueError("support target=None, only aggresive=True")
+    elif isinstance(target, types.ModuleType):
         d = target.__dict__
         if aggressive and only is None:
             only = [target.__name__]
