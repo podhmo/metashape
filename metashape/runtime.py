@@ -8,7 +8,7 @@ from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
-from metashape.analyze.context import Context
+from metashape.analyze.config import Config
 from metashape.analyze import typeinfo  # TODO: remove
 from metashape.outputs.raw.emit import emit as _emit_print_only
 
@@ -26,17 +26,17 @@ def emit_with(
     ] = None,
     *,
     emit: EmitFunc = _emit_print_only,
-    context: t.Optional[Context] = None,
+    config: t.Optional[Config] = None,
     aggressive: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 2,  # xxx: for black magic
 ) -> None:
-    context = context or Context()
+    config = config or Config()
     w = get_walker(
-        target, context=context, aggressive=aggressive, only=only, _depth=_depth
+        target, config=config, aggressive=aggressive, only=only, _depth=_depth
     )
     logger.debug("collect members: %d", len(w))
-    emit(w, output=context.option.output)
+    emit(w, output=config.option.output)
 
 
 def get_walker(
@@ -48,12 +48,12 @@ def get_walker(
         t.Dict[str, t.Type[t.Any]],
     ] = None,
     *,
-    context: t.Optional[Context] = None,
+    config: t.Optional[Config] = None,
     aggressive: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
 ) -> ModuleWalker:
-    context = context or Context()
+    config = config or Config()
     resolver = Resolver()
 
     if target is None:
@@ -93,12 +93,12 @@ def get_walker(
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
 
-    recursive = context.option.recursive
-    sort = context.option.sort
+    recursive = config.option.recursive
+    sort = config.option.sort
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
-    w = ModuleWalker(members, resolver=resolver, context=context)
+    w = ModuleWalker(members, resolver=resolver, config=config)
 
     if recursive:
         if aggressive:

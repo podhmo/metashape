@@ -7,7 +7,7 @@ from metashape.types import MetaData, Kind, Member
 from metashape._access import iterate_props  # TODO: move
 from .typeinfo import TypeInfo
 from .resolver import Resolver
-from .context import Context
+from .config import Config
 
 
 logger = logging.getLogger(__name__)
@@ -17,17 +17,17 @@ class ModuleWalker:
     resolver: Resolver
 
     def __init__(
-        self, members: t.List[t.Any], *, context: Context, resolver: Resolver
+        self, members: t.List[t.Any], *, config: Config, resolver: Resolver
     ) -> None:
         self.resolver = resolver
-        self.context = context
+        self.config = config
         self._members = t.cast(t.List[Member], members)  # xxx
 
     def for_type(self, m: Member) -> TypeWalker:
         return TypeWalker(m, parent=self)
 
     def append(self, m: Member) -> None:
-        self.context.q.append(m)
+        self.config.q.append(m)
 
     def __len__(self) -> int:
         return len(self._members)
@@ -35,9 +35,9 @@ class ModuleWalker:
     def walk(
         self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False
     ) -> t.Iterable[Member]:
-        ctx = self.context
+        ctx = self.config
         for m in self._members:
-            self.context.q.append(m)
+            self.config.q.append(m)
 
         while True:
             try:
