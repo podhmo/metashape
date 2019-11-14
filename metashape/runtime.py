@@ -5,38 +5,14 @@ import logging
 import inspect
 import types
 from metashape.marker import mark, is_marked, guess_mark
-from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
+from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze.config import Config
 from metashape.analyze import typeinfo  # TODO: remove
-from metashape.outputs.raw.emit import emit as _emit_print_only
 
 
 logger = logging.getLogger(__name__)
-
-
-def emit_with(
-    target: t.Union[
-        None,
-        types.ModuleType,
-        t.Type[t.Any],
-        t.List[t.Type[t.Any]],
-        t.Dict[str, t.Type[t.Any]],
-    ] = None,
-    *,
-    emit: EmitFunc = _emit_print_only,
-    config: t.Optional[Config] = None,
-    aggressive: bool = False,
-    only: t.Optional[t.List[str]] = None,
-    _depth: int = 2,  # xxx: for black magic
-) -> None:
-    config = config or Config()
-    w = get_walker(
-        target, config=config, aggressive=aggressive, only=only, _depth=_depth
-    )
-    logger.debug("collect members: %d", len(w))
-    emit(w, output=config.option.output)
 
 
 def get_walker(
