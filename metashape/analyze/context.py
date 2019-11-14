@@ -19,6 +19,8 @@ class Context:
         verbose: bool = False
         ignore_private: bool = True
         output_format: str = "json"
+        recursive: bool = False
+        sort: bool = True  # default false?
 
     @reify
     def option(self) -> Context.Option:

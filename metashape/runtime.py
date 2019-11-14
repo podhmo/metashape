@@ -28,20 +28,12 @@ def emit_with(
     emit: EmitFunc = _emit_print_only,
     context: t.Optional[Context] = None,
     aggressive: bool = False,
-    recursive: bool = False,
-    sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     output: t.IO[str] = sys.stdout,
     _depth: int = 2,  # xxx: for black magic
 ) -> None:
     w = get_walker(
-        target,
-        context=context,
-        aggressive=aggressive,
-        recursive=recursive,
-        sort=sort,
-        only=only,
-        _depth=_depth,
+        target, context=context, aggressive=aggressive, only=only, _depth=_depth
     )
     logger.debug("collect members: %d", len(w))
     emit(w, output=output)
@@ -58,8 +50,6 @@ def get_walker(
     *,
     context: t.Optional[Context] = None,
     aggressive: bool = False,
-    recursive: bool = False,
-    sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
 ) -> ModuleWalker:
@@ -103,9 +93,13 @@ def get_walker(
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
 
+    recursive = context.option.recursive
+    sort = context.option.sort
+
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
     w = ModuleWalker(members, resolver=resolver, context=context)
+
     if recursive:
         if aggressive:
             guess_member = _guess_kind
