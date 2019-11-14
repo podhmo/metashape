@@ -78,6 +78,7 @@ class C:
 )
 def test_walker(msg, c, input, want):
     from metashape.runtime import get_walker as callFUT
+    from metashape.analyze.context import Context
 
     def _create_module(code: str):
         from magicalimport import import_from_physical_path
@@ -91,7 +92,11 @@ def test_walker(msg, c, input, want):
             return import_from_physical_path(wf.name)
 
     m = _create_module(CODE)
-    nodes = callFUT(input(m), aggressive=c.aggressive, recursive=c.recursive).walk()
+    nodes = callFUT(
+        input(m),
+        aggressive=c.aggressive,
+        context=Context(Context.Option(recursive=c.recursive)),
+    ).walk()
     got = [cls.__name__ for cls in nodes]
 
     assert len(got) == len(want)

@@ -8,7 +8,7 @@ from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
-
+from metashape.analyze.context import Context
 from metashape.analyze import typeinfo  # TODO: remove
 from metashape.outputs.raw.emit import emit as _emit_print_only
 
@@ -26,23 +26,16 @@ def emit_with(
     ] = None,
     *,
     emit: EmitFunc = _emit_print_only,
+    context: t.Optional[Context] = None,
     aggressive: bool = False,
-    recursive: bool = False,
-    sort: bool = False,
     only: t.Optional[t.List[str]] = None,
-    output: t.IO[str] = sys.stdout,
     _depth: int = 2,  # xxx: for black magic
 ) -> None:
     w = get_walker(
-        target,
-        aggressive=aggressive,
-        recursive=recursive,
-        sort=sort,
-        only=only,
-        _depth=_depth,
+        target, context=context, aggressive=aggressive, only=only, _depth=_depth
     )
     logger.debug("collect members: %d", len(w))
-    emit(w, output=output)
+    emit(w, output=context.option.output)
 
 
 def get_walker(
@@ -54,18 +47,20 @@ def get_walker(
         t.Dict[str, t.Type[t.Any]],
     ] = None,
     *,
+    context: t.Optional[Context] = None,
     aggressive: bool = False,
-    recursive: bool = False,
-    sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
 ) -> ModuleWalker:
+    context = context or Context()
+    resolver = Resolver()
+
     if target is None:
         if aggressive:
             logger.info(
                 "aggressive=True and target=None, guessing target module... this is unsafe action"
             )
-            # extract caller module (black magic)
+            # xxx: extract caller module (black magic)
             frame = sys._getframe(_depth)
             here = frame.f_globals["__name__"]
             try:
@@ -73,7 +68,9 @@ def get_walker(
             except KeyError:
                 raise ValueError("supported only module name")
 
-    if isinstance(target, types.ModuleType):
+    if target is None:
+        raise ValueError("support target=None, only aggresive=True")
+    elif isinstance(target, types.ModuleType):
         d = target.__dict__
         if aggressive and only is None:
             only = [target.__name__]
@@ -95,9 +92,13 @@ def get_walker(
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
 
+    recursive = context.option.recursive
+    sort = context.option.sort
+
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
-    w = ModuleWalker(members, resolver=Resolver())
+    w = ModuleWalker(members, resolver=resolver, context=context)
+
     if recursive:
         if aggressive:
             guess_member = _guess_kind

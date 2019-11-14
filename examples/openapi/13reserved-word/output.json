@@ -41,42 +41,6 @@
         ],
         "description": "Column is the struct for table column"
       },
-      "Relation": {
-        "properties": {
-          "table": {
-            "$ref": "#/components/schemas/Table"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Column"
-            }
-          },
-          "parent_table": {
-            "$ref": "#/components/schemas/Table"
-          },
-          "parent_columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Column"
-            }
-          },
-          "def": {
-            "type": "string"
-          },
-          "is_additional": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "table",
-          "columns",
-          "parent_columns",
-          "def",
-          "is_additional"
-        ],
-        "description": "Relation is the struct for table relation"
-      },
       "Constraint": {
         "properties": {
           "name": {
@@ -150,6 +114,71 @@
         ],
         "description": "Index is the struct for database index"
       },
+      "Relation": {
+        "properties": {
+          "table": {
+            "$ref": "#/components/schemas/Table"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "parent_table": {
+            "$ref": "#/components/schemas/Table"
+          },
+          "parent_columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "def": {
+            "type": "string"
+          },
+          "is_additional": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "table",
+          "columns",
+          "parent_columns",
+          "def",
+          "is_additional"
+        ],
+        "description": "Relation is the struct for table relation"
+      },
+      "Schema": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Relation"
+            }
+          },
+          "driver": {
+            "$ref": "#/components/schemas/Driver"
+          }
+        },
+        "required": [
+          "name",
+          "tables",
+          "relations",
+          "driver"
+        ],
+        "description": "Schema is the struct for database schema"
+      },
       "Table": {
         "properties": {
           "name": {
@@ -200,35 +229,6 @@
           "def"
         ],
         "description": "Table is the struct for database table"
-      },
-      "Schema": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "tables": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Table"
-            }
-          },
-          "relations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Relation"
-            }
-          },
-          "driver": {
-            "$ref": "#/components/schemas/Driver"
-          }
-        },
-        "required": [
-          "name",
-          "tables",
-          "relations",
-          "driver"
-        ],
-        "description": "Schema is the struct for database schema"
       },
       "Trigger": {
         "properties": {
