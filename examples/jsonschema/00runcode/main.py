@@ -1,5 +1,5 @@
 from metashape.declarative import mark
-from metashape.runtime import emit_with
+from metashape.runtime import get_walker
 from metashape.outputs.jsonschema import emit
 
 
@@ -10,4 +10,4 @@ class Person:
 
 
 # main
-emit_with([Person], emit=emit)
+emit(get_walker([Person]))
