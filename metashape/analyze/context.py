@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+import sys
 from collections import deque
 import dataclasses
 from metashape.langhelpers import reify
@@ -21,6 +22,7 @@ class Context:
         output_format: str = "json"
         recursive: bool = False
         sort: bool = True  # default false?
+        output: t.IO[str] = sys.stdout  # xxx:
 
     @reify
     def option(self) -> Context.Option:

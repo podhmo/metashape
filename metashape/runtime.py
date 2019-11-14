@@ -29,14 +29,13 @@ def emit_with(
     context: t.Optional[Context] = None,
     aggressive: bool = False,
     only: t.Optional[t.List[str]] = None,
-    output: t.IO[str] = sys.stdout,
     _depth: int = 2,  # xxx: for black magic
 ) -> None:
     w = get_walker(
         target, context=context, aggressive=aggressive, only=only, _depth=_depth
     )
     logger.debug("collect members: %d", len(w))
-    emit(w, output=output)
+    emit(w, output=context.option.output)
 
 
 def get_walker(
@@ -61,7 +60,7 @@ def get_walker(
             logger.info(
                 "aggressive=True and target=None, guessing target module... this is unsafe action"
             )
-            # extract caller module (black magic)
+            # xxx: extract caller module (black magic)
             frame = sys._getframe(_depth)
             here = frame.f_globals["__name__"]
             try:
