@@ -21,7 +21,7 @@ class Config:
         ignore_private: bool = True
         output_format: str = "json"
         recursive: bool = False
-        sort: bool = True  # default false?
+        sort: bool = False
         output: t.IO[str] = sys.stdout  # xxx:
 
     def __init__(self, option: t.Optional[Config.Option] = None):
