@@ -1,23 +1,6 @@
 --- 00runcode/output.json
 +++ 07recref/output.json
-@@ -1,6 +1,16 @@
- {
-   "components": {
-     "schemas": {
-+      "Extra": {
-+        "properties": {
-+          "memo": {
-+            "type": "string"
-+          }
-+        },
-+        "required": [
-+          "memo"
-+        ]
-+      },
-       "Person": {
-         "properties": {
-           "name": {
-@@ -8,11 +18,22 @@
+@@ -8,11 +8,32 @@
            },
            "age": {
              "type": "integer"
@@ -38,6 +21,16 @@
 +          "age",
 +          "father",
 +          "extra"
++        ]
++      },
++      "Extra": {
++        "properties": {
++          "memo": {
++            "type": "string"
++          }
++        },
++        "required": [
++          "memo"
          ]
        }
      }

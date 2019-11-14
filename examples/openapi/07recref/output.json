@@ -1,16 +1,6 @@
 {
   "components": {
     "schemas": {
-      "Extra": {
-        "properties": {
-          "memo": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "memo"
-        ]
-      },
       "Person": {
         "properties": {
           "name": {
@@ -34,6 +24,16 @@
           "age",
           "father",
           "extra"
+        ]
+      },
+      "Extra": {
+        "properties": {
+          "memo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "memo"
         ]
       }
     }
