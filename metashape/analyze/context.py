@@ -24,9 +24,8 @@ class Context:
         sort: bool = True  # default false?
         output: t.IO[str] = sys.stdout  # xxx:
 
-    @reify
-    def option(self) -> Context.Option:
-        return self.__class__.Option()
+    def __init__(self, option: t.Optional[Context.Option] = None):
+        self.option = option or self.__class__.Option()
 
     @reify
     def q(self) -> _Queue[Member]:
