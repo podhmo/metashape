@@ -14,7 +14,8 @@
           "name",
           "age"
         ],
-        "description": "Person expression"
+        "description": "Person expression",
+        "additionalProperties": false
       }
     }
   }

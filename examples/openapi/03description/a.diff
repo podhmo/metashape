@@ -1,12 +1,10 @@
 --- 00runcode/output.json
 +++ 03description/output.json
-@@ -13,7 +13,8 @@
-         "required": [
+@@ -14,6 +14,7 @@
            "name",
            "age"
--        ]
-+        ],
-+        "description": "Person expression"
+         ],
++        "description": "Person expression",
+         "additionalProperties": false
        }
      }
-   }

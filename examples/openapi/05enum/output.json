@@ -29,7 +29,8 @@
           "name",
           "age",
           "personality"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }

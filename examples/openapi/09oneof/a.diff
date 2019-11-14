@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 09oneof/output.json
-@@ -8,11 +8,100 @@
+@@ -8,11 +8,102 @@
            },
            "age": {
              "type": "integer"
@@ -59,7 +59,8 @@
 +          "memoList",
 +          "parents",
 +          "pets"
-+        ]
++        ],
++        "additionalProperties": false
 +      },
 +      "Dog": {
 +        "properties": {
@@ -81,7 +82,8 @@
 +          "breed",
 +          "age",
 +          "$type"
-+        ]
++        ],
++        "additionalProperties": false
 +      },
 +      "Cat": {
 +        "properties": {
@@ -99,6 +101,6 @@
 +          "hunts",
 +          "age",
 +          "$type"
-         ]
+         ],
+         "additionalProperties": false
        }
-     }

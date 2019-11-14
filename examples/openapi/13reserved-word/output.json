@@ -22,7 +22,8 @@
           "def",
           "columns"
         ],
-        "description": "Index is the struct for database index"
+        "description": "Index is the struct for database index",
+        "additionalProperties": false
       },
       "Constraint": {
         "properties": {
@@ -57,7 +58,8 @@
           "columns",
           "reference_columns"
         ],
-        "description": "Constraint is the struct for database constraint"
+        "description": "Constraint is the struct for database constraint",
+        "additionalProperties": false
       },
       "Trigger": {
         "properties": {
@@ -72,7 +74,8 @@
           "name",
           "def"
         ],
-        "description": "Trigger is the struct for database trigger"
+        "description": "Trigger is the struct for database trigger",
+        "additionalProperties": false
       },
       "Column": {
         "properties": {
@@ -112,7 +115,8 @@
           "parent_relations",
           "child_relations"
         ],
-        "description": "Column is the struct for table column"
+        "description": "Column is the struct for table column",
+        "additionalProperties": false
       },
       "Table": {
         "properties": {
@@ -163,7 +167,8 @@
           "triggers",
           "def"
         ],
-        "description": "Table is the struct for database table"
+        "description": "Table is the struct for database table",
+        "additionalProperties": false
       },
       "Relation": {
         "properties": {
@@ -199,7 +204,8 @@
           "def",
           "is_additional"
         ],
-        "description": "Relation is the struct for table relation"
+        "description": "Relation is the struct for table relation",
+        "additionalProperties": false
       },
       "Driver": {
         "properties": {
@@ -214,7 +220,8 @@
           "name",
           "database_version"
         ],
-        "description": "Driver is the struct for tbls driver information"
+        "description": "Driver is the struct for tbls driver information",
+        "additionalProperties": false
       },
       "Schema": {
         "properties": {
@@ -243,7 +250,8 @@
           "relations",
           "driver"
         ],
-        "description": "Schema is the struct for database schema"
+        "description": "Schema is the struct for database schema",
+        "additionalProperties": false
       }
     }
   }

@@ -23,7 +23,8 @@
           "name",
           "tweets",
           "favorites"
-        ]
+        ],
+        "additionalProperties": false
       },
       "Tweet": {
         "properties": {
@@ -44,7 +45,8 @@
           "text",
           "author",
           "favorited"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   }
