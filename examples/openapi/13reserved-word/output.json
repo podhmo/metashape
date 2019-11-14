@@ -1,6 +1,79 @@
 {
   "components": {
     "schemas": {
+      "Index": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "def": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": "string"
+          }
+        },
+        "required": [
+          "name",
+          "def",
+          "columns"
+        ],
+        "description": "Index is the struct for database index"
+      },
+      "Constraint": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "def": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "reference_table": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": "string"
+          },
+          "reference_columns": {
+            "type": "array",
+            "items": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "def",
+          "columns",
+          "reference_columns"
+        ],
+        "description": "Constraint is the struct for database constraint"
+      },
+      "Trigger": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "def": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "def"
+        ],
+        "description": "Trigger is the struct for database trigger"
+      },
       "Column": {
         "properties": {
           "name": {
@@ -40,144 +113,6 @@
           "child_relations"
         ],
         "description": "Column is the struct for table column"
-      },
-      "Constraint": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "def": {
-            "type": "string"
-          },
-          "table": {
-            "type": "string"
-          },
-          "reference_table": {
-            "type": "string"
-          },
-          "columns": {
-            "type": "array",
-            "items": "string"
-          },
-          "reference_columns": {
-            "type": "array",
-            "items": "string"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "def",
-          "columns",
-          "reference_columns"
-        ],
-        "description": "Constraint is the struct for database constraint"
-      },
-      "Driver": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "database_version": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "database_version"
-        ],
-        "description": "Driver is the struct for tbls driver information"
-      },
-      "Index": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "def": {
-            "type": "string"
-          },
-          "table": {
-            "type": "string"
-          },
-          "columns": {
-            "type": "array",
-            "items": "string"
-          }
-        },
-        "required": [
-          "name",
-          "def",
-          "columns"
-        ],
-        "description": "Index is the struct for database index"
-      },
-      "Relation": {
-        "properties": {
-          "table": {
-            "$ref": "#/components/schemas/Table"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Column"
-            }
-          },
-          "parent_table": {
-            "$ref": "#/components/schemas/Table"
-          },
-          "parent_columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Column"
-            }
-          },
-          "def": {
-            "type": "string"
-          },
-          "is_additional": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "table",
-          "columns",
-          "parent_columns",
-          "def",
-          "is_additional"
-        ],
-        "description": "Relation is the struct for table relation"
-      },
-      "Schema": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "tables": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Table"
-            }
-          },
-          "relations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Relation"
-            }
-          },
-          "driver": {
-            "$ref": "#/components/schemas/Driver"
-          }
-        },
-        "required": [
-          "name",
-          "tables",
-          "relations",
-          "driver"
-        ],
-        "description": "Schema is the struct for database schema"
       },
       "Table": {
         "properties": {
@@ -230,20 +165,85 @@
         ],
         "description": "Table is the struct for database table"
       },
-      "Trigger": {
+      "Relation": {
+        "properties": {
+          "table": {
+            "$ref": "#/components/schemas/Table"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "parent_table": {
+            "$ref": "#/components/schemas/Table"
+          },
+          "parent_columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "def": {
+            "type": "string"
+          },
+          "is_additional": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "table",
+          "columns",
+          "parent_columns",
+          "def",
+          "is_additional"
+        ],
+        "description": "Relation is the struct for table relation"
+      },
+      "Driver": {
         "properties": {
           "name": {
             "type": "string"
           },
-          "def": {
+          "database_version": {
             "type": "string"
           }
         },
         "required": [
           "name",
-          "def"
+          "database_version"
         ],
-        "description": "Trigger is the struct for database trigger"
+        "description": "Driver is the struct for tbls driver information"
+      },
+      "Schema": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Relation"
+            }
+          },
+          "driver": {
+            "$ref": "#/components/schemas/Driver"
+          }
+        },
+        "required": [
+          "name",
+          "tables",
+          "relations",
+          "driver"
+        ],
+        "description": "Schema is the struct for database schema"
       }
     }
   }

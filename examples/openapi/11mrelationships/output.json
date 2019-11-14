@@ -1,27 +1,6 @@
 {
   "components": {
     "schemas": {
-      "Tweet": {
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "author": {
-            "$ref": "#/components/schemas/User"
-          },
-          "favorited": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/User"
-            }
-          }
-        },
-        "required": [
-          "text",
-          "author",
-          "favorited"
-        ]
-      },
       "User": {
         "properties": {
           "name": {
@@ -44,6 +23,27 @@
           "name",
           "tweets",
           "favorites"
+        ]
+      },
+      "Tweet": {
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/User"
+          },
+          "favorited": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "required": [
+          "text",
+          "author",
+          "favorited"
         ]
       }
     }

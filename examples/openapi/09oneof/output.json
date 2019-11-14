@@ -1,46 +1,6 @@
 {
   "components": {
     "schemas": {
-      "Cat": {
-        "properties": {
-          "hunts": {
-            "type": "boolean"
-          },
-          "age": {
-            "type": "integer"
-          },
-          "$type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "hunts",
-          "age",
-          "$type"
-        ]
-      },
-      "Dog": {
-        "properties": {
-          "bark": {
-            "type": "boolean"
-          },
-          "breed": {
-            "type": "string"
-          },
-          "age": {
-            "type": "integer"
-          },
-          "$type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "bark",
-          "breed",
-          "age",
-          "$type"
-        ]
-      },
       "Person": {
         "properties": {
           "name": {
@@ -102,6 +62,46 @@
           "memoList",
           "parents",
           "pets"
+        ]
+      },
+      "Dog": {
+        "properties": {
+          "bark": {
+            "type": "boolean"
+          },
+          "breed": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bark",
+          "breed",
+          "age",
+          "$type"
+        ]
+      },
+      "Cat": {
+        "properties": {
+          "hunts": {
+            "type": "boolean"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hunts",
+          "age",
+          "$type"
         ]
       }
     }
