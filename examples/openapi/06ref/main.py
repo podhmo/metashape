@@ -1,5 +1,5 @@
 from metashape.declarative import mark
-from metashape.runtime import emit_with
+from metashape.runtime import get_walker
 from metashape.outputs.openapi import emit
 
 
@@ -16,4 +16,4 @@ class Extra:
 
 
 # main
-emit_with([Person], emit=emit)
+emit(get_walker([Person]))

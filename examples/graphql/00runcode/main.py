@@ -1,6 +1,6 @@
 import typing as t
 from metashape.declarative import mark
-from metashape.runtime import emit_with
+from metashape.runtime import get_walker
 from metashape.outputs.graphql import emit
 
 
@@ -13,4 +13,4 @@ class Todo:
 
 
 # main
-emit_with([Todo], emit=emit)
+emit(get_walker([Todo]))
