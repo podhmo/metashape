@@ -23,8 +23,6 @@ logger = logging.getLogger(__name__)
 class Context:  # TODO: rename to context?
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Status:
-        has_query: bool = False
-        has_mutation: bool = False
         schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
