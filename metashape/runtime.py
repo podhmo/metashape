@@ -8,7 +8,7 @@ from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc, EmitFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import ModuleWalker
-
+from metashape.analyze.context import Context
 from metashape.analyze import typeinfo  # TODO: remove
 from metashape.outputs.raw.emit import emit as _emit_print_only
 
@@ -26,6 +26,7 @@ def emit_with(
     ] = None,
     *,
     emit: EmitFunc = _emit_print_only,
+    context: t.Optional[Context] = None,
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
@@ -35,6 +36,7 @@ def emit_with(
 ) -> None:
     w = get_walker(
         target,
+        context=context,
         aggressive=aggressive,
         recursive=recursive,
         sort=sort,
@@ -54,12 +56,16 @@ def get_walker(
         t.Dict[str, t.Type[t.Any]],
     ] = None,
     *,
+    context: t.Optional[Context] = None,
     aggressive: bool = False,
     recursive: bool = False,
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
 ) -> ModuleWalker:
+    context = context or Context()
+    resolver = Resolver()
+
     if target is None:
         if aggressive:
             logger.info(
@@ -99,7 +105,7 @@ def get_walker(
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
-    w = ModuleWalker(members, resolver=Resolver())
+    w = ModuleWalker(members, resolver=resolver, context=context)
     if recursive:
         if aggressive:
             guess_member = _guess_kind

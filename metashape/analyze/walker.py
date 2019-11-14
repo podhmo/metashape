@@ -4,7 +4,6 @@ import logging
 from metashape.marker import guess_mark
 from metashape.constants import ORIGINAL_NAME
 from metashape.types import MetaData, Kind, Member
-from metashape.langhelpers import reify
 from metashape._access import iterate_props  # TODO: move
 from .typeinfo import TypeInfo
 from .resolver import Resolver
@@ -17,16 +16,15 @@ logger = logging.getLogger(__name__)
 class ModuleWalker:
     resolver: Resolver
 
-    def __init__(self, members: t.List[t.Any], *, resolver: Resolver) -> None:
+    def __init__(
+        self, members: t.List[t.Any], *, context: Context, resolver: Resolver
+    ) -> None:
         self.resolver = resolver
+        self.context = context
         self._members = t.cast(t.List[Member], members)  # xxx
 
     def for_type(self, m: Member) -> TypeWalker:
         return TypeWalker(m, parent=self)
-
-    @reify
-    def context(self) -> Context:
-        return Context()
 
     def append(self, m: Member) -> None:
         self.context.q.append(m)
