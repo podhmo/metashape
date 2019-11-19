@@ -42,7 +42,7 @@ class _LazyType:
 
 class Context:
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Store:
+    class State:
         has_query: bool = False
         has_mutation: bool = False
         enum_type_to_name: t.Dict[t.Any, str] = dataclasses.field(
@@ -54,7 +54,7 @@ class Context:
         types: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     def __init__(self, walker: ModuleWalker) -> None:
-        self.store = Context.Store()
+        self.state = Context.State()
         self.result = Context.Result()
         self.walker = walker
         self.config = walker.config
@@ -63,7 +63,7 @@ class Context:
     def dumper(self) -> _Dumper:
         return _Dumper()
 
-    store: Context.Store
+    state: Context.State
     result: Context.Result
     walker: ModuleWalker
     config: AnalyzingConfig
@@ -79,7 +79,7 @@ class Scanner:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
-        store = self.ctx.store
+        state = self.ctx.state
         cfg = self.ctx.config
 
         schema = make_dict()
@@ -88,7 +88,7 @@ class Scanner:
         for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=cfg.option.ignore_private
         ):
-            schema[field_name] = {"type": _LazyType(store.enum_type_to_name, info)}
+            schema[field_name] = {"type": _LazyType(state.enum_type_to_name, info)}
 
         result.types[typename] = schema
 
@@ -100,7 +100,7 @@ def scan(walker: ModuleWalker) -> Context:
     try:
         for m in walker.walk(kinds=["object", "enum"]):
             if guess_mark(m) == "enum":
-                ctx.store.enum_type_to_name[m] = m.__name__
+                ctx.state.enum_type_to_name[m] = m.__name__
             else:
                 scanner.scan(m)
     finally:
@@ -117,23 +117,23 @@ def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
 class _Dumper:
     def dump(self, ctx: Context, o: t.IO[str]) -> None:
         p = partial(print, file=o)
-        store = ctx.store
-        if store.has_query or store.has_query:
+        state = ctx.state
+        if state.has_query or state.has_query:
             p("schema {")
-            if store.has_query:
+            if state.has_query:
                 p("  query: Query")
-            if store.has_mutation:
+            if state.has_mutation:
                 p("  mutation: Mutation")
             p("}")
             p("")
 
-        if store.has_query:
+        if state.has_query:
             p("type Query {")
             p("}")
             p("")
 
         # enum (todo: rename attributes)
-        for definition, name in ctx.store.enum_type_to_name.items():
+        for definition, name in ctx.state.enum_type_to_name.items():
             p(f"enum {name} {{")
             for x in typing_inspect.get_args(definition):
                 p(f"  {x}")

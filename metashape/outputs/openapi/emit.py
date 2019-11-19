@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class Context:  # TODO: rename to context?
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Store:
+    class State:
         schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
@@ -31,12 +31,12 @@ class Context:  # TODO: rename to context?
         )
 
     def __init__(self, walker: ModuleWalker) -> None:
-        self.store = Context.Store()
+        self.state = Context.State()
         self.result = Context.Result()
         self.walker = walker
         self.config = walker.config
 
-    store: Context.Store
+    state: Context.State
     result: Context.Result
     walker: ModuleWalker
     config: AnalyzingConfig
@@ -49,8 +49,8 @@ class _Fixer:
         self.ctx = ctx
 
     def fix_discriminator(self, name: str, fieldname: str) -> None:
-        store = self.ctx.store
-        schema = store.schemas.get(name)
+        state = self.ctx.state
+        schema = state.schemas.get(name)
         if schema is None:
             return
         props = schema.get("properties")
@@ -175,7 +175,7 @@ class Scanner:
         if cfg.option.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
 
-        ctx.store.schemas[typename] = ctx.result.result["components"]["schemas"][
+        ctx.state.schemas[typename] = ctx.result.result["components"]["schemas"][
             typename
         ] = schema
 
