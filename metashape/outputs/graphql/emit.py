@@ -45,13 +45,13 @@ class Context:
     class Store:
         has_query: bool = False
         has_mutation: bool = False
-
-    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Result:
         enum_type_to_name: t.Dict[t.Any, str] = dataclasses.field(
             default_factory=make_dict
         )
-        name_to_type: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
+
+    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
+    class Result:
+        types: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     def __init__(self, walker: ModuleWalker) -> None:
         self.store = Context.Store()
@@ -79,6 +79,7 @@ class Scanner:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
+        store = self.ctx.store
         cfg = self.ctx.config
 
         schema = make_dict()
@@ -87,9 +88,9 @@ class Scanner:
         for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=cfg.option.ignore_private
         ):
-            schema[field_name] = {"type": _LazyType(result.enum_type_to_name, info)}
+            schema[field_name] = {"type": _LazyType(store.enum_type_to_name, info)}
 
-        result.name_to_type[typename] = schema
+        result.types[typename] = schema
 
 
 def scan(walker: ModuleWalker) -> Context:
@@ -99,7 +100,7 @@ def scan(walker: ModuleWalker) -> Context:
     try:
         for m in walker.walk(kinds=["object", "enum"]):
             if guess_mark(m) == "enum":
-                ctx.result.enum_type_to_name[m] = m.__name__
+                ctx.store.enum_type_to_name[m] = m.__name__
             else:
                 scanner.scan(m)
     finally:
@@ -131,8 +132,8 @@ class _Dumper:
             p("}")
             p("")
 
-        # enum
-        for definition, name in ctx.result.enum_type_to_name.items():
+        # enum (todo: rename attributes)
+        for definition, name in ctx.store.enum_type_to_name.items():
             p(f"enum {name} {{")
             for x in typing_inspect.get_args(definition):
                 p(f"  {x}")
@@ -140,7 +141,7 @@ class _Dumper:
             p("")
 
         # type
-        for name, definition in ctx.result.name_to_type.items():
+        for name, definition in ctx.result.types.items():
             p(f"type {name} {{")
             for fieldname, fieldvalue in definition.items():
                 p(f"  {fieldname}: {fieldvalue['type']}")
