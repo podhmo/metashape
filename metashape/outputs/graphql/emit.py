@@ -42,7 +42,7 @@ class _LazyType:
 
 class Context:
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Status:
+    class Store:
         has_query: bool = False
         has_mutation: bool = False
 
@@ -54,7 +54,7 @@ class Context:
         name_to_type: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     def __init__(self, walker: ModuleWalker) -> None:
-        self.status = Context.Status()
+        self.store = Context.Store()
         self.result = Context.Result()
         self.walker = walker
         self.config = walker.config
@@ -63,7 +63,7 @@ class Context:
     def dumper(self) -> _Dumper:
         return _Dumper()
 
-    status: Context.Status
+    store: Context.Store
     result: Context.Result
     walker: ModuleWalker
     config: AnalyzingConfig
@@ -116,17 +116,17 @@ def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
 class _Dumper:
     def dump(self, ctx: Context, o: t.IO[str]) -> None:
         p = partial(print, file=o)
-        status = ctx.status
-        if status.has_query or status.has_query:
+        store = ctx.store
+        if store.has_query or store.has_query:
             p("schema {")
-            if status.has_query:
+            if store.has_query:
                 p("  query: Query")
-            if status.has_mutation:
+            if store.has_mutation:
                 p("  mutation: Mutation")
             p("}")
             p("")
 
-        if status.has_query:
+        if store.has_query:
             p("type Query {")
             p("}")
             p("")
