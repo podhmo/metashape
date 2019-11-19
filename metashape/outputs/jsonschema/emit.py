@@ -22,22 +22,22 @@ logger = logging.getLogger(__name__)
 
 class Context:  # TODO: rename to context?
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Status:
+    class State:
         schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Result:
-        store: t.Dict[str, t.Any] = dataclasses.field(
+        result: t.Dict[str, t.Any] = dataclasses.field(
             default_factory=lambda: make_dict(definitions=make_dict())
         )
 
     def __init__(self, walker: ModuleWalker) -> None:
-        self.status = Context.Status()
+        self.state = Context.State()
         self.result = Context.Result()
         self.walker = walker
         self.config = walker.config
 
-    status: Context.Status
+    state: Context.State
     result: Context.Result
     walker: ModuleWalker
     config: AnalyzingConfig
@@ -126,7 +126,7 @@ class Scanner:
         if cfg.option.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
 
-        ctx.status.schemas[typename] = ctx.result.store["definitions"][
+        ctx.state.schemas[typename] = ctx.result.result["definitions"][
             typename
         ] = schema
 
@@ -146,4 +146,4 @@ def scan(walker: ModuleWalker) -> Context:
 def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
     output = output or walker.config.option.output
     ctx = scan(walker)
-    loading.dump(ctx.result.store, output, format=ctx.config.option.output_format)
+    loading.dump(ctx.result.result, output, format=ctx.config.option.output_format)
