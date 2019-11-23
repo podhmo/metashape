@@ -1,6 +1,6 @@
 from metashape.declarative import mark
 from metashape.runtime import get_walker
-from metashape.outputs.openapi import emit
+from metashape.outputs.openapi import codegen
 
 
 @mark
@@ -10,4 +10,4 @@ class Person:
 
 
 # main
-emit(get_walker([Person]))
+codegen(get_walker([Person]))

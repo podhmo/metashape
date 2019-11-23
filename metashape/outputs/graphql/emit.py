@@ -108,9 +108,7 @@ def scan(walker: ModuleWalker) -> Context:
     return ctx
 
 
-def emit(walker: ModuleWalker, *, output: t.Optional[t.IO[str]] = None) -> None:
-    output = output or walker.config.option.output
-    ctx = scan(walker)
+def emit(ctx: Context, *, output: t.IO[str]) -> None:
     ctx.dumper.dump(ctx, output)  # xxx
 
 

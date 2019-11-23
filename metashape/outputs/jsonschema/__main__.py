@@ -1,5 +1,5 @@
 if __name__ == "__main__":
     from metashape.cli import main
-    from metashape.outputs.jsonschema.emit import emit
+    from metashape.outputs.jsonschema import codegen
 
-    main(emit=emit)
+    main(emit=codegen)

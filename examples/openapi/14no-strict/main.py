@@ -1,4 +1,4 @@
-from metashape.outputs.openapi import emit
+from metashape.outputs.openapi import codegen
 from metashape.runtime import get_walker, Config
 
 
@@ -8,4 +8,4 @@ class Person:
 
 
 config = Config(Config.Option(strict=False))
-emit(get_walker(aggressive=True, config=config))
+codegen(get_walker(aggressive=True, config=config))
