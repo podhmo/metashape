@@ -131,13 +131,20 @@ class Scanner:
         ] = schema
 
 
-def scan(walker: ModuleWalker) -> Context:
+def scan(walker: ModuleWalker, *, definitions: str = None) -> Context:
     ctx = Context(walker)
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(ignore_private=ctx.config.option.ignore_private):
+        for i, m in enumerate(
+            walker.walk(ignore_private=ctx.config.option.ignore_private)
+        ):
             scanner.scan(m)
+            if i == 0 and definitions is None:
+                scanner.ctx.result.result[
+                    "$ref"
+                ] = f"#/definitions/{walker.resolver.resolve_typename(m)}"
+
     finally:
         ctx.config.callbacks.teardown()  # xxx:
     return ctx
