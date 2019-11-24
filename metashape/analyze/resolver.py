@@ -43,5 +43,12 @@ class Resolver:
     ) -> object:
         return metadata and metadata[name]
 
+    def fill_metadata(
+        self, prop: t.Dict[str, t.Any], metadata: MetaData, *, name: str
+    ) -> t.Dict[str, t.Any]:
+        if metadata is not None and name in metadata:
+            prop.update(metadata[name])
+        return prop
+
     def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
         return typeinfo.typeinfo(typ)
