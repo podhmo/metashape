@@ -86,9 +86,7 @@ class Scanner:
             properties=properties, required=required, description=description
         )
 
-        for field_name, info, metadata in walker.for_type(cls).walk(
-            ignore_private=cfg.option.ignore_private
-        ):
+        for field_name, info, metadata in walker.for_type(cls).walk():
             if not info.is_optional:
                 required.append(field_name)
 
@@ -142,9 +140,7 @@ def scan(walker: Walker, *, definitions: t.Optional[str] = None) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for i, m in enumerate(
-            walker.walk(ignore_private=ctx.config.option.ignore_private)
-        ):
+        for i, m in enumerate(walker.walk()):
             scanner.scan(m)
             if i == 0 and definitions is None:
                 scanner.ctx.result.result[

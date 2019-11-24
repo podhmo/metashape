@@ -125,15 +125,15 @@ class Scanner:
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description: str = resolver.metadata.resolve_doc(cls, verbose=cfg.option.verbose)
+        description: str = resolver.metadata.resolve_doc(
+            cls, verbose=cfg.option.verbose
+        )
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
         )
 
-        for field_name, info, metadata in walker.for_type(cls).walk(
-            ignore_private=cfg.option.ignore_private
-        ):
+        for field_name, info, metadata in walker.for_type(cls).walk():
             if not info.is_optional:
                 required.append(field_name)
 
@@ -190,7 +190,7 @@ def scan(walker: Walker,) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(ignore_private=ctx.config.option.ignore_private):
+        for m in walker.walk():
             scanner.scan(m)
     finally:
         ctx.config.callbacks.teardown()  # xxx:

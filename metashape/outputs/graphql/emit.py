@@ -78,14 +78,11 @@ class Scanner:
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
         state = self.ctx.state
-        cfg = self.ctx.config
 
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
 
-        for field_name, info, metadata in walker.for_type(cls).walk(
-            ignore_private=cfg.option.ignore_private
-        ):
+        for field_name, info, metadata in walker.for_type(cls).walk():
             prop = {"type": _LazyType(state.enum_type_to_name, info)}
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
