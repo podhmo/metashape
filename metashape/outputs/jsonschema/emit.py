@@ -140,12 +140,12 @@ def scan(walker: Walker, *, definitions: t.Optional[str] = None) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for i, m in enumerate(walker.walk()):
-            scanner.scan(m)
+        for i, cls in enumerate(walker.walk()):
+            scanner.scan(cls)
             if i == 0 and definitions is None:
                 scanner.ctx.result.result[
                     "$ref"
-                ] = f"#/definitions/{walker.resolver.resolve_typename(m)}"
+                ] = f"#/definitions/{walker.resolver.resolve_typename(cls)}"
 
     finally:
         ctx.config.callbacks.teardown()  # xxx:

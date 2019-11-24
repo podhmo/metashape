@@ -95,11 +95,11 @@ def scan(walker: Walker) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(kinds=["object", "enum"]):
-            if guess_mark(m) == "enum":
-                ctx.state.enum_type_to_name[m] = m.__name__
+        for cls in walker.walk(kinds=["object", "enum"]):
+            if guess_mark(cls) == "enum":
+                ctx.state.enum_type_to_name[cls] = cls.__name__
             else:
-                scanner.scan(m)
+                scanner.scan(cls)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
     return ctx

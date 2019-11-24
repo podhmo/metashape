@@ -190,8 +190,8 @@ def scan(walker: Walker,) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk():
-            scanner.scan(m)
+        for cls in walker.walk():
+            scanner.scan(cls)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
     return ctx
