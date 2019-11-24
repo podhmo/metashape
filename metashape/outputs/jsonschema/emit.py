@@ -135,7 +135,7 @@ class Scanner:
         ] = schema
 
 
-def scan(walker: ModuleWalker, *, definitions: str = None) -> Context:
+def scan(walker: ModuleWalker, *, definitions: t.Optional[str] = None) -> Context:
     ctx = Context(walker)
     scanner = Scanner(ctx)
 
