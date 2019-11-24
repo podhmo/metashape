@@ -42,6 +42,14 @@ class Context:  # TODO: rename to context?
     walker: Walker
     config: AnalyzingConfig
 
+    @property
+    def verbose(self) -> bool:
+        return self.config.option.verbose
+
+    @property
+    def strict(self) -> bool:
+        return self.config.option.strict
+
 
 class Scanner:
     ctx: Context
@@ -74,21 +82,18 @@ class Scanner:
         ctx = self.ctx
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
-        cfg = self.ctx.config
 
         typename = resolver.resolve_typename(cls)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description = resolver.metadata.resolve_doc(cls, verbose=cfg.option.verbose)
+        description = resolver.metadata.resolve_doc(cls, verbose=ctx.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
         )
 
-        for field_name, info, metadata in walker.for_type(cls).walk(
-            ignore_private=cfg.option.ignore_private
-        ):
+        for field_name, info, metadata in walker.for_type(cls).walk():
             if not info.is_optional:
                 required.append(field_name)
 
@@ -129,7 +134,7 @@ class Scanner:
             schema.pop("required")
         if not description:
             schema.pop("description")
-        if cfg.option.strict and "additionalProperties" not in schema:
+        if ctx.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
 
         ctx.state.schemas[typename] = ctx.result.result["definitions"][
@@ -142,14 +147,12 @@ def scan(walker: Walker, *, definitions: t.Optional[str] = None) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for i, m in enumerate(
-            walker.walk(ignore_private=ctx.config.option.ignore_private)
-        ):
-            scanner.scan(m)
+        for i, cls in enumerate(walker.walk()):
+            scanner.scan(cls)
             if i == 0 and definitions is None:
                 scanner.ctx.result.result[
                     "$ref"
-                ] = f"#/definitions/{walker.resolver.resolve_typename(m)}"
+                ] = f"#/definitions/{walker.resolver.resolve_typename(cls)}"
 
     finally:
         ctx.config.callbacks.teardown()  # xxx:

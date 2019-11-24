@@ -33,15 +33,21 @@ class Walker:
         return len(self._members)
 
     def walk(
-        self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False
+        self,
+        *,
+        kinds: t.List[Kind] = ["object"],
+        ignore_private: t.Optional[bool] = None
     ) -> t.Iterable[Member]:
-        ctx = self.config
+        cfg = self.config
+        if ignore_private is None:
+            ignore_private = cfg.option.ignore_private
+
         for m in self._members:
             self.config.q.append(m)
 
         while True:
             try:
-                m = ctx.q.popleft()
+                m = cfg.q.popleft()
             except IndexError:
                 break
 
@@ -64,8 +70,12 @@ class TypeWalker:
         self.parent = parent
 
     def walk(
-        self, *, ignore_private: bool = False
+        self, *, ignore_private: t.Optional[bool] = None
     ) -> t.Iterable[t.Tuple[str, TypeInfo, t.Optional[MetaData]]]:
+        if ignore_private is None:
+            cfg = self.parent.config
+            ignore_private = cfg.option.ignore_private
+
         resolver = self.parent.resolver
         try:
             for name, field_type, metadata in iterate_props(

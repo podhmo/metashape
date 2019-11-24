@@ -78,14 +78,11 @@ class Scanner:
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
         state = self.ctx.state
-        cfg = self.ctx.config
 
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
 
-        for field_name, info, metadata in walker.for_type(cls).walk(
-            ignore_private=cfg.option.ignore_private
-        ):
+        for field_name, info, metadata in walker.for_type(cls).walk():
             prop = {"type": _LazyType(state.enum_type_to_name, info)}
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
@@ -98,11 +95,11 @@ def scan(walker: Walker) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for m in walker.walk(kinds=["object", "enum"]):
-            if guess_mark(m) == "enum":
-                ctx.state.enum_type_to_name[m] = m.__name__
+        for cls in walker.walk(kinds=["object", "enum"]):
+            if guess_mark(cls) == "enum":
+                ctx.state.enum_type_to_name[cls] = cls.__name__
             else:
-                scanner.scan(m)
+                scanner.scan(cls)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
     return ctx
