@@ -70,8 +70,11 @@ class Walker:
             logger.info("walk type: %r", m)
             yield m
 
-    def walked(self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False):
-        seen: t.Dict[Kind, t.List] = defaultdict(list)
+    # todo: rename
+    def walked(
+        self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False
+    ) -> Walked:
+        seen: t.Dict[Kind, t.List[Member]] = defaultdict(list)
         names: t.Dict[Member, str] = {}
         history: t.List[Member] = []
         resolver = self.resolver
@@ -79,14 +82,14 @@ class Walker:
         for m in self.walk(kinds=kinds, ignore_private=ignore_private):
             kind = guess_mark(m)
             names[m] = resolver.resolve_typename(m)
-            seen[kind].append(m)
+            seen[kind].append(m)  # type: ignore
             history.append(m)
         return Walked(seen=seen, names=names, _history=history)
 
 
 @dataclasses.dataclass(frozen=True)
 class Walked:
-    seen: t.Dict[Kind, t.List]
+    seen: t.Dict[Kind, t.List[Member]]
     names: t.Dict[Member, str]
     _history: t.List[Member]
 
