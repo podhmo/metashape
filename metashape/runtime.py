@@ -7,7 +7,7 @@ import types
 from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
-from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
 from metashape.analyze import typeinfo  # TODO: remove
 
@@ -28,7 +28,7 @@ def get_walker(
     aggressive: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
-) -> ModuleWalker:
+) -> Walker:
     config = config or Config()
     resolver = Resolver()
 
@@ -78,7 +78,7 @@ def get_walker(
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
-    w = ModuleWalker(members, resolver=resolver, config=config)
+    w = Walker(members, resolver=resolver, config=config)
 
     if recursive:
         if aggressive:
@@ -93,7 +93,7 @@ def get_walker(
 
 # TODO: move to walker's code
 def _mark_recursive(
-    w: ModuleWalker,
+    w: Walker,
     members: t.List[Member],
     *,
     seen: t.Set[t.Type[t.Any]],

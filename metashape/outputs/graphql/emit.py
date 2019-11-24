@@ -8,7 +8,7 @@ from metashape.types import Member
 from metashape.marker import guess_mark
 from metashape.langhelpers import make_dict, reify
 from metashape.analyze.typeinfo import TypeInfo
-from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 
 from . import detect
@@ -51,7 +51,7 @@ class Context:
     class Result:
         types: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
 
-    def __init__(self, walker: ModuleWalker) -> None:
+    def __init__(self, walker: Walker) -> None:
         self.state = Context.State()
         self.result = Context.Result()
         self.walker = walker
@@ -63,7 +63,7 @@ class Context:
 
     state: Context.State
     result: Context.Result
-    walker: ModuleWalker
+    walker: Walker
     config: AnalyzingConfig
 
 
@@ -93,7 +93,7 @@ class Scanner:
         result.types[typename] = schema
 
 
-def scan(walker: ModuleWalker) -> Context:
+def scan(walker: Walker) -> Context:
     ctx = Context(walker)
     scanner = Scanner(ctx)
 

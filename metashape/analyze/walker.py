@@ -13,7 +13,7 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
-class ModuleWalker:
+class Walker:
     resolver: Resolver
 
     def __init__(
@@ -59,7 +59,7 @@ class ModuleWalker:
 
 
 class TypeWalker:
-    def __init__(self, typ: t.Type[t.Any], *, parent: ModuleWalker):
+    def __init__(self, typ: t.Type[t.Any], *, parent: Walker):
         self.typ = typ
         self.parent = parent
 
