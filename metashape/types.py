@@ -5,7 +5,9 @@ from .constants import ID  # noqa F401
 T = t.TypeVar("T")
 
 Kind = tx.Literal["object", "enum", "ignore"]
-MetaData = t.Optional[t.Dict[str, t.Any]]
+MetaData = t.Optional[
+    t.Dict[str, t.Any]
+]  # TODO: handling dataclasses's _EMPTY_METADATA
 
 # TODO: more strict typing
 Member = t.Type[t.Any]

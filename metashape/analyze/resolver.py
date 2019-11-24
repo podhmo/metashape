@@ -29,8 +29,14 @@ class Resolver:
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)
 
-    def has_default(self, metadata: MetaData, *, name: str = constants.DEFAULT) -> bool:
-        return metadata is not None and name in metadata
+    def has_default(
+        self,
+        metadata: MetaData,
+        *,
+        name: str = constants.DEFAULT,
+        missing: object = constants.MISSING
+    ) -> bool:
+        return metadata is not None and metadata.get(name, missing) is not missing
 
     def resolve_default(
         self, metadata: MetaData, *, name: str = constants.DEFAULT
