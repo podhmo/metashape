@@ -75,7 +75,7 @@ class Scanner:
     def __init__(self, ctx: Context) -> None:
         self.ctx = ctx
 
-    def scan(self, member: Member) -> None:
+    def scan(self, cls: Member) -> None:
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         result = self.ctx.result
@@ -83,9 +83,9 @@ class Scanner:
         cfg = self.ctx.config
 
         schema = make_dict()
-        typename = resolver.resolve_typename(member)
+        typename = resolver.resolve_typename(cls)
 
-        for field_name, info, metadata in walker.for_type(member).walk(
+        for field_name, info, metadata in walker.for_type(cls).walk(
             ignore_private=cfg.option.ignore_private
         ):
             prop = {"type": _LazyType(state.enum_type_to_name, info)}

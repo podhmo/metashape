@@ -116,22 +116,22 @@ class Scanner:
                 )
         return prop
 
-    def scan(self, member: Member) -> None:
+    def scan(self, cls: Member) -> None:
         ctx = self.ctx
         walker = self.ctx.walker
         resolver = self.ctx.walker.resolver
         cfg = self.ctx.config
-        typename = resolver.resolve_typename(member)
+        typename = resolver.resolve_typename(cls)
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description: str = resolver.resolve_doc(member, verbose=cfg.option.verbose)
+        description: str = resolver.resolve_doc(cls, verbose=cfg.option.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
         )
 
-        for field_name, info, metadata in walker.for_type(member).walk(
+        for field_name, info, metadata in walker.for_type(cls).walk(
             ignore_private=cfg.option.ignore_private
         ):
             if not info.is_optional:
