@@ -154,6 +154,11 @@ class Scanner:
                 if enum:
                     prop["enum"] = enum
 
+            # default
+            if resolver.has_default(metadata):
+                prop["default"] = resolver.resolve_default(metadata)
+            resolver.fill_extra_metadata(prop, metadata, name="openapi")
+
             if prop.get("type") == "array":  # todo: simplify with recursion
                 assert len(typeinfo.get_args(info)) == 1
                 first = typeinfo.get_args(info)[0]

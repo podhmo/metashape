@@ -1,5 +1,6 @@
 import typing as t
 from functools import partial
+from dataclasses import MISSING, _MISSING_TYPE
 from .marker import mark  # noqa F401
 from .types import MetaData, T
 from .constants import ORIGINAL_NAME  # noqa F401
@@ -20,5 +21,9 @@ class _Field(t.Generic[T]):
         return self.default
 
 
-def field(default: T, *, metadata: t.Optional[t.Dict[str, t.Any]] = None) -> T:
+def field(
+    default: t.Union[T, _MISSING_TYPE] = MISSING,
+    *,
+    metadata: t.Optional[t.Dict[str, t.Any]] = None
+) -> T:
     return t.cast(T, _Field(default, metadata=metadata))  # xxx: HACK

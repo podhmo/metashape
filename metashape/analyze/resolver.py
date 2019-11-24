@@ -1,6 +1,7 @@
 import typing as t
 import logging
-from metashape.types import T, Member, _ForwardRef
+from metashape import constants
+from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
 from . import typeinfo
@@ -27,6 +28,27 @@ class Resolver:
 
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)
+
+    def has_default(
+        self,
+        metadata: MetaData,
+        *,
+        name: str = constants.DEFAULT,
+        missing: object = constants.MISSING
+    ) -> bool:
+        return metadata is not None and metadata.get(name, missing) is not missing
+
+    def resolve_default(
+        self, metadata: MetaData, *, name: str = constants.DEFAULT
+    ) -> object:
+        return metadata and metadata[name]
+
+    def fill_extra_metadata(
+        self, prop: t.Dict[str, t.Any], metadata: MetaData, *, name: str
+    ) -> t.Dict[str, t.Any]:
+        if metadata is not None and name in metadata:
+            prop.update(metadata[name])
+        return prop
 
     def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
         return typeinfo.typeinfo(typ)

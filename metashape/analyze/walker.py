@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 import logging
 from metashape.marker import guess_mark
-from metashape.constants import ORIGINAL_NAME
+from metashape import constants
 from metashape.types import MetaData, Kind, Member
 from metashape._access import iterate_props  # TODO: move
 from .typeinfo import TypeInfo
@@ -80,10 +80,19 @@ class TypeWalker:
                 )
                 info = resolver.resolve_type_info(field_type)
                 logger.debug("walk prop: 	info=%r", info)
-                if ORIGINAL_NAME in metadata:
-                    name = metadata[ORIGINAL_NAME]
+                if constants.ORIGINAL_NAME in metadata:
+                    name = metadata[constants.ORIGINAL_NAME]
 
+                # handle default
+                if hasattr(self.typ, name):
+                    metadata[constants.DEFAULT] = getattr(self.typ, name)
                 yield name, info, metadata
         except TypeError as e:
             logger.info("iterate props: %r", e)
             return []
+
+
+def _handle_metadata(
+    ob: t.Type[t.Any], *, name: str, typ: t.Type[t.Any], metadata: MetaData
+) -> MetaData:
+    pass
