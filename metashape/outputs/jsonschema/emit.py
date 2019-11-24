@@ -5,7 +5,7 @@ import dataclasses
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict
-from metashape.analyze import typeinfo
+from metashape.analyze.typeinfo import TypeInfo
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze.config import Config as AnalyzingConfig
 from . import detect
@@ -57,11 +57,12 @@ class Scanner:
             "$ref": f"#/definitions/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: typeinfo.TypeInfo) -> t.Dict[str, t.Any]:
+    def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
+        resolver = self.ctx.walker.resolver
         candidates: t.List[t.Dict[str, t.Any]] = []
 
-        for x in typeinfo.get_args(info):
-            custom = typeinfo.get_custom(x)
+        for x in resolver.typeinfo.get_args(info):
+            custom = resolver.typeinfo.get_custom(x)
             if custom is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
@@ -98,7 +99,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if typeinfo.is_composite(info):
+            if resolver.typeinfo.is_composite(info):
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -112,12 +113,12 @@ class Scanner:
             resolver.metadata.fill_extra_metadata(prop, metadata, name="jsonschema")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(typeinfo.get_args(info)) == 1
-                first = typeinfo.get_args(info)[0]
-                if typeinfo.is_composite(first):
+                assert len(resolver.typeinfo.get_args(info)) == 1
+                first = resolver.typeinfo.get_args(info)[0]
+                if resolver.typeinfo.is_composite(first):
                     prop["items"] = self._build_one_of_data(first)
                 else:
-                    custom = typeinfo.get_custom(first)
+                    custom = resolver.typeinfo.get_custom(first)
                     if custom is None:
                         prop["items"] = detect.schema_type(first)
                     else:

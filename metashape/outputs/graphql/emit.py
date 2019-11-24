@@ -7,7 +7,7 @@ import typing_inspect
 from metashape.types import Member
 from metashape.marker import guess_mark
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze import typeinfo
+from metashape.analyze.typeinfo import TypeInfo
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze.config import Config as AnalyzingConfig
 
@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class _LazyType:
-    def __init__(
-        self, enum_type_to_name: t.Dict[t.Type[t.Any], str], info: typeinfo.TypeInfo
-    ):
+    def __init__(self, enum_type_to_name: t.Dict[t.Type[t.Any], str], info: TypeInfo):
         self.enum_type_to_name = enum_type_to_name
         self.info = info
 
