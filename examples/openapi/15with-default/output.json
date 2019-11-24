@@ -1,0 +1,26 @@
+{
+  "components": {
+    "schemas": {
+      "Value": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "name_with_default": {
+            "type": "string",
+            "default": ""
+          },
+          "name_with_metadata_only": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "name_with_default",
+          "name_with_metadata_only"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
