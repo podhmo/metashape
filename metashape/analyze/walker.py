@@ -13,7 +13,7 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
-class ModuleWalker:
+class Walker:
     resolver: Resolver
 
     def __init__(
@@ -59,7 +59,7 @@ class ModuleWalker:
 
 
 class TypeWalker:
-    def __init__(self, typ: t.Type[t.Any], *, parent: ModuleWalker):
+    def __init__(self, typ: t.Type[t.Any], *, parent: Walker):
         self.typ = typ
         self.parent = parent
 
@@ -78,7 +78,7 @@ class TypeWalker:
                     field_type,
                     metadata.keys(),
                 )
-                info = resolver.resolve_type_info(field_type)
+                info = resolver.typeinfo.resolve(field_type)
                 logger.debug("walk prop: 	info=%r", info)
                 if constants.ORIGINAL_NAME in metadata:
                     name = metadata[constants.ORIGINAL_NAME]
@@ -90,9 +90,3 @@ class TypeWalker:
         except TypeError as e:
             logger.info("iterate props: %r", e)
             return []
-
-
-def _handle_metadata(
-    ob: t.Type[t.Any], *, name: str, typ: t.Type[t.Any], metadata: MetaData
-) -> MetaData:
-    pass

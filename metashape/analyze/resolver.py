@@ -1,6 +1,8 @@
+from __future__ import annotations
 import typing as t
 import logging
 from metashape import constants
+from metashape.langhelpers import reify
 from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
@@ -9,8 +11,7 @@ from . import typeinfo
 logger = logging.getLogger(__name__)
 
 
-# TODO: remove this?
-class Resolver:
+class Resolver:  # ModuleResolver
     def __init__(
         self, *, is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
     ) -> None:
@@ -26,6 +27,30 @@ class Resolver:
             logger.info("resolve_name: %r", e)
             return ""
 
+    @reify
+    def typeinfo(self) -> TypeInfoResolver:
+        return TypeInfoResolver()
+
+    @reify
+    def metadata(self) -> MetaDataResolver:
+        return MetaDataResolver()
+
+
+class TypeInfoResolver:
+    def resolve(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        return typeinfo.typeinfo(typ)
+
+    def get_args(self, info: typeinfo.TypeInfo) -> t.List[typeinfo.TypeInfo]:
+        return typeinfo.get_args(info)
+
+    def get_custom(self, info: typeinfo.TypeInfo) -> t.Optional[t.Type[t.Any]]:
+        return typeinfo.get_custom(info)
+
+    def is_composite(self, info: typeinfo.TypeInfo) -> bool:
+        return typeinfo.is_composite(info)
+
+
+class MetaDataResolver:
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)
 
@@ -49,6 +74,3 @@ class Resolver:
         if metadata is not None and name in metadata:
             prop.update(metadata[name])
         return prop
-
-    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        return typeinfo.typeinfo(typ)

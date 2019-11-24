@@ -5,8 +5,8 @@ import dataclasses
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict
-from metashape.analyze import typeinfo
-from metashape.analyze.walker import ModuleWalker
+from metashape.analyze.typeinfo import TypeInfo
+from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 from . import detect
 
@@ -31,7 +31,7 @@ class Context:  # TODO: rename to context?
             default_factory=lambda: make_dict(definitions=make_dict())
         )
 
-    def __init__(self, walker: ModuleWalker) -> None:
+    def __init__(self, walker: Walker) -> None:
         self.state = Context.State()
         self.result = Context.Result()
         self.walker = walker
@@ -39,7 +39,7 @@ class Context:  # TODO: rename to context?
 
     state: Context.State
     result: Context.Result
-    walker: ModuleWalker
+    walker: Walker
     config: AnalyzingConfig
 
 
@@ -57,11 +57,12 @@ class Scanner:
             "$ref": f"#/definitions/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: typeinfo.TypeInfo) -> t.Dict[str, t.Any]:
+    def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
+        resolver = self.ctx.walker.resolver
         candidates: t.List[t.Dict[str, t.Any]] = []
 
-        for x in typeinfo.get_args(info):
-            custom = typeinfo.get_custom(x)
+        for x in resolver.typeinfo.get_args(info):
+            custom = resolver.typeinfo.get_custom(x)
             if custom is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
@@ -79,7 +80,7 @@ class Scanner:
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description = resolver.resolve_doc(cls, verbose=cfg.option.verbose)
+        description = resolver.metadata.resolve_doc(cls, verbose=cfg.option.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
@@ -98,7 +99,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if typeinfo.is_composite(info):
+            if resolver.typeinfo.is_composite(info):
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -107,17 +108,17 @@ class Scanner:
                     prop["enum"] = enum
 
             # default
-            if resolver.has_default(metadata):
-                prop["default"] = resolver.resolve_default(metadata)
-            resolver.fill_extra_metadata(prop, metadata, name="jsonschema")
+            if resolver.metadata.has_default(metadata):
+                prop["default"] = resolver.metadata.resolve_default(metadata)
+            resolver.metadata.fill_extra_metadata(prop, metadata, name="jsonschema")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(typeinfo.get_args(info)) == 1
-                first = typeinfo.get_args(info)[0]
-                if typeinfo.is_composite(first):
+                assert len(resolver.typeinfo.get_args(info)) == 1
+                first = resolver.typeinfo.get_args(info)[0]
+                if resolver.typeinfo.is_composite(first):
                     prop["items"] = self._build_one_of_data(first)
                 else:
-                    custom = typeinfo.get_custom(first)
+                    custom = resolver.typeinfo.get_custom(first)
                     if custom is None:
                         prop["items"] = detect.schema_type(first)
                     else:
@@ -136,7 +137,7 @@ class Scanner:
         ] = schema
 
 
-def scan(walker: ModuleWalker, *, definitions: t.Optional[str] = None) -> Context:
+def scan(walker: Walker, *, definitions: t.Optional[str] = None) -> Context:
     ctx = Context(walker)
     scanner = Scanner(ctx)
 
