@@ -90,9 +90,3 @@ class TypeWalker:
         except TypeError as e:
             logger.info("iterate props: %r", e)
             return []
-
-
-def _handle_metadata(
-    ob: t.Type[t.Any], *, name: str, typ: t.Type[t.Any], metadata: MetaData
-) -> MetaData:
-    pass
