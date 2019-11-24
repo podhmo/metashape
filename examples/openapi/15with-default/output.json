@@ -8,10 +8,12 @@
           },
           "name_with_default": {
             "type": "string",
-            "default": ""
+            "default": "",
+            "maxlength": 255
           },
           "name_with_metadata_only": {
-            "type": "string"
+            "type": "string",
+            "maxlength": 255
           }
         },
         "required": [
