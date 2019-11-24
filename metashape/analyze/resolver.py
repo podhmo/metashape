@@ -1,6 +1,7 @@
 import typing as t
 import logging
 from metashape import constants
+from metashape.langhelpers import reify
 from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
@@ -9,8 +10,7 @@ from . import typeinfo
 logger = logging.getLogger(__name__)
 
 
-# TODO: remove this?
-class Resolver:
+class Resolver:  # ModuleResolver
     def __init__(
         self, *, is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
     ) -> None:
@@ -19,6 +19,22 @@ class Resolver:
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
+    @reify
+    def type_(self):
+        return TypeResolver()
+
+    @reify
+    def metadata(self):
+        return MetaDataResolver()
+
+
+class TypeResolver:
+    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        return typeinfo.typeinfo(typ)
+
+    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
+        return get_doc(ob, verbose=verbose)
+
     def resolve_typename(self, member: t.Union[Member, _ForwardRef]) -> str:
         try:
             return get_name(member)
@@ -26,9 +42,8 @@ class Resolver:
             logger.info("resolve_name: %r", e)
             return ""
 
-    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
-        return get_doc(ob, verbose=verbose)
 
+class MetaDataResolver:
     def has_default(
         self,
         metadata: MetaData,
@@ -49,6 +64,3 @@ class Resolver:
         if metadata is not None and name in metadata:
             prop.update(metadata[name])
         return prop
-
-    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        return typeinfo.typeinfo(typ)
