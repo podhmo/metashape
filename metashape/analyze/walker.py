@@ -78,7 +78,7 @@ class TypeWalker:
                     field_type,
                     metadata.keys(),
                 )
-                info = resolver.resolve_type_info(field_type)
+                info = resolver.type_.resolve_info(field_type)
                 logger.debug("walk prop: 	info=%r", info)
                 if constants.ORIGINAL_NAME in metadata:
                     name = metadata[constants.ORIGINAL_NAME]

@@ -6,7 +6,7 @@ from functools import partial
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze import typeinfo
+from metashape.analyze.typeinfo import Container
 from metashape.analyze.walker import ModuleWalker
 from metashape.analyze.config import Config as AnalyzingConfig
 
@@ -85,14 +85,14 @@ class Scanner:
             "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: typeinfo.Container) -> t.Dict[str, t.Any]:
+    def _build_one_of_data(self, info: Container) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         cfg = self.ctx.walker.config
         candidates: t.List[t.Dict[str, t.Any]] = []
         need_discriminator = True
 
-        for x in typeinfo.get_args(info):
-            custom = typeinfo.get_custom(x)
+        for x in resolver.typeinfo.get_args(info):
+            custom = resolver.typeinfo.get_custom(x)
             if custom is None:
                 need_discriminator = False
                 candidates.append({"type": detect.schema_type(x)})
@@ -103,8 +103,8 @@ class Scanner:
         if need_discriminator:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             # update schema
-            for x in typeinfo.get_args(info):
-                custom = typeinfo.get_custom(x)
+            for x in resolver.typeinfo.get_args(info):
+                custom = resolver.typeinfo.get_custom(x)
                 if custom is None:
                     continue
                 cfg.callbacks.append(
@@ -146,7 +146,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if typeinfo.is_composite(info) and isinstance(info, typeinfo.Container):
+            if resolver.typeinfo.is_composite(info) and isinstance(info, Container):
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -160,16 +160,16 @@ class Scanner:
             resolver.fill_extra_metadata(prop, metadata, name="openapi")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(typeinfo.get_args(info)) == 1
-                first = typeinfo.get_args(info)[0]
-                if typeinfo.is_composite(first) and isinstance(
-                    first, typeinfo.Container
+                assert len(resolver.typeinfo.get_args(info)) == 1
+                first = resolver.typeinfo.get_args(info)[0]
+                if resolver.typeinfo.is_composite(first) and isinstance(
+                    first, Container
                 ):
                     prop["items"] = self._build_one_of_data(first)
-                elif typeinfo.get_custom(first) is None:
+                elif resolver.typeinfo.get_custom(first) is None:
                     prop["items"] = detect.schema_type(first)
                 else:
-                    custom_type = typeinfo.get_custom(first)
+                    custom_type = resolver.typeinfo.get_custom(first)
                     if custom_type is not None:
                         prop["items"] = self._build_ref_data(custom_type)
 

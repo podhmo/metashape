@@ -19,28 +19,37 @@ class Resolver:  # ModuleResolver
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
-    @reify
-    def type_(self):
-        return TypeResolver()
-
-    @reify
-    def metadata(self):
-        return MetaDataResolver()
-
-
-class TypeResolver:
-    def resolve_type_info(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        return typeinfo.typeinfo(typ)
-
-    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
-        return get_doc(ob, verbose=verbose)
-
     def resolve_typename(self, member: t.Union[Member, _ForwardRef]) -> str:
         try:
             return get_name(member)
         except AttributeError as e:
             logger.info("resolve_name: %r", e)
             return ""
+
+    @reify
+    def typeinfo(self):
+        return TypeInfoResolver()
+
+    @reify
+    def metadata(self):
+        return MetaDataResolver()
+
+
+class TypeInfoResolver:
+    def resolve(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        return typeinfo.typeinfo(typ)
+
+    def get_args(self, info: typeinfo.TypeInfo) -> t.List[typeinfo.TypeInfo]:
+        return typeinfo.get_args(info)
+
+    def get_custom(self, info: typeinfo.TypeInfo) -> t.Optional[t.Type[t.Any]]:
+        return typeinfo.get_custom(info)
+
+    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
+        return get_doc(ob, verbose=verbose)
+
+    def is_composite(self, info: typeinfo.TypeInfo) -> bool:
+        return typeinfo.is_composite(info)
 
 
 class MetaDataResolver:
