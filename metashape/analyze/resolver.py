@@ -43,7 +43,7 @@ class Resolver:
     ) -> object:
         return metadata and metadata[name]
 
-    def fill_metadata(
+    def fill_extra_metadata(
         self, prop: t.Dict[str, t.Any], metadata: MetaData, *, name: str
     ) -> t.Dict[str, t.Any]:
         if metadata is not None and name in metadata:

@@ -88,7 +88,9 @@ class Scanner:
         for field_name, info, metadata in walker.for_type(member).walk(
             ignore_private=cfg.option.ignore_private
         ):
-            schema[field_name] = {"type": _LazyType(state.enum_type_to_name, info)}
+            prop = {"type": _LazyType(state.enum_type_to_name, info)}
+            resolver.fill_extra_metadata(prop, metadata, name="graphql")
+            schema[field_name] = prop
 
         result.types[typename] = schema
 

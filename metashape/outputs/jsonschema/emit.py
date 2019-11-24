@@ -109,7 +109,7 @@ class Scanner:
             # default
             if resolver.has_default(metadata):
                 prop["default"] = resolver.resolve_default(metadata)
-            resolver.fill_metadata(prop, metadata, name="jsonschema")
+            resolver.fill_extra_metadata(prop, metadata, name="jsonschema")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
                 assert len(typeinfo.get_args(info)) == 1
