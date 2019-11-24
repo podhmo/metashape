@@ -97,7 +97,8 @@ def scan(walker: Walker) -> Context:
     scanner = Scanner(ctx)
 
     try:
-        for cls in walker.walk(kinds=["object", "enum"]):
+        walked = walker.walked(kinds=["object", "enum"])
+        for cls in walked:
             if guess_mark(cls) == "enum":
                 ctx.state.enum_type_to_name[cls] = cls.__name__
             else:

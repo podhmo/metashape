@@ -1,6 +1,8 @@
 from __future__ import annotations
 import typing as t
 import logging
+import dataclasses
+from collections import defaultdict
 from metashape.marker import guess_mark
 from metashape import constants
 from metashape.types import MetaData, Kind, Member, IteratePropsFunc
@@ -42,6 +44,7 @@ class Walker:
         kinds: t.List[Kind] = ["object"],
         ignore_private: t.Optional[bool] = None
     ) -> t.Iterable[Member]:
+        resolver = self.resolver
         cfg = self.config
         if ignore_private is None:
             ignore_private = cfg.option.ignore_private
@@ -55,7 +58,7 @@ class Walker:
             except IndexError:
                 break
 
-            name = self.resolver.resolve_typename(m)
+            name = resolver.resolve_typename(m)
             if not name:
                 continue
             if ignore_private:
@@ -66,6 +69,40 @@ class Walker:
                 continue
             logger.info("walk type: %r", m)
             yield m
+
+    def walked(self, *, kinds: t.List[Kind] = ["object"], ignore_private: bool = False):
+        seen: t.Dict[Kind, t.List] = defaultdict(list)
+        names: t.Dict[Member, str] = {}
+        history: t.List[Member] = []
+        resolver = self.resolver
+
+        for m in self.walk(kinds=kinds, ignore_private=ignore_private):
+            kind = guess_mark(m)
+            names[m] = resolver.resolve_typename(m)
+            seen[kind].append(m)
+            history.append(m)
+        return Walked(seen=seen, names=names, _history=history)
+
+
+@dataclasses.dataclass(frozen=True)
+class Walked:
+    seen: t.Dict[Kind, t.List]
+    names: t.Dict[Member, str]
+    _history: t.List[Member]
+
+    def __iter__(self) -> t.Iterable[Member]:
+        return iter(self._history)
+
+    @property
+    def enums(self) -> t.Iterable[Member]:
+        return iter(self.seen["enum"])
+
+    @property
+    def objects(self) -> t.Iterable[Member]:
+        return iter(self.seen["object"])
+
+    def get_name(self, m: Member) -> t.Optional[str]:
+        return self.names.get(m)
 
 
 class TypeWalker:
