@@ -1,3 +1,4 @@
+from __future__ import annotations
 import typing as t
 import logging
 from metashape import constants
@@ -27,11 +28,11 @@ class Resolver:  # ModuleResolver
             return ""
 
     @reify
-    def typeinfo(self):
+    def typeinfo(self) -> TypeInfoResolver:
         return TypeInfoResolver()
 
     @reify
-    def metadata(self):
+    def metadata(self) -> MetaDataResolver:
         return MetaDataResolver()
 
 
@@ -45,14 +46,14 @@ class TypeInfoResolver:
     def get_custom(self, info: typeinfo.TypeInfo) -> t.Optional[t.Type[t.Any]]:
         return typeinfo.get_custom(info)
 
-    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
-        return get_doc(ob, verbose=verbose)
-
     def is_composite(self, info: typeinfo.TypeInfo) -> bool:
         return typeinfo.is_composite(info)
 
 
 class MetaDataResolver:
+    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
+        return get_doc(ob, verbose=verbose)
+
     def has_default(
         self,
         metadata: MetaData,

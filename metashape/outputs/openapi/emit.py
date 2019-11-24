@@ -125,7 +125,7 @@ class Scanner:
 
         required: t.List[str] = []
         properties: t.Dict[str, t.Any] = make_dict()
-        description: str = resolver.resolve_doc(cls, verbose=cfg.option.verbose)
+        description: str = resolver.metadata.resolve_doc(cls, verbose=cfg.option.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
             properties=properties, required=required, description=description
@@ -155,9 +155,9 @@ class Scanner:
                     prop["enum"] = enum
 
             # default
-            if resolver.has_default(metadata):
-                prop["default"] = resolver.resolve_default(metadata)
-            resolver.fill_extra_metadata(prop, metadata, name="openapi")
+            if resolver.metadata.has_default(metadata):
+                prop["default"] = resolver.metadata.resolve_default(metadata)
+            resolver.metadata.fill_extra_metadata(prop, metadata, name="openapi")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
                 assert len(resolver.typeinfo.get_args(info)) == 1

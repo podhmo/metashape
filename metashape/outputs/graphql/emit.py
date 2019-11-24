@@ -89,7 +89,7 @@ class Scanner:
             ignore_private=cfg.option.ignore_private
         ):
             prop = {"type": _LazyType(state.enum_type_to_name, info)}
-            resolver.fill_extra_metadata(prop, metadata, name="graphql")
+            resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
 
         result.types[typename] = schema
