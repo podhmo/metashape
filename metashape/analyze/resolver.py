@@ -34,7 +34,7 @@ class Resolver:
         metadata: MetaData,
         *,
         name: str = constants.DEFAULT,
-        missing: object = constants.MISSING
+        missing: object = constants.MISSING  # type:ignore
     ) -> bool:
         return metadata is not None and metadata.get(name, missing) is not missing
 
