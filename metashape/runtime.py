@@ -57,6 +57,7 @@ def get_walker(
         d = {x.__name__: x for x in target}
     else:
         d = {target.__name__: target}
+        mark(target, kind=_guess_kind(target))
 
     if only is not None:
         d = {

@@ -51,9 +51,9 @@ class C:
 @pytest.mark.parametrize(
     "msg, c, input, want",
     [
-        ("one", C(), lambda m: m.A, []),
+        ("one", C(), lambda m: m.A, ["A"]),
         ("one, aggressive=True", C(aggressive=True), lambda m: m.A, ["A"]),
-        ("one, recursive=True", C(recursive=True), lambda m: m.A, []),
+        ("one, recursive=True", C(recursive=True), lambda m: m.A, ["A"]),
         (
             "one, aggressive=True, recursive=True",
             C(aggressive=True, recursive=True),
