@@ -55,6 +55,8 @@ def get_walker(
         d = target
     elif isinstance(target, (list, tuple)):
         d = {x.__name__: x for x in target}
+        for x in target:
+            mark(x, kind=_guess_kind(x))
     else:
         d = {target.__name__: target}
         mark(target, kind=_guess_kind(target))

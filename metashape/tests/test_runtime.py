@@ -60,7 +60,7 @@ class C:
             lambda m: m.A,
             ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
         ),
-        ("list", C(), lambda m: [m.A, m.B], []),
+        ("list", C(), lambda m: [m.A, m.B], ["A", "B"]),
         ("list, aggressive=True", C(aggressive=True), lambda m: [m.A, m.B], ["A", "B"]),
         (
             "list, aggressive=True, recursive=True",
