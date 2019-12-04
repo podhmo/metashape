@@ -86,7 +86,6 @@ def test_walker(msg, c, input, want):
 
         # create fake module
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=True) as wf:
-            print("@", wf.name)
             print(code, file=wf)
             wf.flush()
             return import_from_physical_path(wf.name)
