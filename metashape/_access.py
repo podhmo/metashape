@@ -1,6 +1,7 @@
 import typing as t
 import inspect
 from .types import MetaData, Member, _ForwardRef
+from .types import IteratePropsFunc
 
 
 def get_name(member: t.Union[Member, _ForwardRef]) -> str:
@@ -34,3 +35,7 @@ def iterate_props(
         if ignore_private and fieldname.startswith("_"):
             continue
         yield fieldname, fieldtype, get_metadata(typ, fieldname)
+
+
+# type assertion
+_: IteratePropsFunc = iterate_props
