@@ -56,10 +56,14 @@ def get_walker(
     elif isinstance(target, (list, tuple)):
         d = {x.__name__: x for x in target}
         for x in target:
-            mark(x, kind=_guess_kind(x))
+            kind = _guess_kind(x)
+            if kind is not None:
+                mark(x, kind=kind)
     else:
         d = {target.__name__: target}
-        mark(target, kind=_guess_kind(target))
+        kind = _guess_kind(target)
+        if kind is not None:
+            mark(target, kind=kind)
 
     if only is not None:
         d = {
