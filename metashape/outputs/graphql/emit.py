@@ -83,6 +83,8 @@ class Scanner:
         typename = resolver.resolve_typename(cls)
 
         for field_name, info, metadata in walker.for_type(cls).walk():
+            field_name = resolver.metadata.resolve_name(metadata, default=field_name)
+
             prop = {"type": _LazyType(state.enum_type_to_name, info)}
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
