@@ -3,10 +3,11 @@ import typing as t
 import sys
 from collections import deque
 import dataclasses
+import logging
 from metashape.langhelpers import reify
 from metashape.types import T, Member
 
-
+logger = logging.getLogger(__name__)
 Store = t.Dict[str, t.Any]
 
 
@@ -53,9 +54,12 @@ class _Queue(t.Generic[T]):
     def popleft(self) -> T:  # raise IndexError
         while True:
             x = self.q.popleft()
-            if x in self.seen:
-                continue
-            self.seen.add(x)
+            try:
+                if x in self.seen:
+                    continue
+                self.seen.add(x)
+            except TypeError as e:  # unhashable type
+                logger.debug("skip unhashable type %r", e)
             return x
 
 

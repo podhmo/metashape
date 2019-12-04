@@ -10,7 +10,7 @@ from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
 from metashape.analyze import typeinfo  # TODO: remove
-
+from ._access import get_name
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def get_walker(
             if kind is not None:
                 mark(x, kind=kind)
     else:
-        d = {target.__name__: target}
+        d = {get_name(target): target}
         kind = _guess_kind(target)
         if kind is not None:
             mark(target, kind=kind)

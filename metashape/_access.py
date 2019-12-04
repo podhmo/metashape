@@ -5,11 +5,14 @@ from .types import IteratePropsFunc
 
 
 def get_name(member: t.Union[Member, _ForwardRef]) -> str:
-    name = getattr(member, "__name__", None)  # type: t.Optional[str]
+    name_ = getattr(member, "__name__", None)  # type: t.Optional[str]
+    if name_ is not None:
+        return name_
+    # for ForwardRef
+    name = getattr(member, "__forward_arg__", None)  # type: t.Optional[str]
     if name is not None:
         return name
-    # for ForwardRef
-    return member.__forward_arg__
+    return member.__class__.__name__
 
 
 def get_doc(ob: object, *, verbose: bool = False) -> str:
