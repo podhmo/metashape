@@ -5,7 +5,7 @@ from .constants import ID  # noqa F401
 T = t.TypeVar("T")
 
 Kind = tx.Literal["object", "enum", "ignore"]
-MetaData = t.Optional[t.Mapping[str, t.Any]]
+MetaData = t.Optional[t.MutableMapping[str, t.Any]]
 
 # TODO: more strict typing
 Member = t.Type[t.Any]
