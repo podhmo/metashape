@@ -52,7 +52,7 @@ class TypeInfoResolver:
 
 
 class MetaDataResolver:
-    def resolve_name(self, metadata: MetaData, *, default: str):
+    def resolve_name(self, metadata: MetaData, *, default: str) -> str:
         if metadata:
             return metadata.get(constants.ORIGINAL_NAME, default)
         return default

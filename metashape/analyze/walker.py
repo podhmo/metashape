@@ -77,24 +77,21 @@ class TypeWalker:
             ignore_private = cfg.option.ignore_private
 
         resolver = self.parent.resolver
-        try:
-            for name, field_type, metadata in iterate_props(
-                self.typ, ignore_private=ignore_private
-            ):
-                metadata = metadata or {}
-                logger.info(
-                    "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
-                    name,
-                    field_type,
-                    metadata.keys(),
-                )
-                info = resolver.typeinfo.resolve(field_type)
-                logger.debug("walk prop: 	info=%r", info)
+        for name, field_type, metadata in iterate_props(
+            self.typ, ignore_private=ignore_private
+        ):
+            if metadata is None:
+                metadata = {}
+            logger.info(
+                "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
+                name,
+                field_type,
+                metadata.keys(),
+            )
+            info = resolver.typeinfo.resolve(field_type)
+            logger.debug("walk prop: 	info=%r", info)
 
-                # handle default
-                if hasattr(self.typ, name):
-                    metadata[constants.DEFAULT] = getattr(self.typ, name)
-                yield name, info, metadata
-        except TypeError as e:
-            logger.info("iterate props: %r", e)
-            return []
+            # handle default
+            if hasattr(self.typ, name):
+                metadata[constants.DEFAULT] = getattr(self.typ, name)
+            yield name, info, metadata
