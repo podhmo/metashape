@@ -39,7 +39,10 @@ class Resolver:  # ModuleResolver
 
 class TypeInfoResolver:
     def resolve(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        return typeinfo.typeinfo(typ)
+        try:
+            return typeinfo.typeinfo(typ)
+        except TypeError:
+            return typeinfo.typeinfo(typ.__class__)
 
     def get_args(self, info: typeinfo.TypeInfo) -> t.List[typeinfo.TypeInfo]:
         return typeinfo.get_args(info)
