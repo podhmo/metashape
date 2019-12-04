@@ -51,16 +51,16 @@ class C:
 @pytest.mark.parametrize(
     "msg, c, input, want",
     [
-        ("one", C(), lambda m: m.A, []),
+        ("one", C(), lambda m: m.A, ["A"]),
         ("one, aggressive=True", C(aggressive=True), lambda m: m.A, ["A"]),
-        ("one, recursive=True", C(recursive=True), lambda m: m.A, []),
+        ("one, recursive=True", C(recursive=True), lambda m: m.A, ["A"]),
         (
             "one, aggressive=True, recursive=True",
             C(aggressive=True, recursive=True),
             lambda m: m.A,
             ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
         ),
-        ("list", C(), lambda m: [m.A, m.B], []),
+        ("list", C(), lambda m: [m.A, m.B], ["A", "B"]),
         ("list, aggressive=True", C(aggressive=True), lambda m: [m.A, m.B], ["A", "B"]),
         (
             "list, aggressive=True, recursive=True",
@@ -86,7 +86,6 @@ def test_walker(msg, c, input, want):
 
         # create fake module
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=True) as wf:
-            print("@", wf.name)
             print(code, file=wf)
             wf.flush()
             return import_from_physical_path(wf.name)
