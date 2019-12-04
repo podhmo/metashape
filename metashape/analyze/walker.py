@@ -104,7 +104,5 @@ class TypeWalker:
 
             # handle default
             if hasattr(self.typ, name):
-                val = getattr(self.typ, name)
-                # as MutableMapping
-                metadata[constants.DEFAULT] = val  # type:ignore
+                metadata[constants.DEFAULT] = getattr(self.typ, name)
             yield name, info, metadata
