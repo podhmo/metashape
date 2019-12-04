@@ -80,7 +80,8 @@ class TypeWalker:
         for name, field_type, metadata in iterate_props(
             self.typ, ignore_private=ignore_private
         ):
-            metadata = metadata or {}
+            if metadata is None:
+                metadata = {}
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 name,
