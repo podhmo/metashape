@@ -90,8 +90,6 @@ class TypeWalker:
                 )
                 info = resolver.typeinfo.resolve(field_type)
                 logger.debug("walk prop: 	info=%r", info)
-                if constants.ORIGINAL_NAME in metadata:
-                    name = metadata[constants.ORIGINAL_NAME]
 
                 # handle default
                 if hasattr(self.typ, name):

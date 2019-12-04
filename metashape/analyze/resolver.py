@@ -15,6 +15,7 @@ class Resolver:  # ModuleResolver
     def __init__(
         self, *, is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
     ) -> None:
+
         self._is_member = is_member or is_marked
 
     def is_member(self, ob: t.Type[T]) -> bool:
@@ -51,6 +52,11 @@ class TypeInfoResolver:
 
 
 class MetaDataResolver:
+    def resolve_name(self, metadata: MetaData, *, default: str):
+        if metadata:
+            return metadata.get(constants.ORIGINAL_NAME, default)
+        return default
+
     def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
         return get_doc(ob, verbose=verbose)
 
