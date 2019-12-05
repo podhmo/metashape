@@ -10,7 +10,7 @@ class Index:
     """Index is the struct for database index"""
 
     name: str
-    def_: str = field("", metadata={ORIGINAL_NAME: "def"})
+    def_: str = field(metadata={ORIGINAL_NAME: "def"})
     table: t.Optional[str]
     columns: t.List[str]
 
@@ -20,7 +20,7 @@ class Constraint:
 
     name: str
     type: str  # type
-    def_: str = field("", metadata={ORIGINAL_NAME: "def"})
+    def_: str = field(metadata={ORIGINAL_NAME: "def"})
     table: t.Optional[str]
     reference_table: t.Optional[str]
     columns: t.List[str]
@@ -31,7 +31,7 @@ class Trigger:
     """ Trigger is the struct for database trigger"""
 
     name: str
-    def_: str = field("", metadata={ORIGINAL_NAME: "def"})
+    def_: str = field(metadata={ORIGINAL_NAME: "def"})
 
 
 class Column:
@@ -56,7 +56,7 @@ class Table:
     indexes: t.List[Index]
     constraints: t.List[Constraint]
     triggers: t.List[Trigger]
-    def_: str = field("", metadata={ORIGINAL_NAME: "def"})
+    def_: str = field(metadata={ORIGINAL_NAME: "def"})
 
 
 class Relation:
@@ -66,7 +66,7 @@ class Relation:
     columns: t.List[Column]
     parent_table: t.Optional[Table]
     parent_columns: t.List[Column]
-    def_: str = field("", metadata={ORIGINAL_NAME: "def"})
+    def_: str = field(metadata={ORIGINAL_NAME: "def"})
     is_additional: bool
 
 

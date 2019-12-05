@@ -7,8 +7,7 @@
             "type": "string"
           },
           "def": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "table": {
             "type": "string"
@@ -35,8 +34,7 @@
             "type": "string"
           },
           "def": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "table": {
             "type": "string"
@@ -69,8 +67,7 @@
             "type": "string"
           },
           "def": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         },
         "required": [
@@ -157,8 +154,7 @@
             }
           },
           "def": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         },
         "required": [
@@ -195,8 +191,7 @@
             }
           },
           "def": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "is_additional": {
             "type": "boolean"
