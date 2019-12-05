@@ -56,14 +56,10 @@ def get_walker(
     elif isinstance(target, (list, tuple)):
         d = {x.__name__: x for x in target}
         for x in target:
-            kind = _guess_kind(x)
-            if kind is not None:
-                mark(x, kind=kind)
+            mark(x, kind=_guess_kind(x) or "object")
     else:
         d = {get_name(target): target}
-        kind = _guess_kind(target)
-        if kind is not None:
-            mark(target, kind=kind)
+        mark(target, kind=_guess_kind(target) or "object")
 
     if only is not None:
         d = {
@@ -85,6 +81,7 @@ def get_walker(
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
+
     w = Walker(members, resolver=resolver, config=config)
 
     if recursive:
