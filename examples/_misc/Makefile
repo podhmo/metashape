@@ -1,4 +1,4 @@
-default: 00
+default: 00 01
 
 00:
 	python $@*/main.py > $$(echo $@*)/output.yaml

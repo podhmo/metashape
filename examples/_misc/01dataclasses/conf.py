@@ -29,9 +29,9 @@ toplevel = shapes.Toplevel(
     google_analytics=["UA-XXXXXXXX-X", "auto"],
     markdown_extensions=[
         "admonition",
-        shapes.UsedExtension(
-            codehilite=shapes.CodehiliteExtension(guess_lang=False),
-            toc=shapes.TocExtension(permalink=True),
+        shapes.CodehiliteExtension(
+            codehilite=shapes.CodehiliteExtension.Data(guess_lang=False)
         ),
+        shapes.TocExtension(toc=shapes.TocExtension.Data(permalink=True)),
     ],
 )

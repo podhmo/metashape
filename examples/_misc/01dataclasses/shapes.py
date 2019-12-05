@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Union
+from typing import List, Union
 import dataclasses
 
 
@@ -21,7 +21,7 @@ class Toplevel:
 
     # extensions
     google_analytics: List[str]
-    markdown_extensions: List[Union[str, UsedExtension]]
+    markdown_extensions: List[Union[str, CodehiliteExtension, TocExtension]]
 
 
 @dataclasses.dataclass
@@ -32,7 +32,7 @@ class Extra:
 
 @dataclasses.dataclass
 class Social:
-    type_: str
+    type_: str  # TODO: support treated as "type" on dumping yaml
     link: str
 
 
@@ -57,16 +57,18 @@ class Font:
 
 
 @dataclasses.dataclass
-class UsedExtension:
-    codehilite: CodehiliteExtension
-    toc: TocExtension
-
-
-@dataclasses.dataclass
 class CodehiliteExtension:
-    guess_lang: bool
+    @dataclasses.dataclass
+    class Data:
+        guess_lang: bool
+
+    codehilite: "CodehiliteExtension.Data"
 
 
 @dataclasses.dataclass
 class TocExtension:
-    permalink: bool
+    @dataclasses.dataclass
+    class Data:
+        permalink: bool
+
+    toc: "TocExtension.Data"
