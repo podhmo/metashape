@@ -3,8 +3,10 @@ import typing as t
 import logging
 from metashape.marker import guess_mark
 from metashape import constants
-from metashape.types import MetaData, Kind, Member
+from metashape.types import MetaData, Kind, Member, IteratePropsFunc
 from metashape._access import iterate_props  # TODO: move
+from metashape._dataclass import iterate_props as iterate_props_for_dataclass
+from metashape._dataclass import is_dataclass
 from .typeinfo import TypeInfo
 from .resolver import Resolver
 from .config import Config
@@ -24,7 +26,9 @@ class Walker:
         self._members = t.cast(t.List[Member], members)  # xxx
 
     def for_type(self, m: Member) -> TypeWalker:
-        return TypeWalker(m, parent=self)
+        # TODO: explicitly is better?
+        fn = iterate_props_for_dataclass if is_dataclass(m) else iterate_props
+        return TypeWalker(m, parent=self, iterate_props=fn)
 
     def append(self, m: Member) -> None:
         self.config.q.append(m)
@@ -65,9 +69,16 @@ class Walker:
 
 
 class TypeWalker:
-    def __init__(self, typ: t.Type[t.Any], *, parent: Walker):
+    def __init__(
+        self,
+        typ: t.Type[t.Any],
+        *,
+        parent: Walker,
+        iterate_props: IteratePropsFunc = iterate_props
+    ):
         self.typ = typ
         self.parent = parent
+        self.iterate_props = iterate_props
 
     def walk(
         self, *, ignore_private: t.Optional[bool] = None
@@ -77,7 +88,7 @@ class TypeWalker:
             ignore_private = cfg.option.ignore_private
 
         resolver = self.parent.resolver
-        for name, field_type, metadata in iterate_props(
+        for name, field_type, metadata in self.iterate_props(
             self.typ, ignore_private=ignore_private
         ):
             if metadata is None:
