@@ -16,12 +16,12 @@ class Scanned:
         return iter(self._history)
 
     @property
-    def enums(self) -> t.Iterable[Member]:
-        return iter(self.seen["enum"])
+    def enums(self) -> t.List[Member]:
+        return self.seen["enum"]
 
     @property
-    def objects(self) -> t.Iterable[Member]:
-        return iter(self.seen["object"])
+    def objects(self) -> t.List[Member]:
+        return self.seen["object"]
 
     def get_name(self, m: Member) -> t.Optional[str]:
         return self.names.get(m)
@@ -30,7 +30,7 @@ class Scanned:
 def scan(
     w: Walker,
     *,
-    kinds: t.List[Kind] = ["object", "enums"],
+    kinds: t.List[Kind] = ["object", "enum"],
     ignore_private: bool = False
 ) -> Scanned:
     seen: t.Dict[Kind, t.List[Member]] = defaultdict(list)

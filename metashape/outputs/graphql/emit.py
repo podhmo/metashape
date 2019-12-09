@@ -57,6 +57,7 @@ def scan(walker: Walker) -> Context:
 
     for enum in scanned.enums:
         result.enums[enum.__name__] = enum
+
     for cls in scanned.objects:
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
@@ -90,6 +91,7 @@ def emit(ctx: Context, *, output: t.IO[str]) -> None:
         with m.block(f"enum {name}"):
             for x in typing_inspect.get_args(definition):
                 m.stmt(x)
+        m.sep()
 
     # type
     for name, definition in ctx.result.types.items():
