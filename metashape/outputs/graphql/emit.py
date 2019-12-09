@@ -6,6 +6,7 @@ from functools import partial
 import typing_inspect
 from metashape.langhelpers import make_dict
 from metashape.analyze.walker import Walker
+from metashape.analyze.scan import scan as _scan
 
 from . import detect
 
@@ -51,17 +52,17 @@ def scan(walker: Walker) -> Context:
     resolver = ctx.walker.resolver
     result = ctx.result
 
-    walked = walker.walked(kinds=["object", "enum"])
+    scanned = _scan(walker, kinds=["object", "enum"])
 
-    for enum in walked.enums:
+    for enum in scanned.enums:
         result.enums[enum.__name__] = enum
-    for cls in walked.objects:
+    for cls in scanned.objects:
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
         for field_name, info, metadata in walker.for_type(cls).walk():
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
             prop = {
-                "type": (walked.get_name(info.normalized) or detect.schema_type(info))
+                "type": (scanned.get_name(info.normalized) or detect.schema_type(info))
             }
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
