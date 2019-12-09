@@ -19,6 +19,7 @@ setup(
         "typing_extensions",
         "magicalimport",
         "dictknife",
+        "prestring",
     ],
     extras_require={
         "testing": tests_requires,

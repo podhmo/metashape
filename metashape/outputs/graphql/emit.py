@@ -2,13 +2,14 @@ from __future__ import annotations
 import typing as t
 import logging
 import dataclasses
-from functools import partial
 import typing_inspect
 from metashape.langhelpers import make_dict
 from metashape.analyze.walker import Walker
 from metashape.analyze.scan import scan as _scan
 
 from . import detect
+from ._prestring import Module
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,32 +73,28 @@ def scan(walker: Walker) -> Context:
 
 
 def emit(ctx: Context, *, output: t.IO[str]) -> None:
-    p = partial(print, file=output)
+    m = Module(indent="  ")
     state = ctx.state
     if state.has_query or state.has_query:
-        p("schema {")
-        if state.has_query:
-            p("  query: Query")
-        if state.has_mutation:
-            p("  mutation: Mutation")
-        p("}")
-        p("")
+        with m.block("schema"):
+            if state.has_query:
+                m.stmt("query: Query")
+            if state.has_mutation:
+                m.stmt("mutation: Mutation")
 
     if state.has_query:
-        p("type Query {")
-        p("}")
-        p("")
+        with m.block("type Query"):
+            m.sep()
 
     for name, definition in ctx.result.enums.items():
-        p(f"enum {name} {{")
-        for x in typing_inspect.get_args(definition):
-            p(f"  {x}")
-        p("}")
-        p("")
+        with m.block(f"enum {name}"):
+            for x in typing_inspect.get_args(definition):
+                m.stmt(x)
 
     # type
     for name, definition in ctx.result.types.items():
-        p(f"type {name} {{")
-        for fieldname, fieldvalue in definition.items():
-            p(f"  {fieldname}: {fieldvalue['type']}")
-        p("}")
+        with m.block(f"type {name}"):
+            for fieldname, fieldvalue in definition.items():
+                m.stmt(f"{fieldname}: {fieldvalue['type']}")
+
+    print(m, file=output)
