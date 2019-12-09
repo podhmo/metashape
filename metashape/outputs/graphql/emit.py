@@ -59,6 +59,7 @@ def scan(walker: Walker) -> Context:
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
         for field_name, info, metadata in walker.for_type(cls).walk():
+            field_name = resolver.metadata.resolve_name(metadata, default=field_name)
             prop = {
                 "type": (walked.get_name(info.normalized) or detect.schema_type(info))
             }
