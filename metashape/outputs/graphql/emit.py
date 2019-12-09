@@ -52,7 +52,7 @@ def scan(walker: Walker) -> Context:
     resolver = ctx.walker.resolver
     result = ctx.result
 
-    scanned = _scan(walker, kinds=["object", "enum"])
+    scanned = _scan(walker)
 
     for enum in scanned.enums:
         result.enums[enum.__name__] = enum
