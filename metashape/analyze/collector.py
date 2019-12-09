@@ -16,13 +16,13 @@ class Collector:
         elif isinstance(val, dict):
             return self.collect_dict(val)
         elif is_primitive_type(val):
-            return self.collect_primitive(val)  # type:ignore
+            return self.collect_primitive(val)
         else:
             return self.fn(val)
 
     __call__ = collect
 
-    def collect_list(self, val: t.List[t.Any]) -> _Value:
+    def collect_list(self, val: t.Sequence[t.Any]) -> _Value:
         return [self.collect(x) for x in val]
 
     def collect_dict(self, val: t.Dict[str, t.Any]) -> _Value:
