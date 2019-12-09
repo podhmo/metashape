@@ -9,6 +9,13 @@ import typing_inspect
 # TODO: support inheritance
 # TODO: extract description
 
+PrimitiveType = t.Union[int, bool, float, str, bytes]
+
+
+def is_primitive_type(typ: t.Type[t.Any]) -> bool:
+    return isinstance(typ, (bool, int, float, str, bytes))
+
+
 ContainerType = tx.Literal["list", "tuple", "dict", "set", "union"]
 
 
