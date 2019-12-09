@@ -42,6 +42,7 @@ class Walker:
         kinds: t.List[Kind] = ["object"],
         ignore_private: t.Optional[bool] = None
     ) -> t.Iterable[Member]:
+        resolver = self.resolver
         cfg = self.config
         if ignore_private is None:
             ignore_private = cfg.option.ignore_private
@@ -55,7 +56,7 @@ class Walker:
             except IndexError:
                 break
 
-            name = self.resolver.resolve_typename(m)
+            name = resolver.resolve_typename(m)
             if not name:
                 continue
             if ignore_private:
