@@ -4,8 +4,7 @@ import contextlib
 from prestring import NEWLINE, Module as _Module
 
 
-# fix: Class cannot subclass '_Module' (has type 'Any')
-class Module(_Module):  # type:ignore
+class Module(_Module):
     def sep(self) -> None:
         self.stmt("")
 
