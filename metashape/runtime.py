@@ -50,11 +50,11 @@ def get_walker(
     elif isinstance(target, types.ModuleType):
         d = target.__dict__
         if aggressive and only is None:
-            only = [target.__name__]
+            only = [get_name(target)]
     elif isinstance(target, dict):
         d = target
     elif isinstance(target, (list, tuple)):
-        d = {x.__name__: x for x in target}
+        d = {get_name(x): x for x in target}
         for x in target:
             mark(x, kind=_guess_kind(x) or "object")
     else:
