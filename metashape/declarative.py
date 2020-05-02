@@ -5,6 +5,8 @@ from .marker import mark  # noqa F401
 from .types import MetaData, T
 from .constants import ORIGINAL_NAME  # noqa F401
 
+__all__ = ["shape", "ignore", "field", "MISSING"]
+
 shape = mark  # this is better name?
 ignore = partial(mark, kind="ignore")
 

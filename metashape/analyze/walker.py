@@ -39,7 +39,7 @@ class Walker:
     def walk(
         self,
         *,
-        kinds: t.List[Kind] = ["object"],
+        kinds: t.Sequence[t.Optional[Kind]] = ["object"],
         ignore_private: t.Optional[bool] = None
     ) -> t.Iterable[Member]:
         resolver = self.resolver
