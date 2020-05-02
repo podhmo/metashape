@@ -1,10 +1,11 @@
 import typing as t
 import inspect
+from types import ModuleType
 from .types import MetaData, Member, _ForwardRef
 from .types import IteratePropsFunc
 
 
-def get_name(member: t.Union[Member, _ForwardRef]) -> str:
+def get_name(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
     name_ = getattr(member, "__name__", None)  # type: t.Optional[str]
     if name_ is not None:
         return name_
