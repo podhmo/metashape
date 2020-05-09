@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+from functools import partial
 from functools import lru_cache
 import dataclasses
 import typing_extensions as tx
@@ -16,7 +17,7 @@ def is_primitive_type(typ: t.Type[t.Any]) -> bool:
     return isinstance(typ, (bool, int, float, str, bytes))
 
 
-ContainerType = tx.Literal["list", "tuple", "dict", "set", "union"]
+ContainerType = tx.Literal["?", "list", "tuple", "dict", "set", "union"]
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True, repr=False)
@@ -35,31 +36,26 @@ class TypeInfo:
     user_defined_type: t.Optional[t.Type[t.Any]] = None  # todo:rename
 
     _atom: t.Optional[Atom] = None
-    _container: t.Optional[Container] = None
+    container_type: ContainerType = "?"
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} type={self.raw}>"
+        return f"<{self.__class__.__name__} type={self.raw} is_cointainer={self.is_container}>"
 
     @property
     def atom(self) -> Atom:
         assert self._atom is not None
         return self._atom
 
-    @property
-    def container(self) -> Container:
-        assert self._container is not None
-        return self._container
 
+# @dataclasses.dataclass(frozen=True, unsafe_hash=True)
+# class Container:
+#     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
+#     normalized: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.List[int]
+#     container: ContainerType
+#     args: t.Tuple[TypeInfo, ...]
 
-@dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Container:
-    raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
-    normalized: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.List[int]
-    container: ContainerType
-    args: t.Tuple[TypeInfo, ...]
-
-    is_optional: bool = False  # t.Optional[int] -> True, int -> False
-    is_combined: bool = False  # t.Union -> True, dict -> False
+#     is_optional: bool = False  # t.Optional[int] -> True, int -> False
+#     is_combined: bool = False  # t.Union -> True, dict -> False
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=False)
@@ -79,7 +75,7 @@ class Atom:
     user_defined_type: t.Optional[t.Type[t.Any]] = None
 
 
-_TypeInfoCandidate = t.Union[Atom, Container]
+_TypeInfoCandidate = t.Union[Atom, TypeInfo]
 
 
 @lru_cache(maxsize=128, typed=False)
@@ -123,19 +119,15 @@ def _from_atom(c: Atom) -> TypeInfo:
     )
 
 
-def _from_container(c: Container) -> TypeInfo:
-    return TypeInfo(
-        is_optional=c.is_optional,
-        is_container=True,
-        is_combined=c.is_combined,
-        raw=c.raw,
-        normalized=c.normalized,
-        underlying=type,  # xxx
-        args=tuple(c.args),
-        supertypes=(),
-        user_defined_type=None,
-        _container=c,
-    )
+Container = partial(
+    TypeInfo,
+    is_optional=False,
+    is_container=True,
+    is_combined=False,
+    underlying=type,
+    supertypes=(),
+    user_defined_type=None,
+)
 
 
 @lru_cache(maxsize=1024, typed=False)
@@ -144,7 +136,7 @@ def typeinfo(typ: t.Type[t.Any]) -> TypeInfo:
     if isinstance(c, Atom):
         return _from_atom(c)
     else:
-        return _from_container(c)
+        return c
 
 
 def _typeinfo(
@@ -171,7 +163,7 @@ def _typeinfo(
             return Container(
                 raw=raw,
                 normalized=tuple if issubclass(typ, tuple) else t.Sequence,
-                container="tuple" if issubclass(typ, tuple) else "list",
+                container_type="tuple" if issubclass(typ, tuple) else "list",
                 args=(typeinfo(_anytype),),
             )
         elif issubclass(typ, t.Mapping):
@@ -179,7 +171,7 @@ def _typeinfo(
             return Container(
                 raw=raw,
                 normalized=t.Mapping,
-                container="dict",
+                container_type="dict",
                 args=(childinfo, childinfo),
             )
         else:
@@ -195,7 +187,7 @@ def _typeinfo(
                     typ = underlying = args[0]
                 else:
                     return Container(
-                        container="union",
+                        container_type="union",
                         raw=raw,
                         normalized=typ,
                         args=tuple([typeinfo(t) for t in args]),
@@ -208,7 +200,7 @@ def _typeinfo(
                     args = [x for x in args if x != _nonetype]
                     typ = t.Union[tuple(args)]
                 return Container(
-                    container="union",
+                    container_type="union",
                     raw=raw,
                     normalized=typ,
                     args=tuple([typeinfo(t) for t in args]),
@@ -226,7 +218,7 @@ def _typeinfo(
                 return Container(
                     raw=raw,
                     normalized=typ,
-                    container="tuple" if issubclass(underlying, tuple) else "list",
+                    container_type="tuple" if issubclass(underlying, tuple) else "list",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )
@@ -235,7 +227,7 @@ def _typeinfo(
                 return Container(
                     raw=raw,
                     normalized=typ,
-                    container="dict",
+                    container_type="dict",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )
@@ -244,7 +236,7 @@ def _typeinfo(
                 return Container(
                     raw=raw,
                     normalized=typ,
-                    container="set",
+                    container_type="set",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                 )

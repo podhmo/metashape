@@ -6,7 +6,7 @@ from functools import partial
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze.typeinfo import Container
+from metashape.analyze.typeinfo import TypeInfo
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 
@@ -89,7 +89,7 @@ class Scanner:
             "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: Container) -> t.Dict[str, t.Any]:
+    def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         cfg = self.ctx.walker.config
         candidates: t.List[t.Dict[str, t.Any]] = []
@@ -151,7 +151,7 @@ class Scanner:
                 continue
 
             if info.is_combined:
-                properties[field_name] = prop = self._build_one_of_data(info.container)
+                properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
                 enum = detect.enum(info)
@@ -167,7 +167,7 @@ class Scanner:
                 assert len(info.args) == 1
                 first = info.args[0]
                 if first.is_combined and first.is_container:
-                    prop["items"] = self._build_one_of_data(first.container)
+                    prop["items"] = self._build_one_of_data(first)
                 elif first.user_defined_type is None:
                     prop["items"] = detect.schema_type(first)
                 else:

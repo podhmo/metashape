@@ -17,10 +17,7 @@ typing:
 	mypy --strict --strict-equality --ignore-missing-imports metashape
 
 examples:
-	$(MAKE) -C examples/openapi
-	$(MAKE) -C examples/jsonschema
-	$(MAKE) -C examples/graphql
-	$(MAKE) -C examples/inputs
+	$(MAKE) -C examples
 
 build:
 #	pip install wheel

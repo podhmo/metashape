@@ -27,7 +27,7 @@ def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
 def schema_type(info: typeinfo.TypeInfo) -> str:
     if info.is_container:
         # dict? (additionalProperties?)
-        if info.container.container in ("list", "tuple") and len(info.args) == 1:
+        if info.container_type in ("list", "tuple") and len(info.args) == 1:
             typ = schema_type(info.args[0])
             typ = f"[{typ}]"
             if info.is_optional:

@@ -13,9 +13,9 @@ def schema_type(
     info: typeinfo.TypeInfo, *, unknown: JSONSchemaType = "object"
 ) -> JSONSchemaType:
     if info.is_container:
-        if info.container.container in ("list", "tuple"):
+        if info.container_type in ("list", "tuple"):
             return "array"
-        elif info.container.container == "dict":
+        elif info.container_type == "dict":
             return "object"
     else:  # Atom
         typ = info.underlying
