@@ -20,15 +20,17 @@ def atom(
     custom=None,
     supertypes=None
 ):
-    from metashape.analyze.typeinfo import Atom
+    from metashape.analyze.typeinfo import Atom, _from_atom
 
-    return Atom(
-        raw=raw,
-        underlying=underlying or raw,
-        normalized=normalized or raw or underlying,
-        is_optional=is_optional,
-        custom=custom,
-        supertypes=supertypes or [],
+    return _from_atom(
+        Atom(
+            raw=raw,
+            underlying=underlying or raw,
+            normalized=normalized or raw or underlying,
+            is_optional=is_optional,
+            custom=custom,
+            supertypes=supertypes or [],
+        )
     )
 
 
@@ -42,16 +44,18 @@ def container(
     raw_args=None,
     args=None
 ):
-    from metashape.analyze.typeinfo import Container
+    from metashape.analyze.typeinfo import Container, _from_container
 
     raw_args = raw_args or [atom(raw=x, underlying=x) for x in args]
-    return Container(
-        raw=raw,
-        normalized=normalized or raw,
-        args=tuple(raw_args),
-        container=container,
-        is_optional=is_optional,
-        is_composite=is_composite,
+    return _from_container(
+        Container(
+            raw=raw,
+            normalized=normalized or raw,
+            args=tuple(raw_args),
+            container=container,
+            is_optional=is_optional,
+            is_composite=is_composite,
+        )
     )
 
 
