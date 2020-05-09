@@ -29,7 +29,7 @@ class TypeInfo:
     raw: t.Type[t.Any]
 
     # t.Optional[X] -> X, t.List[X] -> t.List[X]
-    normalized: t.Type[t.Any] = dataclasses.field(repr=False)
+    type_: t.Type[t.Any] = dataclasses.field(repr=False)
 
     # t.List[X] -> (X), t.Dict[K, V]-> (K, V)
     args: t.Tuple[TypeInfo, ...] = dataclasses.field(repr=False)
@@ -83,7 +83,7 @@ def typeinfo(
         elif issubclass(typ, t.Sequence):
             return Container(
                 raw=raw,
-                normalized=tuple if issubclass(typ, tuple) else t.Sequence,
+                type_=tuple if issubclass(typ, tuple) else t.Sequence,
                 container_type="tuple" if issubclass(typ, tuple) else "list",
                 args=(typeinfo(_anytype),),
             )
@@ -91,7 +91,7 @@ def typeinfo(
             childinfo = typeinfo(_anytype)
             return Container(
                 raw=raw,
-                normalized=t.Mapping,
+                type_=t.Mapping,
                 container_type="dict",
                 args=(childinfo, childinfo),
             )
@@ -110,7 +110,7 @@ def typeinfo(
                     return Container(
                         container_type="union",
                         raw=raw,
-                        normalized=typ,
+                        type_=typ,
                         args=tuple([typeinfo(t) for t in args]),
                         is_optional=is_optional,
                         is_combined=True,
@@ -123,7 +123,7 @@ def typeinfo(
                 return Container(
                     container_type="union",
                     raw=raw,
-                    normalized=typ,
+                    type_=typ,
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
                     is_combined=True,
@@ -138,7 +138,7 @@ def typeinfo(
                 args = typing_inspect.get_args(typ)
                 return Container(
                     raw=raw,
-                    normalized=typ,
+                    type_=typ,
                     container_type="tuple" if issubclass(underlying, tuple) else "list",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
@@ -147,7 +147,7 @@ def typeinfo(
                 args = typing_inspect.get_args(typ)
                 return Container(
                     raw=raw,
-                    normalized=typ,
+                    type_=typ,
                     container_type="dict",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
@@ -156,7 +156,7 @@ def typeinfo(
                 args = typing_inspect.get_args(typ)
                 return Container(
                     raw=raw,
-                    normalized=typ,
+                    type_=typ,
                     container_type="set",
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
@@ -173,7 +173,7 @@ def typeinfo(
         user_defined_type = underlying
     return Atom(
         raw=raw,
-        normalized=typ,
+        type_=typ,
         underlying=underlying,
         is_optional=is_optional,
         user_defined_type=user_defined_type,

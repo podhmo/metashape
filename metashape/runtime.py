@@ -119,20 +119,20 @@ def _mark_recursive(
         yield m
 
         for _, info, _ in w.for_type(m).walk():
-            if info.normalized in seen:
+            if info.type_ in seen:
                 continue
 
             for x in info.args or [info]:
-                if x.normalized in seen:
+                if x.type_ in seen:
                     continue
 
-                kind = guess_member(x.normalized)
+                kind = guess_member(x.type_)
                 if kind is None:
                     continue
 
-                mark(x.normalized, kind=kind)
-                yield x.normalized
-                q.append(x.normalized)
+                mark(x.type_, kind=kind)
+                yield x.type_
+                q.append(x.type_)
 
 
 def _guess_kind(cls: t.Type[t.Any]) -> t.Optional[Kind]:

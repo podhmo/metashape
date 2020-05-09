@@ -99,10 +99,10 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.normalized):
-                walker.append(info.normalized)
+            if resolver.is_member(info.type_):
+                walker.append(info.type_)
 
-                properties[field_name] = self._build_ref_data(info.normalized)
+                properties[field_name] = self._build_ref_data(info.type_)
                 continue
 
             if info.is_combined:

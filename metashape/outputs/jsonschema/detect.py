@@ -34,7 +34,7 @@ def schema_type(
 # TODO: strict typing
 # TODO: move
 def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
-    typ = info.normalized
+    typ = info.type_
     origin = getattr(typ, "__origin__", None)
     if origin != tx.Literal:
         return ()  # type: ignore
