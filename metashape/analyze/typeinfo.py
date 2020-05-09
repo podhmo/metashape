@@ -35,16 +35,10 @@ class TypeInfo:
 
     user_defined_type: t.Optional[t.Type[t.Any]] = None  # todo:rename
 
-    _atom: t.Optional[Atom] = None
     container_type: ContainerType = "?"
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} type={self.raw} is_cointainer={self.is_container}>"
-
-    @property
-    def atom(self) -> Atom:
-        assert self._atom is not None
-        return self._atom
 
 
 # @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -58,24 +52,21 @@ class TypeInfo:
 #     is_combined: bool = False  # t.Union -> True, dict -> False
 
 
-@dataclasses.dataclass(frozen=True, unsafe_hash=False)
-class Atom:
-    raw: t.Type[t.Any]  # t.Optional[int] -> t.Optional[int]
-    normalized: t.Type[
-        t.Any
-    ]  # t.Optional[tx.Literal["a", "b"]] -> tx.Literal["a", "b"]
-    underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
+# @dataclasses.dataclass(frozen=True, unsafe_hash=False)
+# class Atom:
+#     raw: t.Type[t.Any]  # t.Optional[int] -> t.Optional[int]
+#     normalized: t.Type[
+#         t.Any
+#     ]  # t.Optional[tx.Literal["a", "b"]] -> tx.Literal["a", "b"]
+#     underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
 
-    is_optional: bool = False  # t.Optional[int] -> True, int -> False
+#     is_optional: bool = False  # t.Optional[int] -> True, int -> False
 
-    supertypes: t.List[t.Type[t.Any]] = dataclasses.field(default_factory=list)
+#     supertypes: t.List[t.Type[t.Any]] = dataclasses.field(default_factory=list)
 
-    # int -> None, Person -> Person, t.List[int] -> None
-    # FIXME: support  t.List[Person] -> Person
-    user_defined_type: t.Optional[t.Type[t.Any]] = None
-
-
-_TypeInfoCandidate = t.Union[Atom, TypeInfo]
+#     # int -> None, Person -> Person, t.List[int] -> None
+#     # FIXME: support  t.List[Person] -> Person
+#     user_defined_type: t.Optional[t.Type[t.Any]] = None
 
 
 @lru_cache(maxsize=128, typed=False)
@@ -104,20 +95,9 @@ def omit_optional(
     return t.Union[tuple(args)], True
 
 
-def _from_atom(c: Atom) -> TypeInfo:
-    return TypeInfo(
-        is_optional=c.is_optional,
-        is_container=False,
-        is_combined=False,
-        raw=c.raw,
-        normalized=c.normalized,
-        underlying=c.underlying,
-        args=(),
-        supertypes=tuple(c.supertypes),
-        user_defined_type=c.user_defined_type,
-        _atom=c,
-    )
-
+Atom = partial(
+    TypeInfo, is_optional=False, is_container=False, is_combined=False, args=(),
+)
 
 Container = partial(
     TypeInfo,
@@ -131,15 +111,7 @@ Container = partial(
 
 
 @lru_cache(maxsize=1024, typed=False)
-def typeinfo(typ: t.Type[t.Any]) -> TypeInfo:
-    c = _typeinfo(typ)
-    if isinstance(c, Atom):
-        return _from_atom(c)
-    else:
-        return c
-
-
-def _typeinfo(
+def typeinfo(
     typ: t.Type[t.Any],
     *,
     is_optional: bool = False,
@@ -149,7 +121,7 @@ def _typeinfo(
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
         t.Set[t.Type[t.Any]], set([str, int, bool, str, bytes, dict, list, t.Any])
     ),
-) -> _TypeInfoCandidate:
+) -> TypeInfo:
     raw = typ
     args = typing_inspect.get_args(typ)
     underlying = getattr(typ, "__origin__", None)
