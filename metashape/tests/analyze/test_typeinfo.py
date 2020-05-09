@@ -28,7 +28,7 @@ def atom(
         normalized=normalized or raw or underlying,
         is_optional=is_optional,
         user_defined_type=user_defined_type,
-        supertypes=supertypes or [],
+        supertypes=tuple(supertypes or ()),
     )
 
 
