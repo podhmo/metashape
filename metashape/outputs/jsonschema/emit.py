@@ -66,11 +66,10 @@ class Scanner:
         }  # todo: lazy
 
     def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
-        resolver = self.ctx.walker.resolver
         candidates: t.List[t.Dict[str, t.Any]] = []
 
-        for x in resolver.typeinfo.get_args(info):
-            custom = resolver.typeinfo.get_custom(x)
+        for x in info.args:
+            custom = x.custom
             if custom is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
@@ -106,7 +105,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if resolver.typeinfo.is_composite(info):
+            if info.is_composite:
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -120,12 +119,12 @@ class Scanner:
             resolver.metadata.fill_extra_metadata(prop, metadata, name="jsonschema")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(resolver.typeinfo.get_args(info)) == 1
-                first = resolver.typeinfo.get_args(info)[0]
-                if resolver.typeinfo.is_composite(first):
+                assert len(info.args) == 1
+                first = info.args[0]
+                if first.is_composite:
                     prop["items"] = self._build_one_of_data(first)
                 else:
-                    custom = resolver.typeinfo.get_custom(first)
+                    custom = first.custom
                     if custom is None:
                         prop["items"] = detect.schema_type(first)
                     else:

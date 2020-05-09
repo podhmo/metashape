@@ -5,7 +5,7 @@ from metashape.constants import ID
 logger = logging.getLogger(__name__)
 
 
-def _underlying_schema_type(info: typeinfo.Atom) -> str:
+def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
     typ = info.underlying
     if info.supertypes and info.supertypes[0] == ID:
         return "ID"
@@ -25,9 +25,9 @@ def _underlying_schema_type(info: typeinfo.Atom) -> str:
 
 
 def schema_type(info: typeinfo.TypeInfo) -> str:
-    if isinstance(info, typeinfo.Container):
+    if info.is_container:
         # dict? (additionalProperties?)
-        if info.container in ("list", "tuple") and len(info.args) == 1:
+        if info.container.container in ("list", "tuple") and len(info.args) == 1:
             typ = schema_type(info.args[0])
             typ = f"[{typ}]"
             if info.is_optional:

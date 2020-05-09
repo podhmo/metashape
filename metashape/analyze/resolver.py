@@ -44,15 +44,6 @@ class TypeInfoResolver:
         except TypeError:
             return typeinfo.typeinfo(typ.__class__)
 
-    def get_args(self, info: typeinfo.TypeInfo) -> t.List[typeinfo.TypeInfo]:
-        return typeinfo.get_args(info)
-
-    def get_custom(self, info: typeinfo.TypeInfo) -> t.Optional[t.Type[t.Any]]:
-        return typeinfo.get_custom(info)
-
-    def is_composite(self, info: typeinfo.TypeInfo) -> bool:
-        return typeinfo.is_composite(info)
-
 
 class MetaDataResolver:
     def resolve_name(self, metadata: MetaData, *, default: str) -> str:

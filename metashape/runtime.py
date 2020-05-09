@@ -9,7 +9,6 @@ from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
-from metashape.analyze import typeinfo  # TODO: remove
 from ._access import get_name
 
 logger = logging.getLogger(__name__)
@@ -123,7 +122,7 @@ def _mark_recursive(
             if info.normalized in seen:
                 continue
 
-            for x in typeinfo.get_args(info) or [info]:
+            for x in info.args or [info]:
                 if x.normalized in seen:
                     continue
 

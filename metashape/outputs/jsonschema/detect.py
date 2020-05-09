@@ -12,10 +12,10 @@ JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", 
 def schema_type(
     info: typeinfo.TypeInfo, *, unknown: JSONSchemaType = "object"
 ) -> JSONSchemaType:
-    if isinstance(info, typeinfo.Container):
-        if info.container in ("list", "tuple"):
+    if info.is_container:
+        if info.container.container in ("list", "tuple"):
             return "array"
-        elif info.container == "dict":
+        elif info.container.container == "dict":
             return "object"
     else:  # Atom
         typ = info.underlying
