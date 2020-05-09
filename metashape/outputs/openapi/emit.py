@@ -151,7 +151,7 @@ class Scanner:
                 continue
 
             if info.is_combined:
-                properties[field_name] = prop = self._build_one_of_data(info)
+                properties[field_name] = prop = self._build_one_of_data(info.container)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
                 enum = detect.enum(info)
@@ -167,7 +167,7 @@ class Scanner:
                 assert len(info.args) == 1
                 first = info.args[0]
                 if first.is_combined and first.is_container:
-                    prop["items"] = self._build_one_of_data(first)
+                    prop["items"] = self._build_one_of_data(first.container)
                 elif first.user_defined_type is None:
                     prop["items"] = detect.schema_type(first)
                 else:
