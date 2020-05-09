@@ -29,7 +29,7 @@ def get_walker(
     _depth: int = 1,  # xxx: for black magic
 ) -> Walker:
     config = config or Config()
-    resolver = Resolver()
+    resolver = Resolver(config=config)
 
     if target is None:
         if aggressive:

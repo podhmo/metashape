@@ -7,15 +7,20 @@ from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
 from metashape import typeinfo
+from .config import Config
+
 
 logger = logging.getLogger(__name__)
 
 
 class Resolver:  # ModuleResolver
     def __init__(
-        self, *, is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
+        self,
+        *,
+        config: t.Optional[Config],
+        is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
     ) -> None:
-
+        self.config = config or Config()
         self._is_member = is_member or is_marked
 
     def is_member(self, ob: t.Type[T]) -> bool:
@@ -30,7 +35,7 @@ class Resolver:  # ModuleResolver
 
     @reify
     def typeinfo(self) -> TypeInfoResolver:
-        return TypeInfoResolver()
+        return TypeInfoResolver(self)
 
     @reify
     def metadata(self) -> MetaDataResolver:
@@ -38,11 +43,15 @@ class Resolver:  # ModuleResolver
 
 
 class TypeInfoResolver:
+    def __init__(self, root: Resolver):
+        self.root = root
+
     def resolve(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        default = self.root.config.typeinfo_unexpected_handler
         try:
-            return typeinfo.typeinfo(typ)
+            return typeinfo.typeinfo(typ, default=default)
         except TypeError:
-            return typeinfo.typeinfo(typ.__class__)
+            return typeinfo.typeinfo(typ.__class__, default=default)
 
 
 class MetaDataResolver:
