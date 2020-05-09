@@ -136,7 +136,7 @@ def _mark_recursive(
 
 
 def _guess_kind(cls: t.Type[t.Any]) -> t.Optional[Kind]:
-    # is custom class?
+    # is user_defined_type class?
     if hasattr(cls, "__name__"):
         if not hasattr(cls, "__loader__") and hasattr(cls, "__annotations__"):
             if not inspect.isclass(cls):

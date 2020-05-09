@@ -69,11 +69,11 @@ class Scanner:
         candidates: t.List[t.Dict[str, t.Any]] = []
 
         for x in info.args:
-            custom = x.custom
-            if custom is None:
+            user_defined_type = x.user_defined_type
+            if user_defined_type is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(custom))
+                candidates.append(self._build_ref_data(user_defined_type))
         prop = {"oneOf": candidates}  # todo: discriminator
         return prop
 
@@ -105,7 +105,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if info.is_composite:
+            if info.is_combined:
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -121,15 +121,15 @@ class Scanner:
             if prop.get("type") == "array":  # todo: simplify with recursion
                 assert len(info.args) == 1
                 first = info.args[0]
-                if first.is_composite:
+                if first.is_combined:
                     prop["items"] = self._build_one_of_data(first)
                 else:
-                    custom = first.custom
-                    if custom is None:
+                    user_defined_type = first.user_defined_type
+                    if user_defined_type is None:
                         prop["items"] = detect.schema_type(first)
                     else:
-                        custom_type = custom
-                        prop["items"] = self._build_ref_data(custom_type)
+                        user_defined_type_type = user_defined_type
+                        prop["items"] = self._build_ref_data(user_defined_type_type)
 
         if len(required) <= 0:
             schema.pop("required")

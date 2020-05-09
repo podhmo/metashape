@@ -96,25 +96,25 @@ class Scanner:
         need_discriminator = True
 
         for x in info.args:
-            custom = x.custom
-            if custom is None:
+            user_defined_type = x.user_defined_type
+            if user_defined_type is None:
                 need_discriminator = False
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(custom))
+                candidates.append(self._build_ref_data(user_defined_type))
         prop: t.Dict[str, t.Any] = {"oneOf": candidates}  # todo: discriminator
 
         if need_discriminator:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             # update schema
             for x in info.args:
-                custom = x.custom
-                if custom is None:
+                user_defined_type = x.user_defined_type
+                if user_defined_type is None:
                     continue
                 cfg.callbacks.append(
                     partial(
                         self.fixer.fix_discriminator,
-                        resolver.resolve_typename(custom),
+                        resolver.resolve_typename(user_defined_type),
                         self.DISCRIMINATOR_FIELD,
                     )
                 )
@@ -150,7 +150,7 @@ class Scanner:
                 properties[field_name] = self._build_ref_data(info.normalized)
                 continue
 
-            if info.is_composite and info.is_container:
+            if info.is_combined:
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -166,14 +166,14 @@ class Scanner:
             if prop.get("type") == "array":  # todo: simplify with recursion
                 assert len(info.args) == 1
                 first = info.args[0]
-                if first.is_composite and first.is_container:
+                if first.is_combined and first.is_container:
                     prop["items"] = self._build_one_of_data(first)
-                elif first.custom is None:
+                elif first.user_defined_type is None:
                     prop["items"] = detect.schema_type(first)
                 else:
-                    custom_type = first.custom
-                    if custom_type is not None:
-                        prop["items"] = self._build_ref_data(custom_type)
+                    user_defined_type_type = first.user_defined_type
+                    if user_defined_type_type is not None:
+                        prop["items"] = self._build_ref_data(user_defined_type_type)
 
         if len(required) <= 0:
             schema.pop("required")

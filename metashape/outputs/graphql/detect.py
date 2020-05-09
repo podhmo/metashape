@@ -9,7 +9,7 @@ def _underlying_schema_type(info: typeinfo.TypeInfo) -> str:
     typ = info.underlying
     if info.supertypes and info.supertypes[0] == ID:
         return "ID"
-    elif info.custom is not None:  # t.Type?
+    elif info.user_defined_type is not None:  # t.Type?
         return typ.__name__
 
     if issubclass(typ, str):

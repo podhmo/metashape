@@ -23,7 +23,7 @@ ContainerType = tx.Literal["list", "tuple", "dict", "set", "union"]
 class TypeInfo:
     is_container: bool
     is_optional: bool
-    is_composite: bool
+    is_combined: bool  # Union (for oneOf, anyOf, allOf)
 
     raw: t.Type[t.Any]
     normalized: t.Type[t.Any]
@@ -32,7 +32,7 @@ class TypeInfo:
     underlying: t.Type[t.Any]
     supertypes: t.Tuple[t.Type[t.Any], ...]
 
-    custom: t.Optional[t.Type[t.Any]] = None  # todo:rename
+    user_defined_type: t.Optional[t.Type[t.Any]] = None  # todo:rename
 
     _atom: t.Optional[Atom] = None
     _container: t.Optional[Container] = None
@@ -59,7 +59,7 @@ class Container:
     args: t.Tuple[TypeInfo, ...]
 
     is_optional: bool = False  # t.Optional[int] -> True, int -> False
-    is_composite: bool = False  # t.Union -> True, dict -> False
+    is_combined: bool = False  # t.Union -> True, dict -> False
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=False)
@@ -76,7 +76,7 @@ class Atom:
 
     # int -> None, Person -> Person, t.List[int] -> None
     # FIXME: support  t.List[Person] -> Person
-    custom: t.Optional[t.Type[t.Any]] = None
+    user_defined_type: t.Optional[t.Type[t.Any]] = None
 
 
 _TypeInfoCandidate = t.Union[Atom, Container]
@@ -112,13 +112,13 @@ def _from_atom(c: Atom) -> TypeInfo:
     return TypeInfo(
         is_optional=c.is_optional,
         is_container=False,
-        is_composite=False,
+        is_combined=False,
         raw=c.raw,
         normalized=c.normalized,
         underlying=c.underlying,
         args=(),
         supertypes=tuple(c.supertypes),
-        custom=c.custom,
+        user_defined_type=c.user_defined_type,
         _atom=c,
     )
 
@@ -127,13 +127,13 @@ def _from_container(c: Container) -> TypeInfo:
     return TypeInfo(
         is_optional=c.is_optional,
         is_container=True,
-        is_composite=c.is_composite,
+        is_combined=c.is_combined,
         raw=c.raw,
         normalized=c.normalized,
         underlying=type,  # xxx
         args=tuple(c.args),
         supertypes=(),
-        custom=None,
+        user_defined_type=None,
         _container=c,
     )
 
@@ -151,7 +151,7 @@ def _typeinfo(
     typ: t.Type[t.Any],
     *,
     is_optional: bool = False,
-    custom: t.Optional[t.Type[t.Any]] = None,
+    user_defined_type: t.Optional[t.Type[t.Any]] = None,
     _nonetype: t.Type[t.Any] = t.cast(t.Type[t.Any], type(None)),  # xxx
     _anytype: t.Type[t.Any] = t.cast(t.Type[t.Any], t.Any),  # xxx
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
@@ -200,7 +200,7 @@ def _typeinfo(
                         normalized=typ,
                         args=tuple([typeinfo(t) for t in args]),
                         is_optional=is_optional,
-                        is_composite=True,
+                        is_combined=True,
                     )
             else:
                 is_optional = _nonetype in args
@@ -213,7 +213,7 @@ def _typeinfo(
                     normalized=typ,
                     args=tuple([typeinfo(t) for t in args]),
                     is_optional=is_optional,
-                    is_composite=True,
+                    is_combined=True,
                 )
 
         if hasattr(typ, "__origin__"):
@@ -257,13 +257,13 @@ def _typeinfo(
         underlying = underlying.__supertype__
 
     if underlying not in _primitives:
-        custom = underlying
+        user_defined_type = underlying
     return Atom(
         raw=raw,
         normalized=typ,
         underlying=underlying,
         is_optional=is_optional,
-        custom=custom,
+        user_defined_type=user_defined_type,
         supertypes=supertypes,
     )
 

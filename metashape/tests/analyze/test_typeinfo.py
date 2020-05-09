@@ -17,7 +17,7 @@ def atom(
     underlying=None,
     normalized=None,
     is_optional=False,
-    custom=None,
+    user_defined_type=None,
     supertypes=None
 ):
     from metashape.analyze.typeinfo import Atom, _from_atom
@@ -28,7 +28,7 @@ def atom(
             underlying=underlying or raw,
             normalized=normalized or raw or underlying,
             is_optional=is_optional,
-            custom=custom,
+            user_defined_type=user_defined_type,
             supertypes=supertypes or [],
         )
     )
@@ -40,7 +40,7 @@ def container(
     raw,
     normalized=None,
     is_optional=False,
-    is_composite=False,
+    is_combined=False,
     raw_args=None,
     args=None
 ):
@@ -54,7 +54,7 @@ def container(
             args=tuple(raw_args),
             container=container,
             is_optional=is_optional,
-            is_composite=is_composite,
+            is_combined=is_combined,
         )
     )
 
@@ -171,25 +171,25 @@ def test_omit_optional(typ, want, omitted):
             ),
         ),
         # schema
-        ("custom", _Person, atom(raw=_Person, underlying=_Person, custom=_Person)),
+        ("user_defined_type", _Person, atom(raw=_Person, underlying=_Person, user_defined_type=_Person)),
         (
-            "optional custom",
+            "optional user_defined_type",
             t.Optional[_Person],
             atom(
                 raw=t.Optional[_Person],
                 normalized=_Person,
                 underlying=_Person,
-                custom=_Person,
+                user_defined_type=_Person,
                 is_optional=True,
             ),
         ),
         (
-            "list custom",
+            "list user_defined_type",
             t.List[_Person],
             container(
                 raw=t.List[_Person],
                 container="list",
-                raw_args=[atom(raw=_Person, underlying=_Person, custom=_Person)],
+                raw_args=[atom(raw=_Person, underlying=_Person, user_defined_type=_Person)],
             ),
         ),
         # composite
@@ -199,22 +199,22 @@ def test_omit_optional(typ, want, omitted):
             container(
                 raw=t.Union[int, str],
                 container="union",
-                is_composite=True,
+                is_combined=True,
                 raw_args=[atom(raw=int, underlying=int), atom(raw=str, underlying=str)],
             ),
         ),
         (
-            "optional union optional custom optional str",
+            "optional union optional user_defined_type optional str",
             # simplify -> t.Union[NoneType, _Person, str]
             t.Optional[t.Union[t.Optional[_Person], t.Optional[str]]],
             container(
                 raw=t.Optional[t.Union[t.Optional[_Person], t.Optional[str]]],
                 normalized=t.Union[_Person, str],
                 container="union",
-                is_composite=True,
+                is_combined=True,
                 is_optional=True,
                 raw_args=[
-                    atom(raw=_Person, underlying=_Person, custom=_Person),
+                    atom(raw=_Person, underlying=_Person, user_defined_type=_Person),
                     atom(raw=str, underlying=str),
                 ],
             ),
