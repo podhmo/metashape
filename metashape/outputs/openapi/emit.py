@@ -171,9 +171,8 @@ class Scanner:
                 elif first.user_defined_type is None:
                     prop["items"] = detect.schema_type(first)
                 else:
-                    user_defined_type_type = first.user_defined_type
-                    if user_defined_type_type is not None:
-                        prop["items"] = self._build_ref_data(user_defined_type_type)
+                    if first.user_defined_type is not None:
+                        prop["items"] = self._build_ref_data(first.user_defined_type)
 
         if len(required) <= 0:
             schema.pop("required")
