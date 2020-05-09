@@ -20,25 +20,28 @@ def is_primitive_type(typ: t.Type[t.Any]) -> bool:
 ContainerType = tx.Literal["?", "list", "tuple", "dict", "set", "union"]
 
 
-@dataclasses.dataclass(frozen=True, unsafe_hash=True, repr=False)
+@dataclasses.dataclass(frozen=True)
 class TypeInfo:
     is_container: bool
     is_optional: bool
     is_combined: bool  # Union (for oneOf, anyOf, allOf)
 
     raw: t.Type[t.Any]
-    normalized: t.Type[t.Any]
-    args: t.Tuple[TypeInfo, ...]
 
-    underlying: t.Type[t.Any]
-    supertypes: t.Tuple[t.Type[t.Any], ...]
+    # t.Optional[X] -> X, t.List[X] -> t.List[X]
+    normalized: t.Type[t.Any] = dataclasses.field(repr=False)
 
-    user_defined_type: t.Optional[t.Type[t.Any]] = None  # todo:rename
+    # t.List[X] -> (X), t.Dict[K, V]-> (K, V)
+    args: t.Tuple[TypeInfo, ...] = dataclasses.field(repr=False)
 
+    # tx.Literal['x', 'y'] -> str, t.Optional[tx.Literal['x', 'y']] -> str
+    underlying: t.Type[t.Any] = dataclasses.field(repr=False)
+    # ?
+    supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False)
+
+    # User -> User, int -> None, (FIXME: t.List[User] -> None)
+    user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(default=None)
     container_type: ContainerType = "?"
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} type={self.raw} is_cointainer={self.is_container}>"
 
 
 Atom = partial(
@@ -174,7 +177,7 @@ def typeinfo(
         underlying=underlying,
         is_optional=is_optional,
         user_defined_type=user_defined_type,
-        supertypes=supertypes,
+        supertypes=tuple(supertypes),
     )
 
 
