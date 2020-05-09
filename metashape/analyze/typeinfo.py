@@ -41,34 +41,6 @@ class TypeInfo:
         return f"<{self.__class__.__name__} type={self.raw} is_cointainer={self.is_container}>"
 
 
-# @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-# class Container:
-#     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
-#     normalized: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.List[int]
-#     container: ContainerType
-#     args: t.Tuple[TypeInfo, ...]
-
-#     is_optional: bool = False  # t.Optional[int] -> True, int -> False
-#     is_combined: bool = False  # t.Union -> True, dict -> False
-
-
-# @dataclasses.dataclass(frozen=True, unsafe_hash=False)
-# class Atom:
-#     raw: t.Type[t.Any]  # t.Optional[int] -> t.Optional[int]
-#     normalized: t.Type[
-#         t.Any
-#     ]  # t.Optional[tx.Literal["a", "b"]] -> tx.Literal["a", "b"]
-#     underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
-
-#     is_optional: bool = False  # t.Optional[int] -> True, int -> False
-
-#     supertypes: t.List[t.Type[t.Any]] = dataclasses.field(default_factory=list)
-
-#     # int -> None, Person -> Person, t.List[int] -> None
-#     # FIXME: support  t.List[Person] -> Person
-#     user_defined_type: t.Optional[t.Type[t.Any]] = None
-
-
 @lru_cache(maxsize=128, typed=False)
 def omit_optional(
     typ: t.Type[t.Any], *, _nonetype: t.Type[t.Any] = type(None)
