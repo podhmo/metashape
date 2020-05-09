@@ -211,7 +211,7 @@ if __name__ == "__main__":
             from pprint import pprint
             from magicalimport import import_symbol
 
-            x = import_symbol(path)
+            x = import_symbol(path, cwd=True)
             pprint(typeinfo(x))
 
         import argparse
