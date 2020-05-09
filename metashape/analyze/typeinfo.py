@@ -19,6 +19,38 @@ def is_primitive_type(typ: t.Type[t.Any]) -> bool:
 ContainerType = tx.Literal["list", "tuple", "dict", "set", "union"]
 
 
+@dataclasses.dataclass(frozen=True, unsafe_hash=True, repr=False)
+class TypeInfo:
+    is_container: bool
+    is_optional: bool
+    is_composite: bool
+
+    raw: t.Type[t.Any]
+    normalized: t.Type[t.Any]
+    args: t.Tuple[TypeInfo, ...]
+
+    underlying: t.Type[t.Any]
+    supertypes: t.Tuple[t.Type[t.Any], ...]
+
+    custom: t.Optional[t.Type[t.Any]] = None  # todo:rename
+
+    _atom: t.Optional[Atom] = None
+    _container: t.Optional[Container] = None
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} type={self.raw}>"
+
+    @property
+    def atom(self) -> Atom:
+        assert self._atom is not None
+        return self._atom
+
+    @property
+    def container(self) -> Container:
+        assert self._container is not None
+        return self._container
+
+
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class Container:
     raw: t.Type[t.Any]  # t.Optional[t.List[int]] -> t.Optional[t.List[int]]
@@ -39,13 +71,15 @@ class Atom:
     underlying: t.Type[t.Any]  # t.Optionall[tx.Literal["a", "b"]] -> str
 
     is_optional: bool = False  # t.Optional[int] -> True, int -> False
-    custom: t.Optional[
-        t.Type[t.Any]
-    ] = None  # int -> None, Person -> Person, t.List[int] -> None
+
     supertypes: t.List[t.Type[t.Any]] = dataclasses.field(default_factory=list)
 
+    # int -> None, Person -> Person, t.List[int] -> None
+    # FIXME: support  t.List[Person] -> Person
+    custom: t.Optional[t.Type[t.Any]] = None
 
-TypeInfo = t.Union[Atom, Container]
+
+_TypeInfoCandidate = t.Union[Atom, Container]
 
 
 @lru_cache(maxsize=128, typed=False)
@@ -74,27 +108,46 @@ def omit_optional(
     return t.Union[tuple(args)], True
 
 
-# TODO: move to method
-def is_composite(info: TypeInfo) -> bool:
-    # for performance (skip isinstance)
-    return getattr(info, "is_composite", False)  # type: ignore
+def _from_atom(c: Atom) -> TypeInfo:
+    return TypeInfo(
+        is_optional=c.is_optional,
+        is_container=False,
+        is_composite=False,
+        raw=c.raw,
+        normalized=c.normalized,
+        underlying=c.underlying,
+        args=(),
+        supertypes=tuple(c.supertypes),
+        custom=c.custom,
+        _atom=c,
+    )
 
 
-# TODO: move to method
-def get_custom(info: TypeInfo) -> t.Optional[t.Type[t.Any]]:
-    # for performance (skip isinstance)
-    return getattr(info, "custom", None)  # type: ignore
+def _from_container(c: Container) -> TypeInfo:
+    return TypeInfo(
+        is_optional=c.is_optional,
+        is_container=True,
+        is_composite=c.is_composite,
+        raw=c.raw,
+        normalized=c.normalized,
+        underlying=type,  # xxx
+        args=tuple(c.args),
+        supertypes=(),
+        custom=None,
+        _container=c,
+    )
 
 
-# TODO: move to method
-def get_args(info: TypeInfo) -> t.List[TypeInfo]:
-    # for performance (skip isinstance)
-    return getattr(info, "args", None) or []
+@lru_cache(maxsize=1024, typed=False)
+def typeinfo(typ: t.Type[t.Any]) -> TypeInfo:
+    c = _typeinfo(typ)
+    if isinstance(c, Atom):
+        return _from_atom(c)
+    else:
+        return _from_container(c)
 
 
-# todo: rename
-@lru_cache(maxsize=128, typed=False)
-def typeinfo(
+def _typeinfo(
     typ: t.Type[t.Any],
     *,
     is_optional: bool = False,
@@ -104,7 +157,7 @@ def typeinfo(
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
         t.Set[t.Type[t.Any]], set([str, int, bool, str, bytes, dict, list, t.Any])
     ),
-) -> TypeInfo:
+) -> _TypeInfoCandidate:
     raw = typ
     args = typing_inspect.get_args(typ)
     underlying = getattr(typ, "__origin__", None)
