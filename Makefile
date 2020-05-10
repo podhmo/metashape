@@ -3,6 +3,8 @@ test:
 ci:
 	pytest --show-capture=all --cov=metashape --no-cov-on-fail --cov-report term-missing
 	$(MAKE) lint typing
+	$(MAKE) examples
+	git diff
 
 format:
 #	pip install -e .[dev]
