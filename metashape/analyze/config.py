@@ -6,6 +6,7 @@ import dataclasses
 import logging
 from metashape.langhelpers import reify
 from metashape.types import T, Member
+from metashape import typeinfo
 
 logger = logging.getLogger(__name__)
 Store = t.Dict[str, t.Any]
@@ -25,8 +26,16 @@ class Config:
         sort: bool = False
         output: t.IO[str] = sys.stdout  # xxx:
 
-    def __init__(self, option: t.Optional[Config.Option] = None):
+    def __init__(
+        self,
+        option: t.Optional[Config.Option] = None,
+        *,
+        typeinfo_unexpected_handler: t.Callable[
+            [t.Type[t.Any]], typeinfo.TypeInfo
+        ] = typeinfo._default_raise_error
+    ):
         self.option = option or self.__class__.Option()
+        self.typeinfo_unexpected_handler = typeinfo_unexpected_handler
 
     @reify
     def q(self) -> _Queue[Member]:

@@ -43,7 +43,9 @@ class TypeInfo:
     user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(
         default=None, hash=False
     )
-    container_type: ContainerType = dataclasses.field(repr=True, hash=False, default="?")
+    container_type: ContainerType = dataclasses.field(
+        repr=True, hash=False, default="?"
+    )
 
 
 Atom = partial(
@@ -88,12 +90,18 @@ def Container_with_children(
     )
 
 
+def _default_raise_error(typ: t.Type[t.Any]) -> TypeInfo:
+    raise ValueError(f"unsupported type {typ}")
+
+
+# todo: rename
 @lru_cache(maxsize=1024, typed=False)
 def typeinfo(
     typ: t.Type[t.Any],
     *,
     is_optional: bool = False,
     user_defined_type: t.Optional[t.Type[t.Any]] = None,
+    default: t.Callable[[t.Type[t.Any]], TypeInfo] = _default_raise_error,
     _nonetype: t.Type[t.Any] = t.cast(t.Type[t.Any], type(None)),  # xxx
     _anytype: t.Type[t.Any] = t.cast(t.Type[t.Any], t.Any),  # xxx
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
@@ -110,7 +118,7 @@ def typeinfo(
         elif issubclass(typ, str):
             underlying = typ
         elif issubclass(typ, t.Sequence):
-            childinfo = typeinfo(_anytype)
+            childinfo = typeinfo(_anytype, default=default)
             return Container(
                 raw=raw,
                 type_=tuple if issubclass(typ, tuple) else t.Sequence,
@@ -119,7 +127,7 @@ def typeinfo(
                 user_defined_type=childinfo.user_defined_type,
             )
         elif issubclass(typ, t.Mapping):
-            childinfo = typeinfo(_anytype)
+            childinfo = typeinfo(_anytype, default=default)
             return Container(
                 raw=raw,
                 type_=t.Mapping,
@@ -143,7 +151,7 @@ def typeinfo(
                         container_type="union",
                         raw=raw,
                         type_=typ,
-                        args=tuple([typeinfo(t) for t in args]),
+                        args=tuple([typeinfo(t, default=default) for t in args]),
                         is_optional=is_optional,
                         is_combined=True,
                     )
@@ -156,7 +164,7 @@ def typeinfo(
                     container_type="union",
                     raw=raw,
                     type_=typ,
-                    args=tuple([typeinfo(t) for t in args]),
+                    args=tuple([typeinfo(t, default=default) for t in args]),
                     is_optional=is_optional,
                     is_combined=True,
                 )
@@ -172,7 +180,7 @@ def typeinfo(
                     raw=raw,
                     type_=typ,
                     container_type="tuple" if issubclass(underlying, tuple) else "list",
-                    args=tuple([typeinfo(t) for t in args]),
+                    args=tuple([typeinfo(t, default=default) for t in args]),
                     is_optional=is_optional,
                 )
             elif issubclass(underlying, t.Mapping):
@@ -181,7 +189,7 @@ def typeinfo(
                     raw=raw,
                     type_=typ,
                     container_type="dict",
-                    args=tuple([typeinfo(t) for t in args]),
+                    args=tuple([typeinfo(t, default=default) for t in args]),
                     is_optional=is_optional,
                 )
             elif issubclass(underlying, t.Set):
@@ -190,11 +198,11 @@ def typeinfo(
                     raw=raw,
                     type_=typ,
                     container_type="set",
-                    args=tuple([typeinfo(t) for t in args]),
+                    args=tuple([typeinfo(t, default=default) for t in args]),
                     is_optional=is_optional,
                 )
             else:
-                raise ValueError(f"unsuported type %{typ}")
+                return default(typ)
 
     supertypes = []
     while hasattr(underlying, "__supertype__"):
