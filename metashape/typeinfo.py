@@ -43,7 +43,7 @@ class TypeInfo:
     user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(
         default=None, hash=False
     )
-    container_type: ContainerType = dataclasses.field(repr=True, hash=False, default="")
+    container_type: ContainerType = dataclasses.field(repr=True, hash=False, default="?")
 
 
 Atom = partial(
