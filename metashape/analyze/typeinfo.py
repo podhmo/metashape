@@ -22,29 +22,28 @@ ContainerType = tx.Literal["?", "list", "tuple", "dict", "set", "union"]
 
 @dataclasses.dataclass(frozen=True)
 class TypeInfo:
+    raw: t.Type[t.Any]
     is_container: bool
     is_optional: bool
     is_combined: bool  # Union (for oneOf, anyOf, allOf)
 
-    raw: t.Type[t.Any]
-
     # t.Optional[X] -> X, t.List[X] -> t.List[X]
-    type_: t.Type[t.Any] = dataclasses.field(repr=False)
+    type_: t.Type[t.Any] = dataclasses.field(repr=False, hash=False)
 
     # t.List[X] -> (X), t.Dict[K, V]-> (K, V)
-    args: t.Tuple[TypeInfo, ...] = dataclasses.field(repr=False)
+    args: t.Tuple[TypeInfo, ...] = dataclasses.field(repr=False, hash=False)
 
     # tx.Literal['x', 'y'] -> str, t.Optional[tx.Literal['x', 'y']] -> str
-    underlying: t.Type[t.Any] = dataclasses.field(repr=False)
+    underlying: t.Type[t.Any] = dataclasses.field(repr=False, hash=False)
     # ?
-    supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False)
+    supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False, hash=False)
 
     # User -> User, int -> None, t.List[User] -> User
     # FIXME: t.Dict[User, User2] -> User  // ?? (User, User2) is needed?
-    user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(default=None)
-    container_type: ContainerType = "?"
-
-    # TODO: for performance, define __eq__ ?
+    user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(
+        default=None, hash=False
+    )
+    container_type: ContainerType = dataclasses.field(repr=True, hash=False, default="")
 
 
 Atom = partial(
