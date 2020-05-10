@@ -39,9 +39,12 @@ class TypeInfo:
     # ?
     supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False)
 
-    # User -> User, int -> None, (FIXME: t.List[User] -> None)
+    # User -> User, int -> None, t.List[User] -> User
+    # FIXME: t.Dict[User, User2] -> User  // ?? (User, User2) is needed?
     user_defined_type: t.Optional[t.Type[t.Any]] = dataclasses.field(default=None)
     container_type: ContainerType = "?"
+
+    # TODO: for performance, define __eq__ ?
 
 
 Atom = partial(
@@ -57,6 +60,33 @@ Container = partial(
     supertypes=(),
     user_defined_type=None,
 )
+
+
+def Container_with_children(
+    *,
+    raw: t.Type[t.Any],
+    type_: t.Type[t.Any],
+    container_type: ContainerType,
+    args: t.Tuple[TypeInfo, ...],
+    is_optional: bool,
+    is_combined: bool = False,
+) -> TypeInfo:
+    user_defined_type = None
+    for childinfo in args:
+        if childinfo.user_defined_type is not None:
+            user_defined_type = childinfo.user_defined_type
+            break
+
+    # todo: collect all user defined type?
+    return Container(
+        raw=raw,
+        type_=type_,
+        container_type=container_type,
+        args=args,
+        is_optional=is_optional,
+        is_combined=is_combined,
+        user_defined_type=user_defined_type,
+    )
 
 
 @lru_cache(maxsize=1024, typed=False)
@@ -81,11 +111,13 @@ def typeinfo(
         elif issubclass(typ, str):
             underlying = typ
         elif issubclass(typ, t.Sequence):
+            childinfo = typeinfo(_anytype)
             return Container(
                 raw=raw,
                 type_=tuple if issubclass(typ, tuple) else t.Sequence,
                 container_type="tuple" if issubclass(typ, tuple) else "list",
-                args=(typeinfo(_anytype),),
+                args=(childinfo,),
+                user_defined_type=childinfo.user_defined_type,
             )
         elif issubclass(typ, t.Mapping):
             childinfo = typeinfo(_anytype)
@@ -94,6 +126,7 @@ def typeinfo(
                 type_=t.Mapping,
                 container_type="dict",
                 args=(childinfo, childinfo),
+                user_defined_type=childinfo.user_defined_type,
             )
         else:
             underlying = typ  # xxx
@@ -107,7 +140,7 @@ def typeinfo(
                     is_optional = True
                     typ = underlying = args[0]
                 else:
-                    return Container(
+                    return Container_with_children(
                         container_type="union",
                         raw=raw,
                         type_=typ,
@@ -120,7 +153,7 @@ def typeinfo(
                 if is_optional:
                     args = [x for x in args if x != _nonetype]
                     typ = t.Union[tuple(args)]
-                return Container(
+                return Container_with_children(
                     container_type="union",
                     raw=raw,
                     type_=typ,
@@ -136,7 +169,7 @@ def typeinfo(
                 underlying = type(args[0])
             elif issubclass(underlying, t.Sequence):
                 args = typing_inspect.get_args(typ)
-                return Container(
+                return Container_with_children(
                     raw=raw,
                     type_=typ,
                     container_type="tuple" if issubclass(underlying, tuple) else "list",
@@ -145,7 +178,7 @@ def typeinfo(
                 )
             elif issubclass(underlying, t.Mapping):
                 args = typing_inspect.get_args(typ)
-                return Container(
+                return Container_with_children(
                     raw=raw,
                     type_=typ,
                     container_type="dict",
@@ -154,7 +187,7 @@ def typeinfo(
                 )
             elif issubclass(underlying, t.Set):
                 args = typing_inspect.get_args(typ)
-                return Container(
+                return Container_with_children(
                     raw=raw,
                     type_=typ,
                     container_type="set",

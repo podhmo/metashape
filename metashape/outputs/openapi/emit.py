@@ -137,7 +137,6 @@ class Scanner:
 
         for field_name, info, metadata in walker.for_type(cls).walk():
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
-
             if not info.is_optional:
                 required.append(field_name)
 
