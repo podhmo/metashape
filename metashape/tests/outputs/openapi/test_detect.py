@@ -2,7 +2,7 @@
 import typing as t
 import typing_extensions as tx
 import pytest
-from metashape.analyze import typeinfo
+from metashape import typeinfo
 
 
 class Person:

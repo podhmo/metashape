@@ -7,7 +7,7 @@ from metashape.types import MetaData, Kind, Member, IteratePropsFunc
 from metashape._access import iterate_props  # TODO: move
 from metashape._dataclass import iterate_props as iterate_props_for_dataclass
 from metashape._dataclass import is_dataclass
-from .typeinfo import TypeInfo
+from metashape.typeinfo import TypeInfo
 from .resolver import Resolver
 from .config import Config
 

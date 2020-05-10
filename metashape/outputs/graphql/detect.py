@@ -1,5 +1,5 @@
 import logging
-from metashape.analyze import typeinfo
+from metashape import typeinfo
 from metashape.constants import ID
 
 logger = logging.getLogger(__name__)

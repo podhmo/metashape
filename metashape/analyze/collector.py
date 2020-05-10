@@ -1,7 +1,7 @@
 import typing as t
 import typing_extensions as tx
 from collections import namedtuple
-from .typeinfo import is_primitive_type, PrimitiveType
+from metashape.typeinfo import is_primitive_type, PrimitiveType
 
 _Value = t.Union[t.List[t.Any], t.Dict[str, t.Any], t.Any]
 _Context = namedtuple("_Context", "args, kwargs")

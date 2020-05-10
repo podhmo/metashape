@@ -2,7 +2,7 @@ import typing as t
 import typing_extensions as tx
 import logging
 import typing_inspect
-from metashape.analyze import typeinfo
+from metashape import typeinfo
 
 
 logger = logging.getLogger(__name__)

@@ -20,7 +20,7 @@ def atom(
     user_defined_type=None,
     supertypes=None
 ):
-    from metashape.analyze.typeinfo import Atom
+    from metashape.typeinfo import Atom
 
     return Atom(
         raw=raw,
@@ -42,10 +42,10 @@ def container(
     raw_args=None,
     args=None
 ):
-    from metashape.analyze.typeinfo import Container
+    from metashape.typeinfo import Container_with_children
 
     raw_args = raw_args or [atom(raw=x, underlying=x) for x in args]
-    return Container(
+    return Container_with_children(
         raw=raw,
         type_=type_ or raw,
         args=tuple(raw_args),
@@ -67,7 +67,7 @@ def container(
     ],
 )
 def test_omit_optional(typ, want, omitted):
-    from metashape.analyze.typeinfo import omit_optional as callFUT
+    from metashape.typeinfo import omit_optional as callFUT
 
     got = callFUT(typ)
     assert got == (want, omitted)
@@ -258,7 +258,7 @@ def test_omit_optional(typ, want, omitted):
     ],
 )
 def test_type_info(msg: str, typ, want):
-    from metashape.analyze.typeinfo import typeinfo as callFUT
+    from metashape.typeinfo import typeinfo as callFUT
 
     got = callFUT(typ)
     assert got == want

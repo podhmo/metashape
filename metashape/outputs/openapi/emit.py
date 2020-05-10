@@ -6,7 +6,7 @@ from functools import partial
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze.typeinfo import TypeInfo
+from metashape.typeinfo import TypeInfo
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 

@@ -6,7 +6,7 @@ from metashape.langhelpers import reify
 from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
-from . import typeinfo
+from metashape import typeinfo
 
 logger = logging.getLogger(__name__)
 
