@@ -5,7 +5,7 @@ import dataclasses
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict
-from metashape.analyze.typeinfo import TypeInfo
+from metashape.typeinfo import TypeInfo
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 from . import detect
@@ -66,15 +66,14 @@ class Scanner:
         }  # todo: lazy
 
     def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
-        resolver = self.ctx.walker.resolver
         candidates: t.List[t.Dict[str, t.Any]] = []
 
-        for x in resolver.typeinfo.get_args(info):
-            custom = resolver.typeinfo.get_custom(x)
-            if custom is None:
+        for x in info.args:
+            user_defined_type = x.user_defined_type
+            if user_defined_type is None:
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(custom))
+                candidates.append(self._build_ref_data(user_defined_type))
         prop = {"oneOf": candidates}  # todo: discriminator
         return prop
 
@@ -100,13 +99,13 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.normalized):
-                walker.append(info.normalized)
+            if resolver.is_member(info.type_):
+                walker.append(info.type_)
 
-                properties[field_name] = self._build_ref_data(info.normalized)
+                properties[field_name] = self._build_ref_data(info.type_)
                 continue
 
-            if resolver.typeinfo.is_composite(info):
+            if info.is_combined:
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -120,17 +119,16 @@ class Scanner:
             resolver.metadata.fill_extra_metadata(prop, metadata, name="jsonschema")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(resolver.typeinfo.get_args(info)) == 1
-                first = resolver.typeinfo.get_args(info)[0]
-                if resolver.typeinfo.is_composite(first):
+                assert len(info.args) == 1
+                first = info.args[0]
+                if first.is_combined:
                     prop["items"] = self._build_one_of_data(first)
                 else:
-                    custom = resolver.typeinfo.get_custom(first)
-                    if custom is None:
+                    user_defined_type = first.user_defined_type
+                    if user_defined_type is None:
                         prop["items"] = detect.schema_type(first)
                     else:
-                        custom_type = custom
-                        prop["items"] = self._build_ref_data(custom_type)
+                        prop["items"] = self._build_ref_data(user_defined_type)
 
         if len(required) <= 0:
             schema.pop("required")

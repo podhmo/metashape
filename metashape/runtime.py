@@ -9,7 +9,6 @@ from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
-from metashape.analyze import typeinfo  # TODO: remove
 from ._access import get_name
 
 logger = logging.getLogger(__name__)
@@ -120,24 +119,24 @@ def _mark_recursive(
         yield m
 
         for _, info, _ in w.for_type(m).walk():
-            if info.normalized in seen:
+            if info.type_ in seen:
                 continue
 
-            for x in typeinfo.get_args(info) or [info]:
-                if x.normalized in seen:
+            for x in info.args or [info]:
+                if x.type_ in seen:
                     continue
 
-                kind = guess_member(x.normalized)
+                kind = guess_member(x.type_)
                 if kind is None:
                     continue
 
-                mark(x.normalized, kind=kind)
-                yield x.normalized
-                q.append(x.normalized)
+                mark(x.type_, kind=kind)
+                yield x.type_
+                q.append(x.type_)
 
 
 def _guess_kind(cls: t.Type[t.Any]) -> t.Optional[Kind]:
-    # is custom class?
+    # is user_defined_type class?
     if hasattr(cls, "__name__"):
         if not hasattr(cls, "__loader__") and hasattr(cls, "__annotations__"):
             if not inspect.isclass(cls):

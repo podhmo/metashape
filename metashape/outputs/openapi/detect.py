@@ -2,7 +2,7 @@ import typing as t
 import typing_extensions as tx
 import logging
 import typing_inspect
-from metashape.analyze import typeinfo
+from metashape import typeinfo
 
 
 logger = logging.getLogger(__name__)
@@ -12,10 +12,10 @@ JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", 
 def schema_type(
     info: typeinfo.TypeInfo, *, unknown: JSONSchemaType = "object"
 ) -> JSONSchemaType:
-    if isinstance(info, typeinfo.Container):
-        if info.container in ("list", "tuple", "set"):
+    if info.is_container:
+        if info.container_type in ("list", "tuple", "set"):
             return "array"
-        elif info.container == "dict":
+        elif info.container_type == "dict":
             return "object"
     else:  # Atom
         typ = info.underlying
@@ -32,7 +32,7 @@ def schema_type(
 
 
 def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
-    typ = info.normalized
+    typ = info.type_
     origin = getattr(typ, "__origin__", None)
     if origin != tx.Literal:
         return ()  # type:ignore

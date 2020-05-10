@@ -6,7 +6,7 @@ from metashape.langhelpers import reify
 from metashape.types import T, Member, _ForwardRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
-from . import typeinfo
+from metashape import typeinfo
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +43,6 @@ class TypeInfoResolver:
             return typeinfo.typeinfo(typ)
         except TypeError:
             return typeinfo.typeinfo(typ.__class__)
-
-    def get_args(self, info: typeinfo.TypeInfo) -> t.List[typeinfo.TypeInfo]:
-        return typeinfo.get_args(info)
-
-    def get_custom(self, info: typeinfo.TypeInfo) -> t.Optional[t.Type[t.Any]]:
-        return typeinfo.get_custom(info)
-
-    def is_composite(self, info: typeinfo.TypeInfo) -> bool:
-        return typeinfo.is_composite(info)
 
 
 class MetaDataResolver:

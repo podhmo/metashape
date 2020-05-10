@@ -64,7 +64,7 @@ def scan(walker: Walker) -> Context:
         for field_name, info, metadata in walker.for_type(cls).walk():
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
             prop = {
-                "type": (scanned.get_name(info.normalized) or detect.schema_type(info))
+                "type": (scanned.get_name(info.type_) or detect.schema_type(info))
             }
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop

@@ -6,7 +6,7 @@ from functools import partial
 from dictknife import loading
 from metashape.types import Member, _ForwardRef
 from metashape.langhelpers import make_dict, reify
-from metashape.analyze.typeinfo import Container
+from metashape.typeinfo import TypeInfo
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config as AnalyzingConfig
 
@@ -89,32 +89,32 @@ class Scanner:
             "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: Container) -> t.Dict[str, t.Any]:
+    def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
         resolver = self.ctx.walker.resolver
         cfg = self.ctx.walker.config
         candidates: t.List[t.Dict[str, t.Any]] = []
         need_discriminator = True
 
-        for x in resolver.typeinfo.get_args(info):
-            custom = resolver.typeinfo.get_custom(x)
-            if custom is None:
+        for x in info.args:
+            user_defined_type = x.user_defined_type
+            if user_defined_type is None:
                 need_discriminator = False
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(custom))
+                candidates.append(self._build_ref_data(user_defined_type))
         prop: t.Dict[str, t.Any] = {"oneOf": candidates}  # todo: discriminator
 
         if need_discriminator:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             # update schema
-            for x in resolver.typeinfo.get_args(info):
-                custom = resolver.typeinfo.get_custom(x)
-                if custom is None:
+            for x in info.args:
+                user_defined_type = x.user_defined_type
+                if user_defined_type is None:
                     continue
                 cfg.callbacks.append(
                     partial(
                         self.fixer.fix_discriminator,
-                        resolver.resolve_typename(custom),
+                        resolver.resolve_typename(user_defined_type),
                         self.DISCRIMINATOR_FIELD,
                     )
                 )
@@ -137,20 +137,19 @@ class Scanner:
 
         for field_name, info, metadata in walker.for_type(cls).walk():
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
-
             if not info.is_optional:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.normalized) and resolver.resolve_typename(
-                info.normalized
+            if resolver.is_member(info.type_) and resolver.resolve_typename(
+                info.type_
             ):
-                walker.append(info.normalized)
+                walker.append(info.type_)
 
-                properties[field_name] = self._build_ref_data(info.normalized)
+                properties[field_name] = self._build_ref_data(info.type_)
                 continue
 
-            if resolver.typeinfo.is_composite(info) and isinstance(info, Container):
+            if info.is_combined:
                 properties[field_name] = prop = self._build_one_of_data(info)
             else:
                 prop = properties[field_name] = {"type": detect.schema_type(info)}
@@ -164,18 +163,15 @@ class Scanner:
             resolver.metadata.fill_extra_metadata(prop, metadata, name="openapi")
 
             if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(resolver.typeinfo.get_args(info)) == 1
-                first = resolver.typeinfo.get_args(info)[0]
-                if resolver.typeinfo.is_composite(first) and isinstance(
-                    first, Container
-                ):
+                assert len(info.args) == 1
+                first = info.args[0]
+                if first.is_combined and first.is_container:
                     prop["items"] = self._build_one_of_data(first)
-                elif resolver.typeinfo.get_custom(first) is None:
+                elif first.user_defined_type is None:
                     prop["items"] = detect.schema_type(first)
                 else:
-                    custom_type = resolver.typeinfo.get_custom(first)
-                    if custom_type is not None:
-                        prop["items"] = self._build_ref_data(custom_type)
+                    if first.user_defined_type is not None:
+                        prop["items"] = self._build_ref_data(first.user_defined_type)
 
         if len(required) <= 0:
             schema.pop("required")

@@ -16,7 +16,7 @@ def run(
     is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None,
     emit: t.Optional[EmitFunc] = None,
 ) -> None:
-    m = import_module(filename)
+    m = import_module(filename, cwd=True)
     walker = get_walker(m, aggressive=aggressive)
     emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
     logger.debug("collect members: %d", len(walker))
