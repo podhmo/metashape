@@ -17,7 +17,7 @@ class NameGuesser:
         formatter: t.Callable[[str], str] = _titleize,
         _aliases: t.Optional[t.Dict[object, str]] = None,
         _joiners: t.Optional[
-            t.Dict[object, t.Callable[[t.Type[t.Any], t.Tuple[t.Any, ...]], str],]
+            t.Dict[object, t.Callable[[t.Type[t.Any], t.Tuple[t.Any, ...]], str]]
         ] = None,
     ) -> None:
         self.format = formatter
