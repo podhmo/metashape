@@ -136,3 +136,5 @@ def NewNamedType(
 
 
 guess_name = _guesser.guess
+resolve = _resolver.resolve
+resolve_maybe = _resolver.resolve_maybe

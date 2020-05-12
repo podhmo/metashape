@@ -63,7 +63,7 @@ class Walker:
                 if name.startswith("_"):
                     continue
 
-            if not guess_mark(m) in kinds:
+            if guess_mark(m) not in kinds:
                 continue
             logger.info("walk type: %r", m)
             yield m

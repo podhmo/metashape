@@ -1,12 +1,13 @@
 import typing as t
 import inspect
 from types import ModuleType
+from metashape.name import resolve_maybe as resolve_name_maybe
 from .types import MetaData, Member, _ForwardRef
 from .types import IteratePropsFunc
 
 
 def get_name(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
-    name_ = getattr(member, "__name__", None)  # type: t.Optional[str]
+    name_ = resolve_name_maybe(member)  # type: ignore
     if name_ is not None:
         return name_
     # for ForwardRef
