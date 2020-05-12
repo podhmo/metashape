@@ -1,5 +1,5 @@
 # type: ignore
-from metashape.guess import guess_name as callFUT
+from metashape.name import guess_name as callFUT
 
 
 def test_primitives():

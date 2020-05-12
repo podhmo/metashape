@@ -2,6 +2,34 @@ import typing as t
 import typing_extensions as tx
 from collections import abc
 
+TypeT = t.TypeVar("TypeT", bound=type)
+
+
+class NameResolver:
+    def __init__(self) -> None:
+        self.pool: t.Dict[int, str] = {}  # leak?
+
+    def register(self, name: str, typ: TypeT) -> TypeT:
+        self.pool[id(typ)] = name
+        return typ
+
+    def resolve(self, typ: TypeT) -> str:
+        name = self.pool.get(id(typ))
+        if name is not None:
+            return name
+
+        if hasattr(typ, "__name__"):
+            name = getattr(typ, "__qualname__", typ.__name__)
+            # HACK: for the type defined in closure. (e.g. t.NewType)
+            if "<locals>" in name:
+                name = typ.__name__
+        else:
+            raise RuntimeError(
+                "this type is not named, please considering use NewNamedType(<name>, <type>)"
+            )
+        self.pool[id(typ)] = name
+        return name
+
 
 def _titleize(name: str) -> str:
     if not name:
@@ -13,6 +41,7 @@ def _titleize(name: str) -> str:
 class NameGuesser:
     def __init__(
         self,
+        resolver: NameResolver,
         *,
         formatter: t.Callable[[str], str] = _titleize,
         _aliases: t.Optional[t.Dict[object, str]] = None,
@@ -20,6 +49,7 @@ class NameGuesser:
             t.Dict[object, t.Callable[[t.Type[t.Any], t.Tuple[t.Any, ...]], str]]
         ] = None,
     ) -> None:
+        self.resolver = resolver
         self.format = formatter
         self._cache: t.Dict[int, str] = {}
         self._aliases = _aliases or {...: "N", t.Any: "Any"}
@@ -42,11 +72,7 @@ class NameGuesser:
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
         if hasattr(typ, "__name__"):
-            py_clsname: str = getattr(typ, "__qualname__", typ.__name__)
-            # HACK: for the type defined in closure. (e.g. t.NewType)
-            if "<locals>" in py_clsname:
-                py_clsname = typ.__name__
-            return py_clsname
+            return self.resolver.resolve(typ)
 
         alias = self._aliases.get(typ)
         if alias is not None:
@@ -93,4 +119,13 @@ class NameGuesser:
         return "or".join([self.format(e) for e in elements])
 
 
-guess_name = NameGuesser().guess
+_resolver = NameResolver()
+_guesser = NameGuesser(_resolver)
+
+
+def NewNamedType(name: str, typ: TypeT, *, _resolver: NameResolver) -> TypeT:
+    _resolver.register(name, typ)
+    return typ
+
+
+guess_name = _guesser.guess
