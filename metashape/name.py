@@ -13,7 +13,7 @@ class NameResolver:
         self.pool[id(typ)] = name
         return typ
 
-    def resolve(self, typ: TypeT) -> str:
+    def resolve_maybe(self, typ: TypeT) -> t.Optional[str]:
         name = self.pool.get(id(typ))
         if name is not None:
             return name
@@ -23,12 +23,16 @@ class NameResolver:
             # HACK: for the type defined in closure. (e.g. t.NewType)
             if "<locals>" in name:
                 name = typ.__name__
-        else:
-            raise RuntimeError(
-                "this type is not named, please considering use NewNamedType(<name>, <type>)"
-            )
-        self.pool[id(typ)] = name
-        return name
+            return name
+        return None
+
+    def resolve(self, typ: TypeT) -> str:
+        name = self.resolve_maybe(typ)
+        if name is not None:
+            return name
+        raise RuntimeError(
+            "this type is not named, please considering use NewNamedType(<name>, <type>)"
+        )
 
 
 def _titleize(name: str) -> str:
@@ -51,7 +55,7 @@ class NameGuesser:
     ) -> None:
         self.resolver = resolver
         self.format = formatter
-        self._cache: t.Dict[int, str] = {}
+        self._cache: t.Dict[int, str] = {}  # leak
         self._aliases = _aliases or {...: "N", t.Any: "Any"}
         self._joiners = _joiners or {
             t.Any: self._join_name_for_default,
@@ -71,8 +75,9 @@ class NameGuesser:
         return guessed
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
-        if hasattr(typ, "__name__"):
-            return self.resolver.resolve(typ)
+        name = self.resolver.resolve_maybe(typ)
+        if name is not None:
+            return name
 
         alias = self._aliases.get(typ)
         if alias is not None:
@@ -123,7 +128,9 @@ _resolver = NameResolver()
 _guesser = NameGuesser(_resolver)
 
 
-def NewNamedType(name: str, typ: TypeT, *, _resolver: NameResolver) -> TypeT:
+def NewNamedType(
+    name: str, typ: TypeT, *, _resolver: NameResolver = _resolver
+) -> TypeT:
     _resolver.register(name, typ)
     return typ
 

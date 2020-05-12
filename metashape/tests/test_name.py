@@ -83,3 +83,12 @@ def test_NewType():
 
     assert callFUT(uint64) == "uint64"
     assert callFUT(uint32) == "uint32"
+
+
+def test_NewNamedType():
+    from typing_extensions import Literal
+    from metashape.name import NewNamedType
+
+    XXX = NewNamedType("XXX", Literal["x", "y", "z"])
+    assert not hasattr(XXX, "__name__")
+    assert callFUT(XXX) == "XXX"
