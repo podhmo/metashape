@@ -1,18 +1,34 @@
 import typing as t
 import typing_extensions as tx
+import weakref
 from collections import abc
 
 
 TypeT = t.TypeVar("TypeT", bound=type)
 
 
+class _Fake:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+_ELLIPSIS = _Fake("...")
+
+
 class NameResolver:
     def __init__(self) -> None:
-        self.pool: t.Dict[int, str] = {}  # leak?
-        self.indirect_map: t.Dict[t.Tuple[t.Any, ...], int] = {}
+        self.pool: weakref.WeakKeyDictionary[str] = weakref.WeakKeyDictionary()
+        self.indirect_map: weakref.WeakValueDictionary[
+            t.Tuple[t.Any, ...]
+        ] = weakref.WeakValueDictionary()
+
+    def _get_key(self, typ: TypeT) -> object:
+        if typ is ...:
+            return _ELLIPSIS
+        return typ
 
     def register(self, name: str, typ: TypeT) -> TypeT:
-        k = id(typ)
+        k = self._get_key(typ)
         self.pool[k] = name
         if hasattr(typ, "__args__"):
             self.indirect_map[self._get_indirect_key(typ)] = k
@@ -22,7 +38,7 @@ class NameResolver:
         return tuple([typ.__origin__, *sorted([str(x) for x in typ.__args__]),],)
 
     def resolve_maybe(self, typ: TypeT) -> t.Optional[str]:
-        name = self.pool.get(id(typ))
+        name = self.pool.get(self._get_key(typ))
         if name is not None:
             return name
 
@@ -38,7 +54,7 @@ class NameResolver:
             if k is not None:
                 name = self.pool.get(k)
                 if name is not None:
-                    self.pool[id(typ)] = name
+                    self.pool[self._get_key(typ)] = name
                     return name
         return None
 
