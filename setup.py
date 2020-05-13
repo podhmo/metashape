@@ -4,7 +4,7 @@ install_requires = ["typing_inspect", "typing_extensions"]
 tests_requires = ["pytest"]
 extras_require = {
     "testing": tests_requires,
-    "dev": tests_requires + ["black", "flake8"],
+    "dev": tests_requires + ["black", "flake8"] + ["mypy"],
     "input": ["json2python-models"],  # todo: omit
     "output": ["dictknife>=0.13.0", "prestring>=0.9.0"],
 }
