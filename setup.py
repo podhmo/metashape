@@ -28,4 +28,5 @@ setup(
     extras_require=extras_require,
     tests_require=tests_requires,
     test_suite="metashape.tests",
+    package_data={"metashape": ["py.typed"]},
 )
