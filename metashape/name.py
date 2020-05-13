@@ -2,16 +2,24 @@ import typing as t
 import typing_extensions as tx
 from collections import abc
 
+
 TypeT = t.TypeVar("TypeT", bound=type)
 
 
 class NameResolver:
     def __init__(self) -> None:
         self.pool: t.Dict[int, str] = {}  # leak?
+        self.indirect_map: t.Dict[t.Tuple[t.Any, ...], int] = {}
 
     def register(self, name: str, typ: TypeT) -> TypeT:
-        self.pool[id(typ)] = name
+        k = id(typ)
+        self.pool[k] = name
+        if hasattr(typ, "__args__"):
+            self.indirect_map[self._get_indirect_key(typ)] = k
         return typ
+
+    def _get_indirect_key(self, typ: t.Type[t.Any]) -> t.Tuple[t.Any, ...]:
+        return tuple([typ.__origin__, *sorted([str(x) for x in typ.__args__]),],)
 
     def resolve_maybe(self, typ: TypeT) -> t.Optional[str]:
         name = self.pool.get(id(typ))
@@ -24,6 +32,14 @@ class NameResolver:
             if "<locals>" in name:
                 name = typ.__name__
             return name
+        elif hasattr(typ, "__args__"):
+            ik = self._get_indirect_key(typ)
+            k = self.indirect_map.get(ik)
+            if k is not None:
+                name = self.pool.get(k)
+                if name is not None:
+                    self.pool[id(typ)] = name
+                    return name
         return None
 
     def resolve(self, typ: TypeT) -> str:
