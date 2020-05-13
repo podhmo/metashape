@@ -12,7 +12,7 @@ setup(
         #   5 - Production/Stable
         "Development Status :: 3 - Alpha",
     ],
-    python_requires=">3.5",
+    python_requires=">3.7",
     packages=find_packages(exclude=["metashape.tests"]),
     install_requires=[
         "typing_inspect",
