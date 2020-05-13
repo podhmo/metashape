@@ -17,9 +17,9 @@ setup(
     install_requires=[
         "typing_inspect",
         "typing_extensions",
-        "magicalimport",
-        "dictknife",
-        "prestring",
+        "magicalimport>=0.9.1",
+        "dictknife>=0.13.0",
+        "prestring>=0.9.0",
     ],
     extras_require={
         "testing": tests_requires,
