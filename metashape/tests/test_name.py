@@ -51,12 +51,13 @@ def test_generics():
 
 def test_Literal():
     from typing_extensions import Literal
+    from metashape.name import NewNamedType
 
     Op = Literal["add", "sub", "mul"]
-    Op.__name__ = "Op"
+    Op = NewNamedType("Op", Op)
     assert callFUT(Op) == "Op"
     assert callFUT(Literal["add", "sub", "mul"]) == "Op"
-    assert callFUT(Literal["mul", "sub", "add"]) == "MulorSuborAdd"
+    assert callFUT(Literal["mul", "sub", "add"]) == "Op"
 
 
 def test_Union():
@@ -83,12 +84,3 @@ def test_NewType():
 
     assert callFUT(uint64) == "uint64"
     assert callFUT(uint32) == "uint32"
-
-
-def test_NewNamedType():
-    from typing_extensions import Literal
-    from metashape.name import NewNamedType
-
-    XXX = NewNamedType("XXX", Literal["x", "y", "z"])
-    assert not hasattr(XXX, "__name__")
-    assert callFUT(XXX) == "XXX"
