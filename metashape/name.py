@@ -1,8 +1,10 @@
 import typing as t
 import typing_extensions as tx
-import weakref
 from collections import abc
+from .langhelpers import reify
 
+if t.TYPE_CHECKING:
+    import weakref
 
 TypeT = t.TypeVar("TypeT", bound=type)
 
@@ -16,14 +18,20 @@ _ELLIPSIS = _Fake("...")
 
 
 class NameResolver:
-    def __init__(self) -> None:
-        self.pool: weakref.WeakKeyDictionary[str] = weakref.WeakKeyDictionary()
-        self.indirect_map: weakref.WeakValueDictionary[
-            t.Tuple[t.Any, ...]
-        ] = weakref.WeakValueDictionary()
+    @reify
+    def pool(self) -> weakref.WeakKeyDictionary[object, str]:
+        import weakref
+
+        return weakref.WeakKeyDictionary()
+
+    @reify
+    def indirect_map(self) -> weakref.WeakValueDictionary[t.Tuple[t.Any, ...], object]:
+        import weakref
+
+        return weakref.WeakValueDictionary()
 
     def _get_key(self, typ: TypeT) -> object:
-        if typ is ...:
+        if typ is ...:  # type: ignore
             return _ELLIPSIS
         return typ
 
@@ -35,7 +43,7 @@ class NameResolver:
         return typ
 
     def _get_indirect_key(self, typ: t.Type[t.Any]) -> t.Tuple[t.Any, ...]:
-        return tuple([typ.__origin__, *sorted([str(x) for x in typ.__args__]),],)
+        return tuple([typ.__origin__, *sorted([str(x) for x in typ.__args__])])
 
     def resolve_maybe(self, typ: TypeT) -> t.Optional[str]:
         name = self.pool.get(self._get_key(typ))
