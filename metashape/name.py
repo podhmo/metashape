@@ -1,3 +1,4 @@
+from __future__ import annotations
 import typing as t
 import typing_extensions as tx
 from collections import abc
@@ -95,7 +96,6 @@ class NameGuesser:
     ) -> None:
         self.resolver = resolver
         self.format = formatter
-        self._cache: t.Dict[int, str] = {}  # leak
         self._aliases = _aliases or {...: "N", t.Any: "Any"}
         self._joiners = _joiners or {
             t.Any: self._join_name_for_default,
@@ -106,12 +106,19 @@ class NameGuesser:
         }
         assert t.Any in self._joiners
 
+    @reify
+    def _cache(self) -> weakref.WeakKeyDictionary[object, str]:
+        import weakref
+
+        return weakref.WeakKeyDictionary()
+
     def guess(self, typ: t.Type[t.Any]) -> str:
-        cached = self._cache.get(id(typ))
+        k = self.resolver._get_key(typ)
+        cached = self._cache.get(k)
         if cached is not None:
             return cached
         guessed = self._guess(typ)
-        self._cache[id(typ)] = guessed
+        self._cache[k] = guessed
         return guessed
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
