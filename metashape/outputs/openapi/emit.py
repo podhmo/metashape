@@ -23,6 +23,9 @@ class Context:  # TODO: rename to context?
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class State:
         schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
+        refs: t.Dict[t.Type[t.Any], t.Dict[str, str]] = dataclasses.field(
+            default_factory=make_dict
+        )
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Result:
@@ -141,9 +144,7 @@ class Scanner:
                 required.append(field_name)
 
             # TODO: self recursion check (warning)
-            if resolver.is_member(info.type_) and resolver.resolve_typename(
-                info.type_
-            ):
+            if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
                 walker.append(info.type_)
 
                 properties[field_name] = self._build_ref_data(info.type_)
@@ -183,6 +184,7 @@ class Scanner:
         ctx.state.schemas[typename] = ctx.result.result["components"]["schemas"][
             typename
         ] = schema
+        ctx.state.refs[cls] = {"$ref": f"#/components/schemas/{typename}"}
 
 
 def scan(walker: Walker,) -> Context:
