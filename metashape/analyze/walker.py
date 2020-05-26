@@ -40,7 +40,8 @@ class Walker:
         self,
         *,
         kinds: t.Sequence[t.Optional[Kind]] = ["object"],
-        ignore_private: t.Optional[bool] = None
+        ignore_private: t.Optional[bool] = None,
+        nocheck: bool = False,
     ) -> t.Iterable[Member]:
         resolver = self.resolver
         cfg = self.config
@@ -57,14 +58,15 @@ class Walker:
                 break
 
             name = resolver.resolve_typename(m)
-            if not name:
-                continue
-            if ignore_private:
-                if name.startswith("_"):
+            if not nocheck:
+                if not name:
                     continue
+                if ignore_private:
+                    if name.startswith("_"):
+                        continue
 
-            if guess_mark(m) not in kinds:
-                continue
+                if guess_mark(m) not in kinds:
+                    continue
             logger.info("walk type: %r", m)
             yield m
 
@@ -75,7 +77,7 @@ class TypeWalker:
         typ: t.Type[t.Any],
         *,
         parent: Walker,
-        iterate_props: IteratePropsFunc = iterate_props
+        iterate_props: IteratePropsFunc = iterate_props,
     ):
         self.typ = typ
         self.parent = parent
