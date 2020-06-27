@@ -6,6 +6,8 @@ import pytest
 
 
 _MyString = t.NewType("_MyString", str)
+_MyString2 = t.NewType("_MyString2", _MyString)
+_Optional_MyString = t.NewType("_Optional_MyString", t.Optional[_MyString])
 
 
 class _Person:
@@ -242,6 +244,11 @@ def test_omit_optional(typ, want, omitted):
             atom(raw=_MyString, underlying=str, supertypes=[_MyString]),
         ),
         (
+            "newType",
+            _MyString2,
+            atom(raw=_MyString2, underlying=str, supertypes=[_MyString2, _MyString]),
+        ),
+        (
             "optional newType",
             t.Optional[_MyString],
             atom(
@@ -250,6 +257,17 @@ def test_omit_optional(typ, want, omitted):
                 underlying=str,
                 is_optional=True,
                 supertypes=[_MyString],
+            ),
+        ),
+        (
+            "optional newType2",
+            _Optional_MyString,
+            atom(
+                raw=_Optional_MyString,
+                type_=_Optional_MyString,
+                underlying=str,
+                is_optional=True,
+                supertypes=[_Optional_MyString],
             ),
         ),
         (

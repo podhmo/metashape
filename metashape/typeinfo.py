@@ -220,7 +220,7 @@ def typeinfo(
             supertypes=tuple(supertypes),
             raw=raw,
             type_=typ,
-            is_optional=is_optional,
+            is_optional=is_optional or underlying_info.is_optional,
         )
 
     if underlying not in _primitives:
