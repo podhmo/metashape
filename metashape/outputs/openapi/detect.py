@@ -27,6 +27,8 @@ def schema_type(
             return "integer"
         elif issubclass(typ, float):
             return "number"
+        elif issubclass(typ, bytes):
+            return "string"
     logger.warning("unexpected type: %r", typ)
     return unknown
 

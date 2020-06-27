@@ -118,6 +118,8 @@ def typeinfo(
             underlying = typ  # xxx
         elif issubclass(typ, str):
             underlying = typ
+        elif issubclass(typ, bytes):
+            underlying = typ
         elif issubclass(typ, t.Sequence):
             childinfo = typeinfo(_anytype, default=default)
             return Container(
