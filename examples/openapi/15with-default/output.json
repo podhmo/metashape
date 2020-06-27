@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "Value": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"

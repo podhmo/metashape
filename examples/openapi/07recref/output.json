@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "Person": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -28,6 +29,7 @@
         "additionalProperties": false
       },
       "Extra": {
+        "type": "object",
         "properties": {
           "memo": {
             "type": "string"

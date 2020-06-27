@@ -135,7 +135,10 @@ class Scanner:
         description: str = resolver.metadata.resolve_doc(cls, verbose=ctx.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
-            properties=properties, required=required, description=description
+            type="object",
+            properties=properties,
+            required=required,
+            description=description,
         )
 
         for field_name, info, metadata in walker.for_type(cls).walk():
