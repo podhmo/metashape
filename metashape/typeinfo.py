@@ -109,7 +109,7 @@ def typeinfo(
     ),
 ) -> TypeInfo:
     raw = typ
-    args = typing_inspect.get_args(typ)
+    args: t.List[t.Type[t.Any]] = typing_inspect.get_args(typ)
     underlying = getattr(typ, "__origin__", None)
 
     if underlying is None:
@@ -159,7 +159,7 @@ def typeinfo(
                 is_optional = _nonetype in args
                 if is_optional:
                     args = [x for x in args if x != _nonetype]
-                    typ = t.Union[tuple(args)]
+                    typ = t.Union[tuple(args)]  # type: ignore
                 return Container_with_children(
                     container_type="union",
                     raw=raw,
@@ -244,7 +244,8 @@ def omit_optional(
     if not is_optional:
         return typ, False
     args = [x for x in args if x != _nonetype]
-    return t.Union[tuple(args)], True
+    rtyp: t.Type[t.Any] = t.Union[tuple(args)]  # type:ignore
+    return rtyp, True
 
 
 if __name__ == "__main__":
