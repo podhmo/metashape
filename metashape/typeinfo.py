@@ -106,7 +106,8 @@ def typeinfo(
     _nonetype: t.Type[t.Any] = t.cast(t.Type[t.Any], type(None)),  # xxx
     _anytype: t.Type[t.Any] = t.cast(t.Type[t.Any], t.Any),  # xxx
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
-        t.Set[t.Type[t.Any]], set([str, int, bool, str, bytes, dict, list, t.Any])
+        t.Set[t.Type[t.Any]],
+        set([str, int, float, bool, str, bytes, dict, list, t.Any]),
     ),
 ) -> TypeInfo:
     raw = typ
