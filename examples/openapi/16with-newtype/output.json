@@ -8,49 +8,62 @@
             "type": "number"
           },
           "float_value": {
-            "type": "number"
+            "type": "number",
+            "format": "float"
           },
           "double_value": {
-            "type": "number"
+            "type": "number",
+            "format": "double"
           },
           "int_value": {
             "type": "integer"
           },
           "int32_value": {
-            "type": "integer"
+            "type": "integer",
+            "format": "int32"
           },
           "int64_value": {
-            "type": "integer"
+            "type": "integer",
+            "format": "int64"
           },
           "string_value": {
             "type": "string"
           },
           "date_value": {
-            "type": "string"
+            "type": "string",
+            "format": "date"
           },
           "datetime_value": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "password_value": {
-            "type": "string"
+            "type": "string",
+            "format": "password"
           },
           "email_value": {
-            "type": "string"
+            "type": "string",
+            "format": "email"
           },
           "uuid_value": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "uri_value": {
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           },
           "hostname_value": {
-            "type": "string"
+            "type": "string",
+            "format": "hostname"
           },
           "ipv4_value": {
-            "type": "string"
+            "type": "string",
+            "format": "ipv4"
           },
           "ipv6_value": {
-            "type": "string"
+            "type": "string",
+            "format": "ipv6"
           }
         },
         "required": [
