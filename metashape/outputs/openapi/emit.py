@@ -176,6 +176,9 @@ class Scanner:
                 else:
                     if first.user_defined_type is not None:
                         prop["items"] = self._build_ref_data(first.user_defined_type)
+            if info.is_newtype:
+                if hasattr(info.supertypes[0], "__name__"):
+                    prop["format"] = info.supertypes[0].__name__
 
         if len(required) <= 0:
             schema.pop("required")
