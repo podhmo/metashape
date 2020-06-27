@@ -35,7 +35,7 @@ class TypeInfo:
 
     # tx.Literal['x', 'y'] -> str, t.Optional[tx.Literal['x', 'y']] -> str
     underlying: t.Type[t.Any] = dataclasses.field(repr=False, hash=False)
-    # ?
+    # if tx.Literal['x', 'y'] or t.NewType("X", str) -> [<new type>]
     supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False, hash=False)
 
     # User -> User, int -> None, t.List[User] -> User
@@ -46,6 +46,7 @@ class TypeInfo:
     container_type: ContainerType = dataclasses.field(
         repr=True, hash=False, default="?"
     )
+    is_newtype: bool = False
 
 
 Atom = partial(
@@ -209,6 +210,17 @@ def typeinfo(
         supertypes.append(underlying)  # todo: fullname?
         underlying = underlying.__supertype__
 
+    if len(supertypes) > 0:
+        underlying_info = typeinfo(underlying)
+        return dataclasses.replace(
+            underlying_info,
+            is_newtype=True,
+            supertypes=tuple(supertypes),
+            raw=raw,
+            type_=typ,
+            is_optional=is_optional,
+        )
+
     if underlying not in _primitives:
         user_defined_type = underlying
     return Atom(
@@ -217,7 +229,8 @@ def typeinfo(
         underlying=underlying,
         is_optional=is_optional,
         user_defined_type=user_defined_type,
-        supertypes=tuple(supertypes),
+        supertypes=(),
+        is_newtype=False,
     )
 
 
