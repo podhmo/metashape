@@ -47,5 +47,8 @@ typing:
 	dictknife diff `echo 00*`/${OUTFILE} `echo $@*`/${OUTFILE} | tee `echo $@*`/a.diff
 15:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+# newtype
 16:
+	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+17:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}

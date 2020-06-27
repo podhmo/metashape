@@ -1,0 +1,92 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "Value": {
+        "type": "object",
+        "properties": {
+          "person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "my_person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "optional_person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "optional_my_person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "optional_my_person2": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "optional_my_person3": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "my_people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "my_people2": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "my_people_optional": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "optional_people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "optional_my_people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "optional_my_people2": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          }
+        },
+        "required": [
+          "person",
+          "my_person",
+          "people",
+          "my_people",
+          "my_people2",
+          "my_people_optional"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
