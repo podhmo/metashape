@@ -135,7 +135,10 @@ class Scanner:
         description: str = resolver.metadata.resolve_doc(cls, verbose=ctx.verbose)
 
         schema: t.Dict[str, t.Any] = make_dict(
-            properties=properties, required=required, description=description
+            type="object",
+            properties=properties,
+            required=required,
+            description=description,
         )
 
         for field_name, info, metadata in walker.for_type(cls).walk():
@@ -173,6 +176,15 @@ class Scanner:
                 else:
                     if first.user_defined_type is not None:
                         prop["items"] = self._build_ref_data(first.user_defined_type)
+
+            if info.is_newtype:
+                if info.user_defined_type is not None:
+                    if prop.get("type") == "object":
+                        prop.pop("type")
+                        prop.update(ctx.state.refs[info.user_defined_type])
+                else:
+                    if hasattr(info.supertypes[0], "__name__"):
+                        prop["format"] = info.supertypes[0].__name__.replace("_", "-")
 
         if len(required) <= 0:
             schema.pop("required")

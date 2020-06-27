@@ -35,7 +35,7 @@ class TypeInfo:
 
     # tx.Literal['x', 'y'] -> str, t.Optional[tx.Literal['x', 'y']] -> str
     underlying: t.Type[t.Any] = dataclasses.field(repr=False, hash=False)
-    # ?
+    # if tx.Literal['x', 'y'] or t.NewType("X", str) -> [<new type>]
     supertypes: t.Tuple[t.Type[t.Any], ...] = dataclasses.field(repr=False, hash=False)
 
     # User -> User, int -> None, t.List[User] -> User
@@ -46,6 +46,7 @@ class TypeInfo:
     container_type: ContainerType = dataclasses.field(
         repr=True, hash=False, default="?"
     )
+    is_newtype: bool = False
 
 
 Atom = partial(
@@ -105,17 +106,20 @@ def typeinfo(
     _nonetype: t.Type[t.Any] = t.cast(t.Type[t.Any], type(None)),  # xxx
     _anytype: t.Type[t.Any] = t.cast(t.Type[t.Any], t.Any),  # xxx
     _primitives: t.Set[t.Type[t.Any]] = t.cast(
-        t.Set[t.Type[t.Any]], set([str, int, bool, str, bytes, dict, list, t.Any])
+        t.Set[t.Type[t.Any]],
+        set([str, int, float, bool, str, bytes, dict, list, t.Any]),
     ),
 ) -> TypeInfo:
     raw = typ
-    args = typing_inspect.get_args(typ)
+    args: t.List[t.Type[t.Any]] = typing_inspect.get_args(typ)
     underlying = getattr(typ, "__origin__", None)
 
     if underlying is None:
         if not hasattr(typ, "__iter__"):
             underlying = typ  # xxx
         elif issubclass(typ, str):
+            underlying = typ
+        elif issubclass(typ, bytes):
             underlying = typ
         elif issubclass(typ, t.Sequence):
             childinfo = typeinfo(_anytype, default=default)
@@ -159,7 +163,7 @@ def typeinfo(
                 is_optional = _nonetype in args
                 if is_optional:
                     args = [x for x in args if x != _nonetype]
-                    typ = t.Union[tuple(args)]
+                    typ = t.Union[tuple(args)]  # type: ignore
                 return Container_with_children(
                     container_type="union",
                     raw=raw,
@@ -209,6 +213,17 @@ def typeinfo(
         supertypes.append(underlying)  # todo: fullname?
         underlying = underlying.__supertype__
 
+    if len(supertypes) > 0:
+        underlying_info = typeinfo(underlying)
+        return dataclasses.replace(
+            underlying_info,
+            is_newtype=True,
+            supertypes=tuple(supertypes),
+            raw=raw,
+            type_=typ,
+            is_optional=is_optional or underlying_info.is_optional,
+        )
+
     if underlying not in _primitives:
         user_defined_type = underlying
     return Atom(
@@ -217,7 +232,8 @@ def typeinfo(
         underlying=underlying,
         is_optional=is_optional,
         user_defined_type=user_defined_type,
-        supertypes=tuple(supertypes),
+        supertypes=(),
+        is_newtype=False,
     )
 
 
@@ -244,7 +260,8 @@ def omit_optional(
     if not is_optional:
         return typ, False
     args = [x for x in args if x != _nonetype]
-    return t.Union[tuple(args)], True
+    rtyp: t.Type[t.Any] = t.Union[tuple(args)]  # type:ignore
+    return rtyp, True
 
 
 if __name__ == "__main__":

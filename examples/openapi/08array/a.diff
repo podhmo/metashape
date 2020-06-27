@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 08array/output.json
-@@ -8,11 +8,22 @@
+@@ -9,11 +9,22 @@
            },
            "age": {
              "type": "integer"

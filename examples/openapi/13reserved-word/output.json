@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "Index": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -26,6 +27,7 @@
         "additionalProperties": false
       },
       "Constraint": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -62,6 +64,7 @@
         "additionalProperties": false
       },
       "Trigger": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -78,6 +81,7 @@
         "additionalProperties": false
       },
       "Column": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -119,6 +123,7 @@
         "additionalProperties": false
       },
       "Table": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -171,6 +176,7 @@
         "additionalProperties": false
       },
       "Relation": {
+        "type": "object",
         "properties": {
           "table": {
             "$ref": "#/components/schemas/Table"
@@ -208,6 +214,7 @@
         "additionalProperties": false
       },
       "Driver": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"
@@ -224,6 +231,7 @@
         "additionalProperties": false
       },
       "Schema": {
+        "type": "object",
         "properties": {
           "name": {
             "type": "string"

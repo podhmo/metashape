@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 05enum/output.json
-@@ -8,11 +8,27 @@
+@@ -9,11 +9,27 @@
            },
            "age": {
              "type": "integer"

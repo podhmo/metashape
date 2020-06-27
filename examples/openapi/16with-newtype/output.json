@@ -1,0 +1,100 @@
+{
+  "components": {
+    "schemas": {
+      "Value": {
+        "type": "object",
+        "properties": {
+          "number_value": {
+            "type": "number"
+          },
+          "float_value": {
+            "type": "number",
+            "format": "float"
+          },
+          "double_value": {
+            "type": "number",
+            "format": "double"
+          },
+          "int_value": {
+            "type": "integer"
+          },
+          "int32_value": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "int64_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "string_value": {
+            "type": "string"
+          },
+          "date_value": {
+            "type": "string",
+            "format": "date"
+          },
+          "datetime_value": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "password_value": {
+            "type": "string",
+            "format": "password"
+          },
+          "byte_value": {
+            "type": "string"
+          },
+          "binary_value": {
+            "type": "string",
+            "format": "binary"
+          },
+          "email_value": {
+            "type": "string",
+            "format": "email"
+          },
+          "uuid_value": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uri_value": {
+            "type": "string",
+            "format": "uri"
+          },
+          "hostname_value": {
+            "type": "string",
+            "format": "hostname"
+          },
+          "ipv4_value": {
+            "type": "string",
+            "format": "ipv4"
+          },
+          "ipv6_value": {
+            "type": "string",
+            "format": "ipv6"
+          }
+        },
+        "required": [
+          "number_value",
+          "float_value",
+          "double_value",
+          "int_value",
+          "int32_value",
+          "int64_value",
+          "string_value",
+          "date_value",
+          "datetime_value",
+          "password_value",
+          "byte_value",
+          "binary_value",
+          "email_value",
+          "uuid_value",
+          "uri_value",
+          "hostname_value",
+          "ipv4_value",
+          "ipv6_value"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

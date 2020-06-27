@@ -1,14 +1,21 @@
 # type: ignore
 import typing as t
+import dataclasses
 import typing_extensions as tx
 import pytest
 
 
-_MyString = t.NewType("S", str)
+_MyString = t.NewType("_MyString", str)
+_MyString2 = t.NewType("_MyString2", _MyString)
+_Optional_MyString = t.NewType("_Optional_MyString", t.Optional[_MyString])
 
 
 class _Person:
     name: str
+
+
+_MyPerson = t.NewType("_MyPerson", _Person)
+_MyPeople = t.NewType("_MyPeople", t.List[_MyPerson])
 
 
 def atom(
@@ -29,6 +36,7 @@ def atom(
         is_optional=is_optional,
         user_defined_type=user_defined_type,
         supertypes=tuple(supertypes or ()),
+        is_newtype=len(supertypes or []) > 0,
     )
 
 
@@ -40,12 +48,13 @@ def container(
     is_optional=False,
     is_combined=False,
     raw_args=None,
-    args=None
+    args=None,
+    supertypes=None
 ):
     from metashape.typeinfo import Container_with_children
 
     raw_args = raw_args or [atom(raw=x, underlying=x) for x in args]
-    return Container_with_children(
+    info = Container_with_children(
         raw=raw,
         type_=type_ or raw,
         args=tuple(raw_args),
@@ -53,6 +62,13 @@ def container(
         is_optional=is_optional,
         is_combined=is_combined,
     )
+    if supertypes:
+        info = dataclasses.replace(
+            info,
+            supertypes=tuple(supertypes or ()),
+            is_newtype=len(supertypes or []) > 0,
+        )
+    return info
 
 
 @pytest.mark.parametrize(
@@ -119,9 +135,7 @@ def test_omit_optional(typ, want, omitted):
         (
             "list t.Any",
             list,
-            container(
-                raw=list, type_=t.Sequence, container_type="list", args=[t.Any]
-            ),
+            container(raw=list, type_=t.Sequence, container_type="list", args=[t.Any]),
         ),
         (
             "tuple str",
@@ -230,6 +244,11 @@ def test_omit_optional(typ, want, omitted):
             atom(raw=_MyString, underlying=str, supertypes=[_MyString]),
         ),
         (
+            "newType",
+            _MyString2,
+            atom(raw=_MyString2, underlying=str, supertypes=[_MyString2, _MyString]),
+        ),
+        (
             "optional newType",
             t.Optional[_MyString],
             atom(
@@ -238,6 +257,60 @@ def test_omit_optional(typ, want, omitted):
                 underlying=str,
                 is_optional=True,
                 supertypes=[_MyString],
+            ),
+        ),
+        (
+            "optional newType2",
+            _Optional_MyString,
+            atom(
+                raw=_Optional_MyString,
+                type_=_Optional_MyString,
+                underlying=str,
+                is_optional=True,
+                supertypes=[_Optional_MyString],
+            ),
+        ),
+        (
+            "newType user defined",
+            _MyPerson,
+            atom(
+                raw=_MyPerson,
+                underlying=_Person,
+                user_defined_type=_Person,
+                supertypes=[_MyPerson],
+            ),
+        ),
+        (
+            "newType user defined with composite type",
+            t.List[_MyPerson],
+            container(
+                raw=t.List[_MyPerson],
+                container_type="list",
+                raw_args=[
+                    atom(
+                        raw=_MyPerson,
+                        underlying=_Person,
+                        user_defined_type=_Person,
+                        supertypes=[_MyPerson],
+                    ),
+                ],
+            ),
+        ),
+        (
+            "newType user defined with composite type with newType",
+            _MyPeople,
+            container(
+                raw=_MyPeople,
+                container_type="list",
+                raw_args=[
+                    atom(
+                        raw=_MyPerson,
+                        underlying=_Person,
+                        user_defined_type=_Person,
+                        supertypes=[_MyPerson],
+                    ),
+                ],
+                supertypes=[_MyPeople],
             ),
         ),
         (

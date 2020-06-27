@@ -1,6 +1,6 @@
 --- 00runcode/output.json
 +++ 04required/output.json
-@@ -8,6 +8,9 @@
+@@ -9,6 +9,9 @@
            },
            "age": {
              "type": "integer"
