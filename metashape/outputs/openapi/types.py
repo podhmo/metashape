@@ -1,24 +1,24 @@
 import typing as t
 
 # see: https://swagger.io/docs/specification/data-models/data-types/
-Number = float
-Double = t.NewType("double", float)
-Float = t.NewType("float", float)
+number = float
+double = t.NewType("double", number)
+float = t.NewType("float", number)
 
-Integer = int
-Int32 = t.NewType("int32", int)
-Int64 = t.NewType("int64", int)
+integer = int
+int32 = t.NewType("int32", int)
+int64 = t.NewType("int64", int)
 
-String = str
-Date = t.NewType("date", str)
-DateTime = t.NewType("date-time", str)
-Password = t.NewType("password", str)
+string = str
+date = t.NewType("date", str)
+date_time = t.NewType("date_time", str)
+password = t.NewType("password", str)
 
-Byte = bytes
-Binary = t.NewType("binary", bytes)
-Email = t.NewType("email", str)
-UUID = t.NewType("uuid", str)
-URI = t.NewType("uri", str)
-Hostname = t.NewType("hostname", str)
-IPV4 = t.NewType("ipv4", str)
-IPV6 = t.NewType("ipv6", str)
+byte = bytes
+binary = t.NewType("binary", byte)
+email = t.NewType("email", str)
+uuid = t.NewType("uuid", str)
+uri = t.NewType("uri", str)
+hostname = t.NewType("hostname", str)
+ipv4 = t.NewType("ipv4", str)
+ipv6 = t.NewType("ipv6", str)

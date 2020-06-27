@@ -2,23 +2,23 @@ from metashape.outputs.openapi import types
 
 
 class Value:
-    number_value: types.Number
-    float_value: types.Float
-    double_value: types.Double
+    number_value: types.number
+    float_value: types.float
+    double_value: types.double
 
-    int_value: types.Integer
-    int32_value: types.Int32
-    int64_value: types.Int64
+    int_value: types.integer
+    int32_value: types.int32
+    int64_value: types.int64
 
-    string_value: types.String
-    date_value: types.Date
-    datetime_value: types.DateTime
-    password_value: types.Password
-    byte_value: types.Byte
-    binary_value: types.Binary
-    email_value: types.Email
-    uuid_value: types.UUID
-    uri_value: types.URI
-    hostname_value: types.Hostname
-    ipv4_value: types.IPV4
-    ipv6_value: types.IPV6
+    string_value: types.string
+    date_value: types.date
+    datetime_value: types.date_time
+    password_value: types.password
+    byte_value: types.byte
+    binary_value: types.binary
+    email_value: types.email
+    uuid_value: types.uuid
+    uri_value: types.uri
+    hostname_value: types.hostname
+    ipv4_value: types.ipv4
+    ipv6_value: types.ipv6

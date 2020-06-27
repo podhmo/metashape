@@ -184,7 +184,7 @@ class Scanner:
                         prop.update(ctx.state.refs[info.user_defined_type])
                 else:
                     if hasattr(info.supertypes[0], "__name__"):
-                        prop["format"] = info.supertypes[0].__name__
+                        prop["format"] = info.supertypes[0].__name__.replace("_", "-")
 
         if len(required) <= 0:
             schema.pop("required")
