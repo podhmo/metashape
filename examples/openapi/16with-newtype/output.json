@@ -41,6 +41,13 @@
             "type": "string",
             "format": "password"
           },
+          "byte_value": {
+            "type": "string"
+          },
+          "binary_value": {
+            "type": "string",
+            "format": "binary"
+          },
           "email_value": {
             "type": "string",
             "format": "email"
@@ -77,6 +84,8 @@
           "date_value",
           "datetime_value",
           "password_value",
+          "byte_value",
+          "binary_value",
           "email_value",
           "uuid_value",
           "uri_value",

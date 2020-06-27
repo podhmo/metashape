@@ -14,8 +14,8 @@ class Value:
     date_value: types.Date
     datetime_value: types.DateTime
     password_value: types.Password
-    # byte_value: types.Byte
-    # binary_value: types.Binary
+    byte_value: types.Byte
+    binary_value: types.Binary
     email_value: types.Email
     uuid_value: types.UUID
     uri_value: types.URI
