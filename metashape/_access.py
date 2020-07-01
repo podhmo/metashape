@@ -43,9 +43,9 @@ def _extract_metadata(
     typ: t.Type[t.Any],
     *,
     metadata: t.Optional[t.Dict[str, t.Any]] = None,
-    target_types: t.Collection = (t.Union, tx.Annotated),
+    target_types: t.List[object] = [t.Union, tx.Annotated],
     see_args: bool = False,
-) -> t.Dict[str, t.Any]:
+) -> t.Tuple[t.Type[t.Any], t.Dict[str, t.Any]]:
     if metadata is None:
         metadata = {}
 
@@ -73,8 +73,9 @@ def _extract_metadata(
 
 
 def iterate_props(
-    typ: t.Type[t.Any], *, ignore_private: bool = True, see_annotated: bool = True,
+    typ: t.Type[t.Any], *, ignore_private: bool = True,
 ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
+    see_annotated: bool = True
     for fieldname, fieldtype in t.get_type_hints(typ).items():
         if ignore_private and fieldname.startswith("_"):
             continue
@@ -82,7 +83,7 @@ def iterate_props(
 
         # typing_extensions.Annotated?
         if see_annotated:
-            fieldtype, metadata = _extract_metadata(fieldtype, metadata=metadata)
+            fieldtype, metadata = _extract_metadata(fieldtype, metadata=metadata)  # type: ignore
 
         yield fieldname, fieldtype, metadata
 
