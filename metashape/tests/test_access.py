@@ -5,6 +5,11 @@ import pytest
 from metashape._access import SeeArgsForMetadata
 
 
+# TODO: this is flake8's bug, string value is treated as type
+# metashape/tests/test_access.py:59:39: F722 syntax error in forward annotation 'nickname of object'
+# metashape/tests/test_access.py:64:52: F821 undefined name 'parents'
+
+
 class Description:
     def __init__(self, description: str) -> None:
         self.description = description
@@ -41,35 +46,45 @@ class WithPrivate:
 
 
 class WithAnnotated:
-    name: tx.Annotated[str, Description("name of object")]
+    name: tx.Annotated[str, Description("name of object")]  # noqa: F722
 
 
 class WithAnnotatedAsMetadata:
-    name: tx.Annotated[str, Description2("name of object")]
+    name: tx.Annotated[str, Description2("name of object")]  # noqa: F722
 
 
 class WithAnnotatedOptional:
-    nickname: tx.Annotated[t.Optional[str], Description("nickname of object")]
+    nickname: tx.Annotated[
+        t.Optional[str], Description("nickname of object")  # noqa: F722
+    ]
 
 
 class WithAnnotatedOptional2:
-    nickname: t.Optional[tx.Annotated[str, Description("nickname of object")]]
+    nickname: t.Optional[
+        tx.Annotated[str, Description("nickname of object")]  # noqa: F722,F821
+    ]
 
 
 class WithAnnotatedList:
-    parents: tx.Annotated[t.List[str], Description("parents")]
-    parents2: t.List[tx.Annotated[str, Description("parents")]]  # not extract
+    parents: tx.Annotated[t.List[str], Description("parents")]  # noqa: F821
+    parents2: t.List[
+        tx.Annotated[str, Description("parents")]  # noqa: F821
+    ]  # not extract
     parents3: tx.Annotated[
-        t.List[tx.Annotated[str, Description("parents")]], SeeArgsForMetadata()
+        t.List[tx.Annotated[str, Description("parents")]],  # noqa: F821
+        SeeArgsForMetadata(),
     ]
 
 
 class WithAnnotatedComplexNested:
     complex_nested: t.Dict[
-        str, t.Dict[str, tx.Annotated[str, Description("complex_nested")]]
+        str, t.Dict[str, tx.Annotated[str, Description("complex_nested")]]  # noqa: F821
     ]
     complex_nested2: tx.Annotated[
-        t.Dict[str, t.Dict[str, tx.Annotated[str, Description("complex_nested")]]],
+        t.Dict[
+            str,
+            t.Dict[str, tx.Annotated[str, Description("complex_nested")]],  # noqa: F821
+        ],
         SeeArgsForMetadata(),
     ]
 
