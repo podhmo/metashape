@@ -5,7 +5,7 @@ from .constants import ID  # noqa F401
 T = t.TypeVar("T")
 
 Kind = tx.Literal["object", "enum", "ignore"]
-MetaData = t.Optional[t.MutableMapping[str, t.Any]]
+MetaData = t.MutableMapping[str, t.Any]
 
 # TODO: more strict typing
 Member = t.Type[t.Any]
@@ -18,7 +18,7 @@ class IteratePropsFunc(tx.Protocol):
     # implementation: _access:iterate_props, _dataclass:iterate_props_for_dataclass
     def __call__(
         self, typ: t.Type[t.Any], *, ignore_private: bool = True
-    ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
+    ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], MetaData]]:
         ...
 
 
