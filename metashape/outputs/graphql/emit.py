@@ -61,7 +61,7 @@ def scan(walker: Walker) -> Context:
     for cls in scanned.objects:
         schema = make_dict()
         typename = resolver.resolve_typename(cls)
-        for field_name, info, metadata in walker.for_type(cls).walk():
+        for field_name, info, metadata in walker.walk_fields(cls):
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
             prop = {"type": (scanned.get_name(info.type_) or detect.schema_type(info))}
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")

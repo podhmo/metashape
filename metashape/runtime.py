@@ -118,7 +118,7 @@ def _mark_recursive(
         seen.add(m)
         yield m
 
-        for _, info, _ in w.for_type(m).walk():
+        for _, info, _ in w.walk_fields(m):
             if info.type_ in seen:
                 continue
 
