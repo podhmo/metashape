@@ -1,9 +1,8 @@
 import typing as t
 import typing_extensions as tx
 import logging
-import typing_inspect
 from metashape import typeinfo
-
+from metashape.langhelpers import typing_get_args
 
 logger = logging.getLogger(__name__)
 JSONSchemaType = tx.Literal["boolean", "string", "integer", "number", "object", "array"]
@@ -38,4 +37,4 @@ def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:
     origin = getattr(typ, "__origin__", None)
     if origin != tx.Literal:
         return ()  # type: ignore
-    return typing_inspect.get_args(typ)  # type: ignore
+    return typing_get_args(typ)  # type: ignore

@@ -161,6 +161,10 @@ class Scanner:
                 if enum:
                     prop["enum"] = enum
 
+            # description
+            if metadata.get("description"):
+                prop["description"] = metadata["description"]
+
             # default
             if resolver.metadata.has_default(metadata):
                 prop["default"] = resolver.metadata.resolve_default(metadata)
