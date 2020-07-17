@@ -58,17 +58,17 @@ class Font:
 
 @dataclasses.dataclass
 class CodehiliteExtension:
+    codehilite: Data
+
     @dataclasses.dataclass
     class Data:
         guess_lang: bool
 
-    codehilite: "CodehiliteExtension.Data"
-
 
 @dataclasses.dataclass
 class TocExtension:
+    toc: TocExtension.Data
+
     @dataclasses.dataclass
     class Data:
         permalink: bool
-
-    toc: "TocExtension.Data"

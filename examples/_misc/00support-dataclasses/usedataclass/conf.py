@@ -1,7 +1,6 @@
 from __future__ import annotations
-from magicalimport import import_module
+import shapes  # toplevel
 
-shapes = import_module("./shapes.py", here=__file__)
 toplevel = shapes.Toplevel(
     site_name="Material for MkDocs",
     site_description="A Material Design theme for MkDocs",

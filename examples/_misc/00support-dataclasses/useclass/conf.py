@@ -29,24 +29,8 @@ class Toplevel:
     # Copyright
     copyright: str = "Copyright &copy; 2016 - 2017 Martin Donath"
 
-    class Theme:
-        name: str = "material"
-        language: str = "en"
-
-        class Palette:
-            primary: str = "indigo"
-            accent: str = "indigo"
-
-        palette: "Palette" = Palette
-
-        class Font:
-            text: str = "Roboto"
-            code: str = "Roboto Mono"
-
-        font: "Toplevel.Theme.Font" = Font
-
-    theme: "Toplevel.Theme" = Theme
-    extra: "Extra" = Extra(
+    theme: Theme
+    extra: Extra = Extra(
         manifest="manifest.webmanifest",
         social=[
             Social(type_="github", link="https://github.com/squidfunk"),
@@ -61,3 +45,17 @@ class Toplevel:
         {"codehilite": {"guess_lang": False}},
         {"toc": {"permalink": True}},
     ]
+
+    class Theme:
+        name: str = "material"
+        language: str = "en"
+        palette: Palette
+        font: Font
+
+        class Palette:
+            primary: str = "indigo"
+            accent: str = "indigo"
+
+        class Font:
+            text: str = "Roboto"
+            code: str = "Roboto Mono"
