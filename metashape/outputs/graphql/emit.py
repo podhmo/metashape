@@ -2,8 +2,8 @@ from __future__ import annotations
 import typing as t
 import logging
 import dataclasses
-import typing_inspect
 from metashape.langhelpers import make_dict
+from metashape.langhelpers import typing_get_args
 from metashape.analyze.walker import Walker
 from metashape.analyze.scan import scan as _scan
 
@@ -63,9 +63,7 @@ def scan(walker: Walker) -> Context:
         typename = resolver.resolve_typename(cls)
         for field_name, info, metadata in walker.for_type(cls).walk():
             field_name = resolver.metadata.resolve_name(metadata, default=field_name)
-            prop = {
-                "type": (scanned.get_name(info.type_) or detect.schema_type(info))
-            }
+            prop = {"type": (scanned.get_name(info.type_) or detect.schema_type(info))}
             resolver.metadata.fill_extra_metadata(prop, metadata, name="graphql")
             schema[field_name] = prop
 
@@ -89,7 +87,7 @@ def emit(ctx: Context, *, output: t.IO[str]) -> None:
 
     for name, definition in ctx.result.enums.items():
         with m.block(f"enum {name}"):
-            for x in typing_inspect.get_args(definition):
+            for x in typing_get_args(definition):
                 m.stmt(x)
         m.sep()
 

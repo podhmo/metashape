@@ -85,7 +85,7 @@ class TypeWalker:
 
     def walk(
         self, *, ignore_private: t.Optional[bool] = None
-    ) -> t.Iterable[t.Tuple[str, TypeInfo, t.Optional[MetaData]]]:
+    ) -> t.Iterable[t.Tuple[str, TypeInfo, MetaData]]:
         if ignore_private is None:
             cfg = self.parent.config
             ignore_private = cfg.option.ignore_private
@@ -96,6 +96,7 @@ class TypeWalker:
         ):
             if metadata is None:
                 metadata = {}
+
             logger.info(
                 "walk prop: 	name=%r	type=%r	keys(metadata)=%s",
                 name,

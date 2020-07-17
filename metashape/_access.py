@@ -33,11 +33,11 @@ def get_doc(ob: object, *, verbose: bool = False) -> str:
     return doc
 
 
-def get_metadata(cls: t.Type[t.Any], name: str) -> t.Optional[MetaData]:
+def get_metadata(cls: t.Type[t.Any], name: str) -> MetaData:
     prop = cls.__dict__.get(name)
     if prop is None:
-        return None
-    return getattr(prop, "metadata", None)  # type: ignore
+        return {}
+    return getattr(prop, "metadata", None) or {}
 
 
 def _extract_metadata(
@@ -75,7 +75,7 @@ def _extract_metadata(
 
 def iterate_props(
     typ: t.Type[t.Any], *, ignore_private: bool = True,
-) -> t.Iterable[t.Tuple[str, t.Type[t.Any], t.Optional[MetaData]]]:
+) -> t.Iterable[t.Tuple[str, t.Type[t.Any], MetaData]]:
     see_annotated: bool = True
     for fieldname, fieldtype in t.get_type_hints(typ).items():
         if ignore_private and fieldname.startswith("_"):
