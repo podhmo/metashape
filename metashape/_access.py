@@ -77,7 +77,8 @@ def iterate_props(
     typ: t.Type[t.Any], *, ignore_private: bool = True,
 ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], MetaData]]:
     see_annotated: bool = True
-    for fieldname, fieldtype in t.get_type_hints(typ).items():
+    hints = t.get_type_hints(typ, localns=getattr(typ, "__dict__", None))
+    for fieldname, fieldtype in hints.items():
         if ignore_private and fieldname.startswith("_"):
             continue
         metadata = get_metadata(typ, fieldname)
