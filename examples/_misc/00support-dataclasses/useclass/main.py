@@ -1,4 +1,5 @@
 import sys
+import typing as t
 from dictknife import loading
 from magicalimport import import_symbol
 from metashape.analyze.collector import Collector, _Value
@@ -12,17 +13,17 @@ else:
     cls = import_symbol("./conf.py:Toplevel", here=__file__)
 
 
-def collect(target: _Value, *, w: Walker) -> _Value:
+@Collector
+def collect(cls: _Value, *, w: Walker) -> _Value:
     props = {}
-    for name, typeinfo, metadata in w.walk_fields(target):
+    for name, typeinfo, metadata in w.walk_fields(cls):
         fieldname = w.resolver.metadata.resolve_name(metadata, default=name)
-        props[fieldname] = collect(getattr(target, name), w=w)
+        props[fieldname] = collect(getattr(cls, name, None) or typeinfo.raw, w=w)
     return props
 
 
 d = {}
 w = get_walker(cls)
-collector = Collector(collect)
 for cls in w.walk():
-    d.update(collector.collect(cls, w=w))
+    d.update(collect(cls, w=w))
 loading.dumpfile(d, format="yaml")

@@ -1,9 +1,11 @@
-default: 00 01
+default: 00
 
+# dataclasses support
 00:
-	python $@*/main.py > $$(echo $@*)/output.yaml
-	dictknife diff $@*/mkdocs.yml $@*/output.yaml | tee $$(echo $@*)/a.diff
-01:
-	python $@*/main.py > $$(echo $@*)/output.yaml
-	python 00*/main.py $$(echo $@*)/conf.py:toplevel > $$(echo $@*)/00-output.yaml
-	dictknife diff $@*/00-output.yaml $@*/output.yaml | tee $$(echo $@*)/a.diff
+	# use class
+	python $@*/useclass/main.py > $$(echo $@*)/useclass/got.yaml
+	dictknife diff $@*/want.yaml $@*/useclass/got.yaml | tee $$(echo $@*)/want-useclass.diff
+
+	# use dataclasses as member
+	python $@*/usedataclass/main.py > $$(echo $@*)/usedataclass/got.yaml
+	dictknife diff $@*/want.yaml $@*/usedataclass/got.yaml | tee $$(echo $@*)/want-usedataclass.diff
