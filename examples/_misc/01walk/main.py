@@ -30,14 +30,7 @@ if __name__ == "__main__":
             {
                 "one": walk(runtime.get_walker(Team)),
                 "list": walk(runtime.get_walker([Team, Member])),
-                "with-recursive": walk(
-                    runtime.get_walker(
-                        [Team],
-                        config=runtime.Config(
-                            option=runtime.Config.Option(recursive=True)
-                        ),
-                    )
-                ),
+                "with-recursive": walk(runtime.get_walker([Team], recursive=True)),
             },
             indent=2,
         )
