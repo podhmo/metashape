@@ -4,7 +4,7 @@ from functools import partial
 from functools import lru_cache
 import dataclasses
 import typing_extensions as tx
-import typing_inspect
+from metashape.langhelpers import typing_get_args
 
 
 # TODO: support inheritance
@@ -111,7 +111,7 @@ def typeinfo(
     ),
 ) -> TypeInfo:
     raw = typ
-    args: t.List[t.Type[t.Any]] = typing_inspect.get_args(typ)
+    args: t.List[t.Type[t.Any]] = typing_get_args(typ)
     underlying = getattr(typ, "__origin__", None)
 
     if underlying is None:
@@ -176,10 +176,10 @@ def typeinfo(
         if hasattr(typ, "__origin__"):
             underlying = typ.__origin__
             if underlying == tx.Literal:
-                args = typing_inspect.get_args(typ)
+                args = typing_get_args(typ)
                 underlying = type(args[0])
             elif issubclass(underlying, t.Sequence):
-                args = typing_inspect.get_args(typ)
+                args = typing_get_args(typ)
                 return Container_with_children(
                     raw=raw,
                     type_=typ,
@@ -188,7 +188,7 @@ def typeinfo(
                     is_optional=is_optional,
                 )
             elif issubclass(underlying, t.Mapping):
-                args = typing_inspect.get_args(typ)
+                args = typing_get_args(typ)
                 return Container_with_children(
                     raw=raw,
                     type_=typ,
@@ -197,7 +197,7 @@ def typeinfo(
                     is_optional=is_optional,
                 )
             elif issubclass(underlying, t.Set):
-                args = typing_inspect.get_args(typ)
+                args = typing_get_args(typ)
                 return Container_with_children(
                     raw=raw,
                     type_=typ,
@@ -247,7 +247,7 @@ def omit_optional(
     if origin != t.Union:
         return typ, False
 
-    args = typing_inspect.get_args(typ)
+    args = typing_get_args(typ)
     if len(args) == 2:
         if args[0] == _nonetype:
             return args[1], True

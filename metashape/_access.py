@@ -4,6 +4,7 @@ import typing_extensions as tx
 import inspect
 from types import ModuleType
 from metashape.name import resolve_maybe as resolve_name_maybe
+from metashape.langhelpers import typing_get_args
 from .types import MetaData, Member, _ForwardRef
 from .types import IteratePropsFunc
 
@@ -58,14 +59,14 @@ def _extract_metadata(
                 metadata.update(x.as_metadata())
             else:
                 metadata.update(x.__dict__)
-        typ = t.get_args(typ)[0]
+        typ = typing_get_args(typ)[0]
 
     if hasattr(typ, "__origin__") and typ.__origin__:
         if metadata is None:
             metadata = {}
         if see_args or typ.__origin__ in target_types:
             new_args = []
-            for x in t.get_args(typ):
+            for x in typing_get_args(typ):
                 new_arg, _ = _extract_metadata(x, metadata=metadata, see_args=see_args)
                 new_args.append(new_arg)
             typ.__args__ = new_args
