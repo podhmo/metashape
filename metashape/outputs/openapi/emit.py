@@ -29,8 +29,8 @@ class Context:  # TODO: rename to context?
 
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class Result:
-        result: t.Dict[str, t.Any] = dataclasses.field(
-            default_factory=lambda: make_dict(components=make_dict(schemas=make_dict()))
+        components: t.Dict[str, t.Dict[str, t.Any]] = dataclasses.field(
+            default_factory=lambda: make_dict(schemas=make_dict()),
         )
 
     def __init__(self, walker: Walker) -> None:
@@ -197,7 +197,7 @@ class Scanner:
         if cfg.option.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
 
-        ctx.state.schemas[typename] = ctx.result.result["components"]["schemas"][
+        ctx.state.schemas[typename] = ctx.result.components["schemas"][
             typename
         ] = schema
         ctx.state.refs[cls] = {"$ref": f"#/components/schemas/{typename}"}
@@ -216,4 +216,6 @@ def scan(walker: Walker,) -> Context:
 
 
 def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None) -> None:
-    loading.dump(ctx.result.result, output, format=ctx.config.option.output_format)
+    loading.dump(
+        dataclasses.asdict(ctx.result), output, format=ctx.config.option.output_format
+    )
