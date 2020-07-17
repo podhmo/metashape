@@ -1,6 +1,10 @@
+import sys
 from setuptools import setup, find_packages
 
-install_requires = ["typing_inspect", "typing_extensions"]
+install_requires = ["typing-extensions"]
+if sys.version_info < (3, 8):
+    install_requires.append("typing-inspect")
+
 tests_requires = ["pytest"]
 extras_require = {
     "testing": tests_requires,
