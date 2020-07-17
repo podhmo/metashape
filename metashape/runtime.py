@@ -25,6 +25,8 @@ def get_walker(
     *,
     config: t.Optional[Config] = None,
     aggressive: bool = False,
+    recursive: bool = False,
+    sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
 ) -> Walker:
@@ -75,8 +77,8 @@ def get_walker(
                     v.__name__ = name  # xxx TODO: use tx.Annotated
                 mark(v, kind=kind)
 
-    recursive = config.option.recursive
-    sort = config.option.sort
+    recursive = recursive or config.option.recursive
+    sort = sort or config.option.sort
 
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
