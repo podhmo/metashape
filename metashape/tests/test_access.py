@@ -1,4 +1,5 @@
 # type: ignore
+from __future__ import annotations
 import typing as t
 import typing_extensions as tx
 import pytest
@@ -43,6 +44,15 @@ class WithPrivate:
     name: str
     _private_val: str
     __dunder_val__: str
+
+
+class Nested:
+    name: str
+    person: _Person
+
+    class _Person:
+        name: str
+        age: int
 
 
 class WithAnnotated:
@@ -115,6 +125,16 @@ class WithAnnotatedComplexNested:
             WithAnnotated,
             {"name": {"type": str, "metadata": {"description": "name of object"}}},
         ),
+        # nested
+        (
+            "nested",
+            Nested,
+            {
+                "name": {"type": str, "metadata": {}},
+                "person": {"type": Nested._Person, "metadata": {}},
+            },
+        ),
+        # annotation
         (
             "annotated-as-metadata",
             WithAnnotatedAsMetadata,
