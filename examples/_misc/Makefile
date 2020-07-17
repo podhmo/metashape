@@ -1,11 +1,16 @@
-default: 00
+default: 00 01
 
+SHELL := $(shell which bash)
 # dataclasses support
 00:
 	# use class
-	python $@*/useclass/main.py > $$(echo $@*)/useclass/got.yaml
-	dictknife diff $@*/want.yaml $@*/useclass/got.yaml | tee $$(echo $@*)/want-useclass.diff
+	python $@*/useclass/main.py > $$(echo $@*/)useclass/got.yaml 2>&1
+	dictknife diff $@*/want.yaml $@*/useclass/got.yaml > $$(echo $@*/)want-useclass.diff 2>&1
 
 	# use dataclasses as member
-	python $@*/usedataclass/main.py > $$(echo $@*)/usedataclass/got.yaml
-	dictknife diff $@*/want.yaml $@*/usedataclass/got.yaml | tee $$(echo $@*)/want-usedataclass.diff
+	python $@*/usedataclass/main.py > $$(echo $@*/)usedataclass/got.yaml 2>&1
+	dictknife diff $@*/want.yaml $@*/usedataclass/got.yaml > $$(echo $@*/)want-usedataclass.diff 2>&1
+
+# walk classes
+01:
+	python $(shell echo $@*/)main.py > $$(echo $@*/)output.json 2>&1
