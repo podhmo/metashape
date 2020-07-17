@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+import warnings
 import logging
 from metashape.marker import guess_mark
 from metashape import constants
@@ -26,9 +27,19 @@ class Walker:
         self._members = t.cast(t.List[Member], members)  # xxx
 
     def for_type(self, m: Member) -> TypeWalker:
+        warnings.warn("depreacated. use Walker.get_type_walker() or Walker.walk_fields(), instead of Walker.for_type()")
         # TODO: explicitly is better?
         fn = iterate_props_for_dataclass if is_dataclass(m) else iterate_props
         return TypeWalker(m, parent=self, iterate_props=fn)
+
+    def get_type_walker(self, m: Member) -> TypeWalker:
+        fn = iterate_props_for_dataclass if is_dataclass(m) else iterate_props
+        return TypeWalker(m, parent=self, iterate_props=fn)
+
+    def walk_fields(
+        self, m: Member, *, ignore_private: t.Optional[bool] = None
+    ) -> t.Iterable[t.Tuple[str, TypeInfo, MetaData]]:
+        return self.get_type_walker(m).walk(ignore_private=ignore_private)
 
     def append(self, m: Member) -> None:
         self.config.q.append(m)

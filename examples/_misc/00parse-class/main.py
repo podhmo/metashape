@@ -12,10 +12,9 @@ else:
     cls = import_symbol("./conf.py:Toplevel", here=__file__)
 
 
-@Collector
 def collect(target: _Value, *, w: Walker) -> _Value:
     props = {}
-    for name, typeinfo, metadata in w.for_type(target).walk():
+    for name, typeinfo, metadata in w.walk_fields(target):
         fieldname = w.resolver.metadata.resolve_name(metadata, default=name)
         props[fieldname] = collect(getattr(target, name), w=w)
     return props
@@ -23,6 +22,7 @@ def collect(target: _Value, *, w: Walker) -> _Value:
 
 d = {}
 w = get_walker(cls)
+collector = Collector(collect)
 for cls in w.walk():
-    d.update(collect(cls, w=w))
+    d.update(collector.collect(cls, w=w))
 loading.dumpfile(d, format="yaml")
