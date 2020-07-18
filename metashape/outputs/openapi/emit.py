@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+import typing_extensions as tx
 import logging
 import dataclasses
 from functools import partial
@@ -19,34 +20,45 @@ logger = logging.getLogger(__name__)
 # TODO: conflict name
 
 
-class Context:  # TODO: rename to context?
-    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class State:
-        schemas: t.Dict[str, t.Any] = dataclasses.field(default_factory=make_dict)
-        refs: t.Dict[t.Type[t.Any], t.Dict[str, str]] = dataclasses.field(
-            default_factory=make_dict
-        )
-
-    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
-    class Result:
-        components: t.Dict[str, t.Dict[str, t.Any]] = dataclasses.field(
-            default_factory=lambda: make_dict(schemas=make_dict()),
-        )
+class Context:
+    state: Context.State
+    result: ResultDict
+    walker: Walker
+    config: AnalyzingConfig
 
     def __init__(self, walker: Walker) -> None:
         self.state = Context.State()
-        self.result = Context.Result()
+        self.result = {"components": {"schemas": {}}}
         self.walker = walker
         self.config = walker.config
-
-    state: Context.State
-    result: Context.Result
-    walker: Walker
-    config: AnalyzingConfig
 
     @property
     def verbose(self) -> bool:
         return self.config.option.verbose
+
+    @dataclasses.dataclass(frozen=False, unsafe_hash=True)
+    class State:
+        schemas: t.Dict[str, SchemaDict] = dataclasses.field(default_factory=make_dict)
+        refs: t.Dict[t.Type[t.Any], t.Dict[str, str]] = dataclasses.field(
+            default_factory=make_dict
+        )
+
+
+class ResultDict(tx.TypedDict):
+    components: ComponentDict
+
+
+class ComponentDict(tx.TypedDict):
+    schemas: t.Dict[str, SchemaDict]
+
+
+class SchemaDict(tx.TypedDict, total=False):
+    type: detect.JSONSchemaType
+
+    description: str
+    properties: t.Any
+    required: t.List[str]
+    additionalProperties: t.Union[bool, t.Dict[str, t.Any]]
 
 
 class _Fixer:
@@ -134,7 +146,7 @@ class Scanner:
         properties: t.Dict[str, t.Any] = make_dict()
         description: str = resolver.metadata.resolve_doc(cls, verbose=ctx.verbose)
 
-        schema: t.Dict[str, t.Any] = make_dict(
+        schema: SchemaDict = make_dict(
             type="object",
             properties=properties,
             required=required,
@@ -197,7 +209,7 @@ class Scanner:
         if cfg.option.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
 
-        ctx.state.schemas[typename] = ctx.result.components["schemas"][
+        ctx.state.schemas[typename] = ctx.result["components"]["schemas"][
             typename
         ] = schema
         ctx.state.refs[cls] = {"$ref": f"#/components/schemas/{typename}"}
@@ -216,6 +228,4 @@ def scan(walker: Walker,) -> Context:
 
 
 def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None) -> None:
-    loading.dump(
-        dataclasses.asdict(ctx.result), output, format=ctx.config.option.output_format
-    )
+    loading.dump(ctx.result, output, format=ctx.config.option.output_format)
