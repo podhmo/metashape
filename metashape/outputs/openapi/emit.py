@@ -5,7 +5,7 @@ import logging
 import dataclasses
 from functools import partial
 from dictknife import loading
-from metashape.types import Member
+from metashape.types import Member, MetaData
 from metashape.langhelpers import make_dict, reify
 from metashape.typeinfo import TypeInfo
 from metashape.analyze.resolver import Resolver
@@ -120,6 +120,10 @@ class Scanner:
         return _Fixer(self.ctx, discriminator_name=self.DISCRIMINATOR_FIELD)
 
     def _build_ref_data(self, field_type: Member) -> t.Dict[str, t.Any]:
+        ref_data = self.ctx.state.refs.get(field_type)
+        if ref_data is not None:
+            return ref_data
+
         resolver = self.ctx.resolver
         self.walker.append(field_type)
         return {
@@ -141,6 +145,56 @@ class Scanner:
         if need_discriminator:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             self.fixer.register_fix_discriminator_callback(info)
+
+        return prop
+
+    def _build_property_data(
+        self, info: TypeInfo, *, metadata: MetaData
+    ) -> t.Dict[str, t.Any]:
+        resolver = self.ctx.resolver
+        metadata_resolver = resolver.metadata
+
+        # TODO: self recursion check (warning)
+        if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
+            return self._build_ref_data(info.type_)
+
+        if info.is_combined:
+            prop = self._build_one_of_data(info)
+        else:
+            prop = {"type": detect.schema_type(info)}
+            enum = detect.enum(info)
+            if enum:
+                prop["enum"] = enum
+
+        # description
+        if metadata.get("description"):
+            prop["description"] = metadata_resolver.resolve_doc(
+                info.type_, verbose=True, value=metadata["description"]
+            )
+
+        # default
+        if metadata_resolver.has_default(metadata):
+            prop["default"] = metadata_resolver.resolve_default(metadata)
+        metadata_resolver.fill_extra_metadata(prop, metadata, name="openapi")
+
+        if prop.get("type") == "array":  # todo: simplify with recursion
+            assert len(info.args) == 1
+            first = info.args[0]
+            if first.is_combined and first.is_container:
+                prop["items"] = self._build_one_of_data(first)
+            elif first.user_defined_type is None:
+                prop["items"] = detect.schema_type(first)
+            else:
+                if first.user_defined_type is not None:
+                    prop["items"] = self._build_ref_data(first.user_defined_type)
+
+        if info.is_newtype:
+            if info.user_defined_type is not None:
+                if prop.get("type") == "object":
+                    return self._build_ref_data(info.user_defined_type)
+            else:
+                if hasattr(info.supertypes[0], "__name__"):
+                    prop["format"] = resolver.resolve_typeformat(info)
 
         return prop
 
@@ -166,49 +220,7 @@ class Scanner:
             if not info.is_optional:
                 required.append(field_name)
 
-            # TODO: self recursion check (warning)
-            if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
-                properties[field_name] = self._build_ref_data(info.type_)
-                continue
-
-            if info.is_combined:
-                properties[field_name] = prop = self._build_one_of_data(info)
-            else:
-                prop = properties[field_name] = {"type": detect.schema_type(info)}
-                enum = detect.enum(info)
-                if enum:
-                    prop["enum"] = enum
-
-            # description
-            if metadata.get("description"):
-                prop["description"] = metadata_resolver.resolve_doc(
-                    info.type_, verbose=True, value=metadata["description"]
-                )
-
-            # default
-            if metadata_resolver.has_default(metadata):
-                prop["default"] = metadata_resolver.resolve_default(metadata)
-            metadata_resolver.fill_extra_metadata(prop, metadata, name="openapi")
-
-            if prop.get("type") == "array":  # todo: simplify with recursion
-                assert len(info.args) == 1
-                first = info.args[0]
-                if first.is_combined and first.is_container:
-                    prop["items"] = self._build_one_of_data(first)
-                elif first.user_defined_type is None:
-                    prop["items"] = detect.schema_type(first)
-                else:
-                    if first.user_defined_type is not None:
-                        prop["items"] = self._build_ref_data(first.user_defined_type)
-
-            if info.is_newtype:
-                if info.user_defined_type is not None:
-                    if prop.get("type") == "object":
-                        prop.pop("type")
-                        prop.update(ctx.state.refs[info.user_defined_type])
-                else:
-                    if hasattr(info.supertypes[0], "__name__"):
-                        prop["format"] = resolver.resolve_typeformat(info)
+            properties[field_name] = self._build_property_data(info, metadata=metadata)
 
         # simplify
         if len(required) <= 0:
