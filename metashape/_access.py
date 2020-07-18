@@ -57,6 +57,9 @@ def _extract_metadata(
                 see_args = True
             if hasattr(x, "as_metadata"):
                 metadata.update(x.as_metadata())
+            elif hasattr(x, "__slots__"):
+                for name in x.__slots__:
+                    metadata[name] = getattr(x, name)
             else:
                 metadata.update(x.__dict__)
         typ = typing_get_args(typ)[0]
