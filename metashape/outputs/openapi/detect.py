@@ -16,6 +16,8 @@ def schema_type(
             return "array"
         elif info.container_type == "dict":
             return "object"
+        # union?
+        raise Exception(info)
     else:  # Atom
         typ = info.underlying
         if issubclass(typ, str):
@@ -28,8 +30,8 @@ def schema_type(
             return "number"
         elif issubclass(typ, bytes):
             return "string"
-    logger.warning("unexpected type: %r", typ)
-    return unknown
+        logger.warning("unexpected type: %r", typ)
+        return unknown
 
 
 def enum(info: typeinfo.TypeInfo) -> t.Tuple[str]:

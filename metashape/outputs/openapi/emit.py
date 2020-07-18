@@ -61,7 +61,7 @@ class Context:
     @dataclasses.dataclass(frozen=False, unsafe_hash=True)
     class State:
         schemas: t.Dict[str, SchemaDict] = dataclasses.field(default_factory=make_dict)
-        refs: t.Dict[t.Type[t.Any], t.Dict[str, str]] = dataclasses.field(
+        refs: t.Dict[t.Type[t.Any], RefDict] = dataclasses.field(
             default_factory=make_dict
         )
 
@@ -82,17 +82,43 @@ class ComponentDict(tx.TypedDict):
 
 
 class SchemaDict(tx.TypedDict, total=False):
+    # required
     type: detect.JSONSchemaType
 
+    # optional
     description: str
-    properties: t.Any
+    default: t.Any
+    properties: t.Dict[str, t.Union[PropertyDict, RefDict, OneOfDict]]
     required: t.List[str]
     additionalProperties: t.Union[bool, t.Dict[str, t.Any]]
 
 
-class _Fixer:
-    ctx: Context
+class OneOfDict(tx.TypedDict, total=False):
+    # required
+    oneOf: t.List[t.Union[RefDict, t.Dict[str, t.Any]]]
 
+    # optional
+    discriminator: t.Dict[str, str]  # {PropertyName:str}
+
+
+RefDict = tx.TypedDict("RefDict", {"$ref": str})
+
+
+class PropertyDict(tx.TypedDict, total=False):
+    # required
+    type: detect.JSONSchemaType
+
+    # optional
+    format: str
+    default: t.Any
+    description: str
+    enum: t.Sequence[t.Any]
+
+    # only type=array
+    items: t.Union[RefDict, OneOfDict, t.Dict[str, t.Any]]
+
+
+class _Fixer:
     def __init__(self, ctx: Context, *, discriminator_name: str) -> None:
         self.ctx = ctx
         self.discriminator_name = discriminator_name
@@ -136,7 +162,7 @@ class Builder:
     def fixer(self) -> _Fixer:
         return _Fixer(self.ctx, discriminator_name=self.DISCRIMINATOR_FIELD)
 
-    def build_ref_data(self, field_type: Member) -> t.Dict[str, t.Any]:
+    def build_ref_data(self, field_type: Member) -> RefDict:
         ref_data = self.ctx.state.refs.get(field_type)
         if ref_data is not None:
             return ref_data
@@ -147,27 +173,26 @@ class Builder:
             "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
-        candidates: t.List[t.Dict[str, t.Any]] = []
+    def build_one_of_data(self, info: TypeInfo) -> OneOfDict:
+        candidates: t.List[t.Union[RefDict, t.Dict[str, detect.JSONSchemaType]]] = []
         need_discriminator = True
 
         for x in info.args:
             if x.user_defined_type is None:
                 need_discriminator = False
-                candidates.append({"type": detect.schema_type(x)})
+                candidates.append(detect.schema_type(x))
             else:
                 candidates.append(self.build_ref_data(x.user_defined_type))
 
-        prop: t.Dict[str, t.Any] = {"oneOf": candidates}
+        prop: OneOfDict = {"oneOf": candidates}
         if need_discriminator:
             prop["discriminator"] = {"propertyName": self.DISCRIMINATOR_FIELD}
             self.fixer.register_fix_discriminator_callback(info)
-
         return prop
 
     def build_property_data(
         self, info: TypeInfo, *, metadata: MetaData
-    ) -> t.Dict[str, t.Any]:
+    ) -> t.Union[PropertyDict, RefDict]:
         resolver = self.ctx.resolver
         metadata_resolver = resolver.metadata
 
@@ -175,10 +200,11 @@ class Builder:
         if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
             return self.build_ref_data(info.type_)
 
+        prop: PropertyDict = make_dict()
         if info.is_combined:
-            prop = self.build_one_of_data(info)
+            prop.update(self.build_one_of_data(info))  # type: ignore
         else:
-            prop = {"type": detect.schema_type(info)}
+            prop["type"] = detect.schema_type(info)
             enum = detect.enum(info)
             if enum:
                 prop["enum"] = enum
@@ -192,7 +218,11 @@ class Builder:
         # default
         if metadata_resolver.has_default(metadata):
             prop["default"] = metadata_resolver.resolve_default(metadata)
-        metadata_resolver.fill_extra_metadata(prop, metadata, name="openapi")
+
+        # inject extra data
+        metadata_resolver.fill_extra_metadata(
+            prop, metadata, name="openapi"  # type:ignore
+        )
 
         if prop.get("type") == "array":  # todo: simplify with recursion
             assert len(info.args) == 1
@@ -200,7 +230,7 @@ class Builder:
             if first.is_combined and first.is_container:
                 prop["items"] = self.build_one_of_data(first)
             elif first.user_defined_type is None:
-                prop["items"] = detect.schema_type(first)
+                prop["items"] = {"type": detect.schema_type(first)}
             else:
                 if first.user_defined_type is not None:
                     prop["items"] = self.build_ref_data(first.user_defined_type)
