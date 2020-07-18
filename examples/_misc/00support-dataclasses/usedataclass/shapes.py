@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List, Union
-from metashape.constants import ORIGINAL_NAME
 import dataclasses
 
 
@@ -33,7 +32,7 @@ class Extra:
 
 @dataclasses.dataclass
 class Social:
-    type_: str = dataclasses.field(metadata={ORIGINAL_NAME: "type"})
+    type_: str
     link: str
 
 
