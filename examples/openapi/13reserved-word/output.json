@@ -15,7 +15,9 @@
           },
           "columns": {
             "type": "array",
-            "items": "string"
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -46,11 +48,15 @@
           },
           "columns": {
             "type": "array",
-            "items": "string"
+            "items": {
+              "type": "string"
+            }
           },
           "reference_columns": {
             "type": "array",
-            "items": "string"
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
