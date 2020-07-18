@@ -13,7 +13,7 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
-class Resolver:  # ModuleResolver
+class Resolver:
     def __init__(
         self,
         *,
@@ -26,6 +26,10 @@ class Resolver:  # ModuleResolver
     def is_member(self, ob: t.Type[T]) -> bool:
         return self._is_member(ob)
 
+    @reify
+    def metadata(self) -> MetaDataResolver:
+        return MetaDataResolver()
+
     def resolve_typename(self, member: t.Union[Member, _ForwardRef]) -> str:
         try:
             return get_name(member)
@@ -33,25 +37,15 @@ class Resolver:  # ModuleResolver
             logger.info("resolve_name: %r", e)
             return ""
 
-    @reify
-    def typeinfo(self) -> TypeInfoResolver:
-        return TypeInfoResolver(self)
-
-    @reify
-    def metadata(self) -> MetaDataResolver:
-        return MetaDataResolver()
-
-
-class TypeInfoResolver:
-    def __init__(self, root: Resolver):
-        self.root = root
-
-    def resolve(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
-        default = self.root.config.typeinfo_unexpected_handler
+    def resolve_typeinfo(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+        default = self.config.typeinfo_unexpected_handler
         try:
             return typeinfo.typeinfo(typ, default=default)
         except TypeError:
             return typeinfo.typeinfo(typ.__class__, default=default)
+
+    def resolve_typeformat(self, info: typeinfo.TypeInfo) -> str:
+        return info.supertypes[0].__name__.replace("_", "-")
 
 
 class MetaDataResolver:
@@ -60,7 +54,11 @@ class MetaDataResolver:
             return metadata.get(constants.ORIGINAL_NAME, default)
         return default
 
-    def resolve_doc(self, ob: object, *, verbose: bool = False) -> str:
+    def resolve_doc(
+        self, ob: object, *, verbose: bool = False, value: t.Optional[str] = None
+    ) -> str:
+        if value is not None:
+            return value
         return get_doc(ob, verbose=verbose)
 
     def has_default(

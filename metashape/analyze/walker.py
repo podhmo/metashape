@@ -114,7 +114,7 @@ class TypeWalker:
                 field_type,
                 metadata.keys(),
             )
-            info = resolver.typeinfo.resolve(field_type)
+            info = resolver.resolve_typeinfo(field_type)
             logger.debug("walk prop: 	info=%r", info)
 
             # handle default
