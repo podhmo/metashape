@@ -108,7 +108,7 @@ class _Fixer:
             schema["required"] = [fieldname]
 
 
-class Scanner:
+class Builder:
     DISCRIMINATOR_FIELD = "$type"
 
     def __init__(self, ctx: Context, *, walker: Walker) -> None:
@@ -119,7 +119,7 @@ class Scanner:
     def fixer(self) -> _Fixer:
         return _Fixer(self.ctx, discriminator_name=self.DISCRIMINATOR_FIELD)
 
-    def _build_ref_data(self, field_type: Member) -> t.Dict[str, t.Any]:
+    def build_ref_data(self, field_type: Member) -> t.Dict[str, t.Any]:
         ref_data = self.ctx.state.refs.get(field_type)
         if ref_data is not None:
             return ref_data
@@ -130,7 +130,7 @@ class Scanner:
             "$ref": f"#/components/schemas/{resolver.resolve_typename(field_type)}"
         }  # todo: lazy
 
-    def _build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
+    def build_one_of_data(self, info: TypeInfo) -> t.Dict[str, t.Any]:
         candidates: t.List[t.Dict[str, t.Any]] = []
         need_discriminator = True
 
@@ -139,7 +139,7 @@ class Scanner:
                 need_discriminator = False
                 candidates.append({"type": detect.schema_type(x)})
             else:
-                candidates.append(self._build_ref_data(x.user_defined_type))
+                candidates.append(self.build_ref_data(x.user_defined_type))
 
         prop: t.Dict[str, t.Any] = {"oneOf": candidates}
         if need_discriminator:
@@ -148,7 +148,7 @@ class Scanner:
 
         return prop
 
-    def _build_property_data(
+    def build_property_data(
         self, info: TypeInfo, *, metadata: MetaData
     ) -> t.Dict[str, t.Any]:
         resolver = self.ctx.resolver
@@ -156,10 +156,10 @@ class Scanner:
 
         # TODO: self recursion check (warning)
         if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
-            return self._build_ref_data(info.type_)
+            return self.build_ref_data(info.type_)
 
         if info.is_combined:
-            prop = self._build_one_of_data(info)
+            prop = self.build_one_of_data(info)
         else:
             prop = {"type": detect.schema_type(info)}
             enum = detect.enum(info)
@@ -181,24 +181,24 @@ class Scanner:
             assert len(info.args) == 1
             first = info.args[0]
             if first.is_combined and first.is_container:
-                prop["items"] = self._build_one_of_data(first)
+                prop["items"] = self.build_one_of_data(first)
             elif first.user_defined_type is None:
                 prop["items"] = detect.schema_type(first)
             else:
                 if first.user_defined_type is not None:
-                    prop["items"] = self._build_ref_data(first.user_defined_type)
+                    prop["items"] = self.build_ref_data(first.user_defined_type)
 
         if info.is_newtype:
             if info.user_defined_type is not None:
                 if prop.get("type") == "object":
-                    return self._build_ref_data(info.user_defined_type)
+                    return self.build_ref_data(info.user_defined_type)
             else:
                 if hasattr(info.supertypes[0], "__name__"):
                     prop["format"] = resolver.resolve_typeformat(info)
 
         return prop
 
-    def scan(self, cls: Member) -> None:
+    def build_schema_data(self, cls: Member) -> SchemaDict:
         ctx = self.ctx
         walker = self.walker
         resolver = self.ctx.resolver
@@ -220,7 +220,7 @@ class Scanner:
             if not info.is_optional:
                 required.append(field_name)
 
-            properties[field_name] = self._build_property_data(info, metadata=metadata)
+            properties[field_name] = self.build_property_data(info, metadata=metadata)
 
         # simplify
         if len(required) <= 0:
@@ -229,17 +229,17 @@ class Scanner:
             schema.pop("description")
         if ctx.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
-
-        ctx.register_schema(cls, schema)
+        return schema
 
 
 def scan(walker: Walker,) -> Context:
     ctx = Context(walker)
-    scanner = Scanner(ctx, walker=walker)
+    builder = Builder(ctx, walker=walker)
 
     try:
         for cls in walker.walk():
-            scanner.scan(cls)
+            schema = builder.build_schema_data(cls)
+            ctx.register_schema(cls, schema)
     finally:
         ctx.config.callbacks.teardown()  # xxx:
     return ctx
