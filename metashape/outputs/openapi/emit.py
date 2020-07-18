@@ -21,6 +21,23 @@ logger = logging.getLogger(__name__)
 # TODO: conflict name
 
 
+def scan(walker: Walker,) -> Context:
+    ctx = Context(walker)
+    builder = Builder(ctx, walker=walker)
+
+    try:
+        for cls in walker.walk():
+            schema = builder.build_schema_data(cls)
+            ctx.register_schema(cls, schema)
+    finally:
+        ctx.config.callbacks.teardown()  # xxx:
+    return ctx
+
+
+def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None) -> None:
+    loading.dump(ctx.result, output, format=ctx.config.option.output_format)
+
+
 class Context:
     state: Context.State
     result: ResultDict
@@ -230,20 +247,3 @@ class Builder:
         if ctx.strict and "additionalProperties" not in schema:
             schema["additionalProperties"] = False
         return schema
-
-
-def scan(walker: Walker,) -> Context:
-    ctx = Context(walker)
-    builder = Builder(ctx, walker=walker)
-
-    try:
-        for cls in walker.walk():
-            schema = builder.build_schema_data(cls)
-            ctx.register_schema(cls, schema)
-    finally:
-        ctx.config.callbacks.teardown()  # xxx:
-    return ctx
-
-
-def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None) -> None:
-    loading.dump(ctx.result, output, format=ctx.config.option.output_format)
