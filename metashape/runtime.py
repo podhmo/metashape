@@ -54,6 +54,8 @@ def get_walker(
             only = [get_name(target)]
     elif isinstance(target, dict):
         d = target
+        for x in d.values():
+            mark(x, kind=_guess_kind(x) or "object")
     elif isinstance(target, (list, tuple)):
         d = {get_name(x): x for x in target}
         for x in target:
