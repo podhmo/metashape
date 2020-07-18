@@ -32,7 +32,7 @@ class Extra:
 
 @dataclasses.dataclass
 class Social:
-    type_: str  # TODO: support treated as "type" on dumping yaml
+    type_: str
     link: str
 
 

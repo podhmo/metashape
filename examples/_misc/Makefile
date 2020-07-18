@@ -5,9 +5,9 @@ SHELL := $(shell which bash)
 # dataclasses support
 00:
 	# use class
-	python $@*/useclass/main.py > $$(echo $@*/)useclass/got.yaml 2>&1
-	dictknife diff $@*/want.yaml $@*/useclass/got.yaml > $$(echo $@*/)want-useclass.diff 2>&1
+	python $(shell echo $@*/)useclass/main.py &> $(shell echo $@*/)useclass/got.yaml
+	dictknife diff $(shell echo $@*/)want.yaml $@*/useclass/got.yaml &> $(shell echo $@*/)want-useclass.diff
 
 	# use dataclasses as member
-	python $@*/usedataclass/main.py > $$(echo $@*/)usedataclass/got.yaml 2>&1
-	dictknife diff $@*/want.yaml $@*/usedataclass/got.yaml > $$(echo $@*/)want-usedataclass.diff 2>&1
+	python $(shell echo $@*/)usedataclass/main.py &> $(shell echo $@*/)usedataclass/got.yaml
+	dictknife diff $(shell echo $@*/)want.yaml $@*/usedataclass/got.yaml &> $(shell echo $@*/)want-usedataclass.diff

@@ -17,11 +17,11 @@ theme:
 extra:
   manifest: manifest.webmanifest
   social:
-  - type_: github
+  - type: github
     link: 'https://github.com/squidfunk'
-  - type_: twitter
+  - type: twitter
     link: 'https://twitter.com/squidfunk'
-  - type_: linkedin
+  - type: linkedin
     link: 'https://linkedin.com/in/squidfunk'
 google_analytics:
 - UA-XXXXXXXX-X

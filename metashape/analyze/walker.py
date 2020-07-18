@@ -27,7 +27,9 @@ class Walker:
         self._members = t.cast(t.List[Member], members)  # xxx
 
     def for_type(self, m: Member) -> TypeWalker:
-        warnings.warn("depreacated. use Walker.get_type_walker() or Walker.walk_fields(), instead of Walker.for_type()")
+        warnings.warn(
+            "depreacated. use Walker.get_type_walker() or Walker.walk_fields(), instead of Walker.for_type()"
+        )
         # TODO: explicitly is better?
         fn = iterate_props_for_dataclass if is_dataclass(m) else iterate_props
         return TypeWalker(m, parent=self, iterate_props=fn)
@@ -68,8 +70,8 @@ class Walker:
             except IndexError:
                 break
 
-            name = resolver.resolve_typename(m)
             if not nocheck:
+                name = resolver.resolve_typename(m)
                 if not name:
                     continue
                 if ignore_private:

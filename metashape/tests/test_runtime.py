@@ -71,7 +71,7 @@ class C:
         (
             "dict, aggressive=True, recursive=True",
             C(aggressive=True, recursive=True),
-            lambda m: m.__dict__,
+            lambda m: {"A": m.A, "B": m.B},
             ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
         ),
     ],
