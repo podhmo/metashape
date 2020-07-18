@@ -28,10 +28,7 @@ class Scanned:
 
 
 def scan(
-    w: Walker,
-    *,
-    kinds: t.List[Kind] = ["object", "enum"],
-    ignore_private: bool = False
+    w: Walker, *, kinds: t.List[Kind] = ["object", "enum"], ignore_private: bool = False
 ) -> Scanned:
     seen: t.Dict[Kind, t.List[Member]] = defaultdict(list)
     names: t.Dict[Member, str] = {}
