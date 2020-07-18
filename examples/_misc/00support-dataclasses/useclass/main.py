@@ -1,16 +1,8 @@
-import sys
-import typing as t
 from dictknife import loading
-from magicalimport import import_symbol
 from metashape.analyze.collector import Collector, _Value
 from metashape.analyze.walker import Walker
 from metashape.runtime import get_walker
-
-
-if len(sys.argv) > 1:
-    cls = import_symbol(sys.argv[1])
-else:
-    cls = import_symbol("./conf.py:Toplevel", here=__file__)
+from conf import Toplevel as target
 
 
 @Collector
@@ -23,7 +15,7 @@ def collect(cls: _Value, *, w: Walker) -> _Value:
 
 
 d = {}
-w = get_walker(cls)
+w = get_walker(target)
 for cls in w.walk():
     d.update(collect(cls, w=w))
 loading.dumpfile(d, format="yaml")
