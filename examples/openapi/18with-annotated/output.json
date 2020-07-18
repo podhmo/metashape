@@ -7,10 +7,15 @@
           "name": {
             "type": "string",
             "description": "name of person"
+          },
+          "age": {
+            "type": "integer",
+            "description": "age of person"
           }
         },
         "required": [
-          "name"
+          "name",
+          "age"
         ],
         "additionalProperties": false
       }
