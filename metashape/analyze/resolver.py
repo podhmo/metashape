@@ -50,8 +50,11 @@ class Resolver:
 
 class MetaDataResolver:
     def resolve_name(self, metadata: MetaData, *, default: str) -> str:
-        if metadata:
-            return metadata.get(constants.ORIGINAL_NAME, default)
+        name = metadata.get(constants.ORIGINAL_NAME)
+        if name is not None:
+            return str(name)
+        if default.endswith("_") and not default.startswith("_"):
+            return default[:-1]
         return default
 
     def resolve_doc(
