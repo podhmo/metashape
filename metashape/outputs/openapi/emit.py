@@ -180,7 +180,7 @@ class Builder:
         for x in info.args:
             if x.user_defined_type is None:
                 need_discriminator = False
-                candidates.append(detect.schema_type(x))
+                candidates.append({"type": detect.schema_type(x)})
             else:
                 candidates.append(self.build_ref_data(x.user_defined_type))
 
