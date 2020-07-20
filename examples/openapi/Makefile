@@ -1,7 +1,7 @@
 OUTFILE := output.json
 SHELL := $(shell which bash)
 
-default: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
+default: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
 
 typing:
 	mypy --strict .
@@ -55,3 +55,7 @@ typing:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 18:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+19:
+	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+20:
+	python -m metashape.outputs.openapi --aggressive $@*/shape.py | tee `echo $@*`/${OUTFILE}

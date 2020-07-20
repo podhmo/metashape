@@ -197,7 +197,14 @@ class Builder:
         metadata_resolver = resolver.metadata
 
         # TODO: self recursion check (warning)
-        if resolver.is_member(info.type_) and resolver.resolve_typename(info.type_):
+        if (
+            resolver.is_member(info.type_)
+            or (
+                info.user_defined_type is not None
+                and not info.is_container
+                and not info.is_newtype
+            )
+        ) and resolver.resolve_typename(info.type_):
             return self.build_ref_data(info.type_)
 
         prop: PropertyDict = make_dict()
