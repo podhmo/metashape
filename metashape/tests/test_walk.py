@@ -54,3 +54,11 @@ def test_walk_one__with_recursive2():
         "Member": {"name": str(str), "team": str(Team)},
     }
     assert want == got
+
+
+def test_walk_one__container():
+    got = _walk(get_walker(t.List[Member]))
+    want = {
+        "Member": {"name": str(str), "team": str(Team)},
+    }
+    assert want == got
