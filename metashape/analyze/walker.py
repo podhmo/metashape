@@ -4,7 +4,7 @@ import warnings
 import logging
 from metashape.marker import guess_mark, mark
 from metashape import constants
-from metashape.types import MetaData, Kind, Member, IteratePropsFunc
+from metashape.types import MetaData, Kind, Member, MemberOrRef, IteratePropsFunc
 from metashape._access import iterate_props  # TODO: move
 from metashape._dataclass import iterate_props as iterate_props_for_dataclass
 from metashape._dataclass import is_dataclass
@@ -43,7 +43,14 @@ class Walker:
     ) -> t.Iterable[t.Tuple[str, TypeInfo, MetaData]]:
         return self.get_type_walker(m).walk(ignore_private=ignore_private)
 
-    def append(self, m: Member) -> None:
+    def append(self, m: MemberOrRef) -> None:
+        if hasattr(m, "__forward_arg__"):
+            # todo: support ForwardRef
+            warnings.warn(
+                "ForwardRef is not supported yet. please use from __future__ import annotations"
+            )
+            return
+
         info = self.resolver.resolve_typeinfo(m)
         if info.args:
             for x in info.args:
