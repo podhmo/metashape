@@ -9,6 +9,7 @@ from metashape.types import Kind, Member, GuessMemberFunc
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
+from metashape.typeinfo import typeinfo
 from ._access import get_name
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,12 @@ def _mark_recursive(
         if m in seen:
             continue
         seen.add(m)
+
+        info = typeinfo(m)
+        if info.is_container:
+            q.append(info.user_defined_type)
+            continue
+
         yield m
 
         for _, info, _ in w.walk_fields(m):

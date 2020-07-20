@@ -57,7 +57,7 @@ def test_walk_one__with_recursive2():
 
 
 def test_walk_one__container():
-    got = _walk(get_walker(t.List[Member]))
+    got = _walk(get_walker({"Members": t.List[Member]}))
     want = {
         "Member": {"name": str(str), "team": str(Team)},
     }

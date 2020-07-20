@@ -129,6 +129,7 @@ class TypeWalker:
             ignore_private = cfg.option.ignore_private
 
         resolver = self.parent.resolver
+
         for name, field_type, metadata in self.iterate_props(
             self.typ, ignore_private=ignore_private
         ):
