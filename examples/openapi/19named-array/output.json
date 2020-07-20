@@ -1,0 +1,40 @@
+{
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "Toplevel": {
+        "type": "object",
+        "properties": {
+          "named": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "unnamed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "required": [
+          "named",
+          "unnamed"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

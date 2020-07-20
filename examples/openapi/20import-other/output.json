@@ -1,0 +1,25 @@
+{
+  "components": {
+    "schemas": {
+      "Toplevel": {
+        "type": "object",
+        "properties": {
+          "info": {
+            "type": "object"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "required": [
+          "info",
+          "users"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
