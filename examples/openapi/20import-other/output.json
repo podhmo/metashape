@@ -5,7 +5,7 @@
         "type": "object",
         "properties": {
           "info": {
-            "type": "object"
+            "$ref": "#/components/schemas/Info"
           },
           "users": {
             "type": "array",
@@ -17,6 +17,61 @@
         "required": [
           "info",
           "users"
+        ],
+        "additionalProperties": false
+      },
+      "Info": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "license": {
+            "$ref": "#/components/schemas/License"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "license"
+        ],
+        "additionalProperties": false
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "License": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "mit",
+              "gpl"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
         ],
         "additionalProperties": false
       }
