@@ -31,8 +31,6 @@ def get_walker(
     _depth: int = 1,  # xxx: for black magic
 ) -> Walker:
     config = config or Config()
-    resolver = Resolver(config=config)
-
     if target is None:
         if aggressive:
             logger.info(
@@ -52,6 +50,7 @@ def get_walker(
         d = target.__dict__
         if aggressive and only is None:
             only = [get_name(target)]
+
     elif isinstance(target, dict):
         d = target
         for x in d.values():
@@ -85,6 +84,8 @@ def get_walker(
     itr = sorted(d.items()) if sort else d.items()
     members = [v for _, v in itr if is_marked(v)]
 
+    named = {id(val): name for name, val in d.items()}
+    resolver = Resolver(config=config, named=named)
     w = Walker(members, resolver=resolver, config=config)
 
     if recursive:
