@@ -6,6 +6,7 @@ class User:
     name: str
 
 
+# todo: use metashape.name.NewNamedType ?
 UserList = t.List[User]
 
 
