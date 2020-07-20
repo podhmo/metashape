@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 import warnings
 import logging
-from metashape.marker import guess_mark
+from metashape.marker import guess_mark, mark
 from metashape import constants
 from metashape.types import MetaData, Kind, Member, IteratePropsFunc
 from metashape._access import iterate_props  # TODO: move
@@ -44,7 +44,19 @@ class Walker:
         return self.get_type_walker(m).walk(ignore_private=ignore_private)
 
     def append(self, m: Member) -> None:
-        self.config.q.append(m)
+        info = self.resolver.resolve_typeinfo(m)
+        if info.args:
+            for x in info.args:
+                typ = x.user_defined_type
+                if typ is not None:
+                    mark(
+                        typ, kind=guess_mark(typ) or "object",
+                    )
+                    self.config.q.append(typ)
+        typ = info.user_defined_type
+        if typ is not None:
+            mark(typ, kind=guess_mark(info.type_) or "object")
+            self.config.q.append(typ)
 
     def __len__(self) -> int:
         return len(self._members)
@@ -73,12 +85,19 @@ class Walker:
             if not nocheck:
                 name = resolver.resolve_typename(m)
                 if not name:
+                    logger.debug("skip type: %r, unnamed", m)
                     continue
                 if ignore_private:
                     if name.startswith("_"):
+                        logger.debug("skip type: %r, private", m)
                         continue
 
-                if guess_mark(m) not in kinds:
+                kind = guess_mark(m)
+                if kind not in kinds:
+                    info = resolver.resolve_typeinfo(m)
+                    if info.args:
+                        self.append(m)
+                    logger.debug("skip type: %r, unmarked, kind=%r", m, kind)
                     continue
             logger.info("walk type: %r", m)
             yield m
