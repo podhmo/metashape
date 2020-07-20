@@ -43,9 +43,8 @@ class Walker:
     ) -> t.Iterable[t.Tuple[str, TypeInfo, MetaData]]:
         return self.get_type_walker(m).walk(ignore_private=ignore_private)
 
-    def append(self, m: MemberOrRef) -> None:
-        if hasattr(m, "__forward_arg__"):
-            # todo: support ForwardRef
+    def append(self, m: Member) -> None:
+        if hasattr(m, "__forward_arg__"):  # todo: support ForwardRef
             warnings.warn(
                 "ForwardRef is not supported yet. please use from __future__ import annotations"
             )
