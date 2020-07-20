@@ -4,7 +4,7 @@ import warnings
 import logging
 from metashape.marker import guess_mark, mark
 from metashape import constants
-from metashape.types import MetaData, Kind, Member, MemberOrRef, IteratePropsFunc
+from metashape.types import MetaData, Kind, Member, IteratePropsFunc
 from metashape._access import iterate_props  # TODO: move
 from metashape._dataclass import iterate_props as iterate_props_for_dataclass
 from metashape._dataclass import is_dataclass
