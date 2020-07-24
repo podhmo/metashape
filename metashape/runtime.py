@@ -6,6 +6,7 @@ import inspect
 import types
 from metashape.marker import mark, is_marked, guess_mark
 from metashape.types import Kind, Member, GuessMemberFunc
+from metashape.typeinfo import typeinfo
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
@@ -31,7 +32,6 @@ def get_walker(
     _depth: int = 1,  # xxx: for black magic
 ) -> Walker:
     config = config or Config()
-    resolver = Resolver(config=config)
 
     if target is None:
         if aggressive:
@@ -52,6 +52,7 @@ def get_walker(
         d = target.__dict__
         if aggressive and only is None:
             only = [get_name(target)]
+
     elif isinstance(target, dict):
         d = target
         for x in d.values():
@@ -83,8 +84,14 @@ def get_walker(
     sort = sort or config.option.sort
 
     itr = sorted(d.items()) if sort else d.items()
-    members = [v for _, v in itr if is_marked(v)]
+    members = [
+        (typeinfo(v).user_defined_type or v if hasattr(v, "__origin__") else v)
+        for _, v in itr
+        if is_marked(v)
+    ]
 
+    named = {id(val): name for name, val in d.items()}
+    resolver = Resolver(config=config, named=named)
     w = Walker(members, resolver=resolver, config=config)
 
     if recursive:

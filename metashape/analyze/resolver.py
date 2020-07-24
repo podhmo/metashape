@@ -3,7 +3,7 @@ import typing as t
 import logging
 from metashape import constants
 from metashape.langhelpers import reify
-from metashape.types import T, Member, _ForwardRef, MetaData
+from metashape.types import T, MemberOrRef, MetaData
 from metashape.marker import is_marked
 from metashape._access import get_doc, get_name
 from metashape import typeinfo
@@ -18,9 +18,11 @@ class Resolver:
         self,
         *,
         config: t.Optional[Config],
-        is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None
+        is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None,
+        named: t.Optional[t.Dict[int, str]] = None,
     ) -> None:
         self.config = config or Config()
+        self._named = named or {}
         self._is_member = is_member or is_marked
 
     def is_member(self, ob: t.Type[T]) -> bool:
@@ -30,14 +32,16 @@ class Resolver:
     def metadata(self) -> MetaDataResolver:
         return MetaDataResolver()
 
-    def resolve_typename(self, member: t.Union[Member, _ForwardRef]) -> str:
+    def resolve_typename(self, member: MemberOrRef) -> str:
         try:
-            return get_name(member)
+            # support unhashable type. using id by naming cache ( t.List[X], .etc)
+            return self._named.get(id(member)) or get_name(member)
         except AttributeError as e:
             logger.info("resolve_name: %r", e)
             return ""
 
-    def resolve_typeinfo(self, typ: t.Type[t.Any]) -> typeinfo.TypeInfo:
+    def resolve_typeinfo(self, typ: MemberOrRef) -> typeinfo.TypeInfo:
+        # TODO: support _ForwardRef
         default = self.config.typeinfo_unexpected_handler
         try:
             return typeinfo.typeinfo(typ, default=default)
@@ -69,7 +73,7 @@ class MetaDataResolver:
         metadata: MetaData,
         *,
         name: str = constants.DEFAULT,
-        missing: object = constants.MISSING  # type:ignore
+        missing: object = constants.MISSING,  # type:ignore
     ) -> bool:
         return metadata is not None and metadata.get(name, missing) is not missing
 

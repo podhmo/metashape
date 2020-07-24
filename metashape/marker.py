@@ -2,17 +2,22 @@ import typing as t
 from .types import T, Kind
 
 
-# TODO: remove
+_mapping: t.Dict[t.Any, Kind] = {}
+
+
 def is_marked(cls: t.Type[t.Any]) -> bool:
-    return getattr(cls, "_metashape_mark", None) is not None
+    global _mapping
+    return _mapping.get(id(cls)) is not None
 
 
 def guess_mark(cls: t.Type[t.Any]) -> t.Optional[Kind]:
-    return getattr(cls, "_metashape_mark", None)  # type: ignore
+    global _mapping
+    return _mapping.get(id(cls))
 
 
 def mark(cls: t.Type[T], *, kind: Kind = "object") -> t.Type[T]:
+    global _mapping
     if is_marked(cls):
         return cls
-    setattr(cls, "_metashape_mark", kind)
+    _mapping[id(cls)] = kind
     return cls
