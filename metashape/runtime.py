@@ -31,7 +31,12 @@ def get_walker(
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
     _extra_target_name="__ADDITIONAL_TARGETS__",
+    _seen_modules: t.Optional[t.Set[types.ModuleType]] = None,
+    _guess_kind: t.Callable[[t.Any], t.Optional[Kind]] = _guess_kind,
 ) -> Walker:
+    if _seen_modules is None:
+        _seen_modules = set()
+
     config = config or Config()
 
     if target is None:
@@ -50,6 +55,7 @@ def get_walker(
     if target is None:
         raise ValueError("support target=None, only aggresive=True")
     elif isinstance(target, types.ModuleType):
+        _seen_modules.add(target)
         d = target.__dict__
         if aggressive and only is None:
             only = [get_name(target)]
@@ -105,9 +111,25 @@ def get_walker(
         )  # xxx:
 
     if isinstance(target, types.ModuleType):
-        for x in getattr(target, _extra_target_name) or []:
-            mark(x, kind=_guess_kind(x) or "object")
-            w._members.append(x)
+        for x in getattr(target, _extra_target_name, None) or []:
+            if isinstance(x, types.ModuleType):
+                _seen_modules.add(x)
+                sw = get_walker(
+                    x,
+                    config=config,
+                    aggressive=aggressive,
+                    recursive=recursive,
+                    sort=sort,
+                    only=None,
+                    _depth=_depth + 1,
+                    _extra_target_name=_extra_target_name,
+                    _seen_modules=_seen_modules,
+                    _guess_kind=_guess_kind,
+                )
+                w._members.extend(sw._members)
+            else:
+                mark(x, kind=_guess_kind(x) or "object")
+                w._members.append(x)
 
     return w
 
