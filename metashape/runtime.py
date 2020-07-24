@@ -30,6 +30,7 @@ def get_walker(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
+    _extra_target_name="__ADDITIONAL_TARGETS__",
 ) -> Walker:
     config = config or Config()
 
@@ -102,6 +103,12 @@ def get_walker(
         w._members = list(
             _mark_recursive(w, w._members, seen=set(), guess_member=guess_member)
         )  # xxx:
+
+    if isinstance(target, types.ModuleType):
+        for x in getattr(target, _extra_target_name) or []:
+            mark(x, kind=_guess_kind(x) or "object")
+            w._members.append(x)
+
     return w
 
 
