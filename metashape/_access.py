@@ -24,6 +24,15 @@ def get_name(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
     return member.__class__.__name__
 
 
+def get_fullname(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
+    if hasattr(member, "__file__"):  # module type
+        return member.__name__  # type: ignore
+    if hasattr(member, "__module__"):
+        return f"{member.__module__}.{get_name(member)}"
+    else:
+        return f"?.{get_name(member)}"
+
+
 def get_doc(ob: object, *, verbose: bool = False) -> str:
     doc = inspect.getdoc(ob)
     if doc is None:

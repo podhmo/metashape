@@ -10,9 +10,30 @@ from metashape.typeinfo import typeinfo
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
-from ._access import get_name
+from ._access import get_name, get_fullname  # noqa:F401
 
 logger = logging.getLogger(__name__)
+builtins = sys.modules["builtins"]
+
+
+def _guess_kind(cls: t.Any) -> t.Optional[Kind]:
+    # is module?
+    if hasattr(cls, "__loader__"):
+        return None
+
+    # is typed user_defined_type class or callable?
+    if hasattr(cls, "__name__") and hasattr(cls, "__annotations__"):
+        if not callable(cls):
+            return None
+        if inspect.isclass(cls):
+            return "object"
+        return "callable"
+
+    # is tx.Literal?
+    if hasattr(cls, "__origin__") and cls.__origin__ is tx.Literal:
+        return "enum"
+
+    return None
 
 
 def get_walker(
@@ -30,7 +51,13 @@ def get_walker(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
+    _extra_target_name: str = "__ADDITIONAL_TARGETS__",
+    _seen_modules: t.Optional[t.Set[types.ModuleType]] = None,
+    _guess_kind: t.Callable[[t.Any], t.Optional[Kind]] = _guess_kind,
 ) -> Walker:
+    if _seen_modules is None:
+        _seen_modules = set()
+
     config = config or Config()
 
     if target is None:
@@ -49,6 +76,7 @@ def get_walker(
     if target is None:
         raise ValueError("support target=None, only aggresive=True")
     elif isinstance(target, types.ModuleType):
+        _seen_modules.add(target)
         d = target.__dict__
         if aggressive and only is None:
             only = [get_name(target)]
@@ -102,6 +130,28 @@ def get_walker(
         w._members = list(
             _mark_recursive(w, w._members, seen=set(), guess_member=guess_member)
         )  # xxx:
+
+    if isinstance(target, types.ModuleType):
+        for x in getattr(target, _extra_target_name, None) or []:
+            if isinstance(x, types.ModuleType):
+                _seen_modules.add(x)
+                sw = get_walker(
+                    x,
+                    config=config,
+                    aggressive=aggressive,
+                    recursive=recursive,
+                    sort=sort,
+                    only=None,
+                    _depth=_depth + 1,
+                    _extra_target_name=_extra_target_name,
+                    _seen_modules=_seen_modules,
+                    _guess_kind=_guess_kind,
+                )
+                w._members.extend(sw._members)
+            else:
+                mark(x, kind=_guess_kind(x) or "object")
+                w._members.append(x)
+
     return w
 
 
@@ -144,19 +194,3 @@ def _mark_recursive(
                 mark(x.type_, kind=kind)
                 yield x.type_
                 q.append(x.type_)
-
-
-def _guess_kind(cls: t.Type[t.Any]) -> t.Optional[Kind]:
-    # is user_defined_type class?
-    if hasattr(cls, "__name__"):
-        if not hasattr(cls, "__loader__") and hasattr(cls, "__annotations__"):
-            if not inspect.isclass(cls):
-                return None
-            return "object"
-        return None
-
-    # is tx.Literal?
-    if hasattr(cls, "__origin__") and cls.__origin__ is tx.Literal:
-        return "enum"
-
-    return None

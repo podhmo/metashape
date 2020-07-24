@@ -21,7 +21,7 @@ class _ForwardRef(tx.Protocol):
 
 
 # TODO: more strict typing
-Kind = tx.Literal["object", "enum", "ignore"]
+Kind = tx.Literal["object", "enum", "ignore", "callable"]
 MetaData = t.MutableMapping[str, t.Any]
 
 Member = t.Type[t.Any]
