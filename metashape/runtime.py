@@ -51,7 +51,7 @@ def get_walker(
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
     _depth: int = 1,  # xxx: for black magic
-    _extra_target_name="__ADDITIONAL_TARGETS__",
+    _extra_target_name: str = "__ADDITIONAL_TARGETS__",
     _seen_modules: t.Optional[t.Set[types.ModuleType]] = None,
     _guess_kind: t.Callable[[t.Any], t.Optional[Kind]] = _guess_kind,
 ) -> Walker:

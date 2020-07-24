@@ -24,9 +24,9 @@ def get_name(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
     return member.__class__.__name__
 
 
-def get_fullname(member: t.Union[ModuleType, Member, _ForwardRef]):
+def get_fullname(member: t.Union[ModuleType, Member, _ForwardRef]) -> str:
     if hasattr(member, "__file__"):  # module type
-        return member.__name__
+        return member.__name__  # type: ignore
     if hasattr(member, "__module__"):
         return f"{member.__module__}.{get_name(member)}"
     else:
