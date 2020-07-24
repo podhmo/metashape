@@ -10,7 +10,7 @@ from metashape.typeinfo import typeinfo
 from metashape.analyze.resolver import Resolver
 from metashape.analyze.walker import Walker
 from metashape.analyze.config import Config
-from ._access import get_name
+from ._access import get_name, get_fullname  # noqa:F401
 
 logger = logging.getLogger(__name__)
 
