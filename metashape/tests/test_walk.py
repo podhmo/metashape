@@ -62,3 +62,12 @@ def test_walk_one__container():
         "Member": {"name": str(str), "team": str(Team)},
     }
     assert want == got
+
+
+def test_walk_one__union():
+    got = _walk(get_walker(t.Union[Member, Team]))
+    want = {
+        "Member": {"name": str(str), "team": str(Team)},
+        "Team": {"name": str(str), "members": str(t.List[Member])},
+    }
+    assert want == got
