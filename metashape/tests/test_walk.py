@@ -17,6 +17,9 @@ class Member:
 def _walk(w):
     defs = {}
     for cls in w.walk():
+        if hasattr(cls, "__origin__") and cls.__origin__ == t.Union:  # xxx:
+            w.append(cls)
+            continue
         defs[cls.__name__] = {
             name: str(typeinfo.raw) for name, typeinfo, _ in w.walk_fields(cls)
         }
@@ -65,7 +68,9 @@ def test_walk_one__container():
 
 
 def test_walk_one__union():
-    got = _walk(get_walker(t.Union[Member, Team]))
+    from metashape.name import NewNamedType
+
+    got = _walk(get_walker(NewNamedType("MemberOrTeam", t.Union[Member, Team])))
     want = {
         "Member": {"name": str(str), "team": str(Team)},
         "Team": {"name": str(str), "members": str(t.List[Member])},
