@@ -1,3 +1,4 @@
+from __future__ import annotations
 import typing as t
 import typing_extensions as tx
 import sys
@@ -36,6 +37,16 @@ def _guess_kind(cls: t.Any) -> t.Optional[Kind]:
     return None
 
 
+def _unwrap_type(
+    typ: t.Type[t.Any],
+    *,
+    _unwrap_origins: t.Tuple[t.Type[t.Any]] = (dict, list, set, tuple),
+) -> t.Type[t.Any]:
+    if hasattr(typ, "__origin__") and typ.__origin__ in _unwrap_origins:
+        return typeinfo(typ).user_defined_type or typ
+    return typ
+
+
 def get_walker(
     target: t.Union[
         None,
@@ -50,6 +61,7 @@ def get_walker(
     recursive: bool = False,
     sort: bool = False,
     only: t.Optional[t.List[str]] = None,
+    unwrap_type: t.Callable[[t.Type[t.Any]], t.Type[t.Any]] = _unwrap_type,
     _depth: int = 1,  # xxx: for black magic
     _extra_target_name: str = "__ADDITIONAL_TARGETS__",
     _seen_modules: t.Optional[t.Set[types.ModuleType]] = None,
@@ -112,11 +124,7 @@ def get_walker(
     sort = sort or config.option.sort
 
     itr = sorted(d.items()) if sort else d.items()
-    members = [
-        (typeinfo(v).user_defined_type or v if hasattr(v, "__origin__") else v)
-        for _, v in itr
-        if is_marked(v)
-    ]
+    members = [unwrap_type(v) for _, v in itr if is_marked(v)]
 
     named = {id(val): name for name, val in d.items()}
     resolver = Resolver(config=config, named=named)
