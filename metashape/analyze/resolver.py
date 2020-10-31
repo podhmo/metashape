@@ -44,7 +44,10 @@ class Resolver:
         # TODO: support _ForwardRef
         default = self.config.typeinfo_unexpected_handler
         try:
-            return typeinfo.typeinfo(typ, default=default)
+            if hasattr(typ, "__forward_arg__"):
+                raise NotImplementedError("ForwardRef is not supported yet")
+            v = t.cast(t.Type[t.Any], typ)
+            return typeinfo.typeinfo(v, default=default)
         except TypeError:
             return typeinfo.typeinfo(typ.__class__, default=default)
 
