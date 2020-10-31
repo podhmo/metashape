@@ -1,7 +1,6 @@
 # type: ignore
 from __future__ import annotations
 import typing as t
-import typing_extensions as tx
 import dataclasses
 import pytest
 
@@ -24,9 +23,15 @@ class Many:
     memo: t.List[str] = dataclasses.field(default_factory=list)
 
 
+# # not supported
+# @dataclasses.dataclass
+# class WithAnnotated:
+#     name: tx.Annotated[str, Description("name of object")]  # noqa: F722
+
+
 @dataclasses.dataclass
 class WithAnnotated:
-    name: tx.Annotated[str, Description("name of object")]  # noqa: F722
+    name: str = dataclasses.field(metadata={"description": "name of object"})
 
 
 @dataclasses.dataclass
@@ -54,16 +59,11 @@ class TocExtension:
     [
         ("simple", Simple, {"name": {"type": str, "metadata": {}}}),
         ("many", Many, {"memo": {"type": t.List[str], "metadata": {}}}),
-        # (
-        #     "with-annotated",
-        #     WithAnnotated,
-        #     {
-        #         "name": {
-        #             "type": tx.Annotated[str, Description("name of object")],
-        #             "metadata": {"description": "name of object"},
-        #         }
-        #     },
-        # ),
+        (
+            "with-annotated",
+            WithAnnotated,
+            {"name": {"type": str, "metadata": {"description": "name of object"},}},
+        ),
         (
             "internal-def",
             CodehiliteExtension,
