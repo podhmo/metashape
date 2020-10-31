@@ -13,7 +13,7 @@ extras_require = {
     "testing": tests_requires,
     "dev": tests_requires + ["black", "flake8"] + ["mypy"],
     "input": ["json2python-models"],  # todo: omit
-    "output": ["dictknife>=0.13.0", "prestring>=0.9.0"],
+    "output": ["dictknife>=0.13.0", "prestring>=0.9.0", "magicalimport"],
 }
 extras_require["cli"] = (
     extras_require["input"] + extras_require["output"] + ["magicalimport>=0.9.1"]
