@@ -62,7 +62,7 @@ class TocExtension:
         (
             "with-annotated",
             WithAnnotated,
-            {"name": {"type": str, "metadata": {"description": "name of object"},}},
+            {"name": {"type": str, "metadata": {"description": "name of object"}}},
         ),
         (
             "internal-def",
