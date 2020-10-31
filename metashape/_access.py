@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
+import sys
 import inspect
 from types import ModuleType
 from metashape.name import resolve_maybe as resolve_name_maybe
@@ -85,11 +86,19 @@ def _extract_metadata(
     return typ, metadata
 
 
+if sys.version_info >= (3, 9):
+    from functools import partial
+
+    _get_type_hints = partial(t.get_type_hints, include_extras=True)
+else:
+    _get_type_hints = t.get_type_hints
+
+
 def iterate_props(
     typ: t.Type[t.Any], *, ignore_private: bool = True,
 ) -> t.Iterable[t.Tuple[str, t.Type[t.Any], MetaData]]:
     see_annotated: bool = True
-    hints = t.get_type_hints(typ, localns=getattr(typ, "__dict__", None))
+    hints = _get_type_hints(typ, localns=getattr(typ, "__dict__", None))
     for fieldname, fieldtype in hints.items():
         if ignore_private and fieldname.startswith("_"):
             continue
