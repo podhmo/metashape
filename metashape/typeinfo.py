@@ -5,6 +5,7 @@ from ._typeinfo import (
     is_primitive_type,
     Atom,
     Container,
+    Container_with_children,
     TypeInfo,
     _default_raise_error,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "is_primitive_type",
     "Atom",
     "Container",
+    "Container_with_children",
     "TypeInfo",
     "_default_raise_error",
     "typeinfo",

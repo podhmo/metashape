@@ -4,7 +4,7 @@ import typing_extensions as tx
 import dataclasses
 from functools import lru_cache
 from metashape.langhelpers import typing_get_args
-from _typeinfo import (
+from ._typeinfo import (
     TypeInfo,
     _default_raise_error,
     Container,
