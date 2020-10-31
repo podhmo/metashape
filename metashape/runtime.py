@@ -40,7 +40,7 @@ def _guess_kind(cls: t.Any) -> t.Optional[Kind]:
 def _unwrap_type(
     typ: t.Type[t.Any],
     *,
-    _unwrap_origins: t.Tuple[t.Type[t.Any]] = (dict, list, set, tuple),
+    _unwrap_origins: t.Tuple[t.Type[t.Any], ...] = (dict, list, set, tuple),
 ) -> t.Type[t.Any]:
     if hasattr(typ, "__origin__") and typ.__origin__ in _unwrap_origins:
         return typeinfo(typ).user_defined_type or typ
