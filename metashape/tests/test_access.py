@@ -202,7 +202,10 @@ def test_iterate_props(msg, target_class, want):
     from metashape._access import iterate_props as _callFUT
 
     got = {
-        name: {"type": typ, **({"metadata": metadata} if metadata is not None else {})}
+        name: {
+            "type": typ,
+            **({"metadata": dict(metadata)} if metadata is not None else {}),
+        }
         for name, typ, metadata in _callFUT(target_class)
     }
 
