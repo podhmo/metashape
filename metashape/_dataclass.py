@@ -26,8 +26,9 @@ def _evaluate_type(typ: t.Type[t.Any], field: Field[t.Any]) -> t.Type[t.Any]:
         return field_type
 
     m = sys.modules[typ.__module__]
-    field_type = field.type = t.ForwardRef(field_type)._evaluate(
-        m.__dict__, typ.__dict__
+    # TODO: the types that defined in closure is not supported yet
+    field_type = field.type = t._eval_type(
+        t.ForwardRef(field_type), m.__dict__, typ.__dict__
     )
     return field_type
 

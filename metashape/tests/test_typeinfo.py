@@ -1,5 +1,7 @@
 # type: ignore
+from __future__ import annotations
 import typing as t
+import sys
 import dataclasses
 import typing_extensions as tx
 import pytest
@@ -89,6 +91,11 @@ def test_omit_optional(typ, want, omitted):
     assert got == (want, omitted)
 
 
+py39List = list
+if sys.version_info < (3, 9):
+    py39List = t.List
+
+
 @pytest.mark.parametrize(
     "msg, typ, want",
     [
@@ -104,6 +111,11 @@ def test_omit_optional(typ, want, omitted):
             "list str",
             t.List[str],
             container(raw=t.List[str], container_type="list", args=[str]),
+        ),
+        (
+            "list str",
+            py39List[str],
+            container(raw=py39List[str], container_type="list", args=[str]),
         ),
         (
             "optional list str",
