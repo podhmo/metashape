@@ -44,7 +44,8 @@ class Resolver:
         # TODO: support _ForwardRef
         default = self.config.typeinfo_unexpected_handler
         try:
-            return typeinfo.typeinfo(typ, default=default)
+            r = typeinfo.typeinfo(typ, default=default)
+            return r
         except TypeError:
             return typeinfo.typeinfo(typ.__class__, default=default)
 
