@@ -28,6 +28,7 @@ build:
 upload:
 #	pip install twine
 	twine check dist/metashape-$(shell cat VERSION)*
-	twine upload dist/metashape-$(shell cat VERSION)*
+	twine upload dist/metashape-$(shell cat VERSION)*.gz
+	twine upload dist/metashape-$(shell cat VERSION)*.whl
 
 .PHONY: test format lint build upload examples typing
