@@ -117,6 +117,8 @@ class PropertyDict(tx.TypedDict, total=False):
     # only type=array
     items: t.Union[RefDict, OneOfDict, t.Dict[str, t.Any]]
 
+    additionalProperties: t.Dict[str, t.Any]  # suppress cyclic definition
+
 
 class _Fixer:
     def __init__(self, ctx: Context, *, discriminator_name: str) -> None:
@@ -251,7 +253,7 @@ class Builder:
                     prop["format"] = resolver.resolve_typeformat(info)
 
         if info.container_type == "dict":
-            prop["additionalProperties"] = self.build_property_data(
+            prop["additionalProperties"] = self.build_property_data(  # type: ignore
                 info.args[1], metadata={}
             )
 
