@@ -250,6 +250,11 @@ class Builder:
                 if hasattr(info.supertypes[0], "__name__"):
                     prop["format"] = resolver.resolve_typeformat(info)
 
+        if info.container_type == "dict":
+            prop["additionalProperties"] = self.build_property_data(
+                info.args[1], metadata={}
+            )
+
         return prop
 
     def build_schema_data(self, cls: Member) -> SchemaDict:
