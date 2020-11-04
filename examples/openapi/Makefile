@@ -65,4 +65,6 @@ typing:
 21:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 	dictknife diff `echo 08*`/${OUTFILE} `echo $@*`/${OUTFILE} |& tee `echo $@*`/a.diff
+22:
+	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 
