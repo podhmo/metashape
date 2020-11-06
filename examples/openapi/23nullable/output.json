@@ -1,0 +1,37 @@
+{
+  "components": {
+    "schemas": {
+      "Data": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "optional_name": {
+            "type": "string"
+          },
+          "nullable_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "optional_nullable_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "nullable_name2": {
+            "type": "string"
+          },
+          "optional_nullable_name2": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "nullable_name",
+          "nullable_name2"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
