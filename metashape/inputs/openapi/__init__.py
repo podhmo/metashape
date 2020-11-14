@@ -30,14 +30,6 @@ class Resolver:
         self.fulldata = fulldata
         self._accessor = dictknife.Accessor()  # todo: rename
 
-    def resolve_python_type(self, d: AnyDict, *, name: str,) -> t.Type[t.Any]:
-        type_hints = {}
-        for field_name, field in d["properties"].items():
-            type_hints[field_name] = str  # TODO: guess type
-        return type(name, (), {"__annotations__": type_hints})
-
-    ##
-
     def has_ref(self, d: AnyDict) -> bool:
         return "$ref" in d
 
