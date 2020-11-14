@@ -109,8 +109,9 @@ class Resolver:
 
 
 class Accessor:
-    def __init__(self, resolver: Resolver):
+    def __init__(self, resolver: Resolver, *, refs: t.Dict[str, Ref]):
         self.resolver = resolver
+        self.refs = refs
 
     def schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
         try:
@@ -127,17 +128,21 @@ class Accessor:
         for k, v in schemas.items():
             yield k, v
 
-    def extract_python_type(self, name: str, d: AnyDict) -> t.Type[t.Any]:
+    def extract_type(self, name: str, d: AnyDict) -> Type:
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
-        type_hints = {}
+        annotations = {}
+
         for field_name, field in d["properties"].items():
             metadata = metadata_dict[field_name]
+            if self.resolver.has_ref(field):
+                annotations[field_name] = Ref(ref=field["$ref"])
+                continue
 
-            typ = str  # TODO: guess type
+            typ = Type(name="str")
             if not metadata["required"]:
-                typ = t.Optional[str]
-            type_hints[field_name] = typ
-        return type(name, (), {"__annotations__": type_hints})
+                typ = Optional(typ)
+            annotations[field_name] = typ
+        return Type(name=name, bases=(), annotations=annotations)
 
     def _extract_metadata_dict_pre_properties(
         self, d: t.Dict[str, t.Any]
@@ -156,58 +161,95 @@ class MetadataDict(tx.TypedDict, total=False):
 
 @dataclasses.dataclass
 class Context:
-    types: AnyDict = dataclasses.field(default_factory=make_dict)
+    import_area: Module
+    types: t.Dict[str, Type] = dataclasses.field(default_factory=make_dict)
+    refs: t.Dict[str, Ref] = dataclasses.field(default_factory=make_dict, compare=False)
+
+
+@dataclasses.dataclass
+class Ref:
+    ref: str
+
+    @property
+    def name(self) -> str:
+        return self.ref.rsplit("/", 1)[-1]
+
+    def as_type_str(self, ctx: Context) -> str:
+        name = self.name
+        if name not in ctx.types:
+            return f"TODO[{name}]"
+        return ctx.types[name].as_type_str(ctx)
+
+
+@dataclasses.dataclass
+class Type:
+    name: str
+    bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
+    annotations: t.Dict[str, t.Union[Type, Ref]] = dataclasses.field(
+        default_factory=make_dict, compare=False
+    )
+    module: str = ""
+
+    def as_type_str(self, ctx: Context) -> str:
+        if not self.module:
+            return self.name
+
+        ctx.import_area.import_(self.module)
+        return f"{self.module}.{self.name}"
+
+
+@dataclasses.dataclass
+class Container:
+    name: str
+    module: str
+    args: t.List[Type] = dataclasses.field(default_factory=list)
+
+    def as_type_str(self, ctx: Context) -> str:
+        # TODO: cache
+        args = [x.as_type_str(ctx) for x in self.args]
+        fullname = self.module
+        if self.module:
+            ctx.import_area.import_(self.module)
+            fullname = f"{self.module}.{self.name}"
+        return f"{fullname}[{', '.join(args)}]"
+
+
+def Optional(typ: Type) -> Container:
+    return Container(name="Optional", module="typing", args=[typ])
 
 
 class Emitter:
     def __init__(self, *, m: t.Optional[Module] = None) -> None:
-        m = m or Module()
-        self.m = m
-        self.import_area = m.submodule()
-
-    def _get_type_str(self, typ: t.Type[t.Any]) -> str:
-        name = getattr(typ, "__name__", None)
-        if name is None:
-            if hasattr(typ, "__origin__"):
-                name = typ.__origin__._name
-        assert name is not None
-
-        if typ.__module__ != "builtins":
-            self.import_area.import_(typ.__module__)
-
-        # TODO: implementation
-        if hasattr(typ, "__args__"):
-            return str(typ)
-        else:
-            return typ.__name__
+        self.m = m or Module()
 
     def emit(self, ctx: Context) -> Module:
         m = self.m
 
-        for name, cls in ctx.types.items():
+        for name, typ in ctx.types.items():
             with m.class_(name):
                 # TODO: omit class inheritance
-                for field_name, field_type in t.get_type_hints(cls).items():
+                for field_name, field_type in typ.annotations.items():
                     # TODO: to pytype
-                    type_str = self._get_type_str(field_type)
+                    type_str = field_type.as_type_str(ctx)
                     m.stmt(f"{field_name}: {type_str}")
 
-        if str(self.import_area):
-            self.import_area.sep()
+        if str(ctx.import_area):
+            ctx.import_area.sep()
         return m
 
 
 def main(d: AnyDict) -> None:
-    ctx = Context()
+    m = Module()
+    ctx = Context(import_area=m.submodule())
     resolver = Resolver(d)
-    a = Accessor(resolver)
+    a = Accessor(resolver, refs=ctx.refs)
     for name, sd in a.schemas(d):
         if not a.resolver.has_schema(sd):
             logger.debug("skip schema %s", name)
             continue
 
         # TODO: normalize
-        ctx.types[name] = a.extract_python_type(name, sd)
+        ctx.types[name] = a.extract_type(name, sd)
 
-    emitter = Emitter()
+    emitter = Emitter(m=m)
     print(emitter.emit(ctx))
