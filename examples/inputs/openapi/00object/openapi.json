@@ -3,11 +3,11 @@
     "schemas": {
       "Person": {
         "properties": {
-          "age": {
-            "type": "integer"
-          },
           "name": {
             "type": "string"
+          },
+          "age": {
+            "type": "integer"
           }
         },
         "required": [
