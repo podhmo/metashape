@@ -30,16 +30,6 @@ class Resolver:
         self.fulldata = fulldata
         self._accessor = dictknife.Accessor()  # todo: rename
 
-    # for python
-    def resolve_pytype_str(self, typ: t.Type[t.Any]) -> str:
-        # TODO: implementation
-        if hasattr(typ, "__args__"):
-            return str(typ)
-        else:
-            return typ.__name__
-
-    # for dict
-
 
 class Accessor:
     def __init__(self, resolver: Resolver):
@@ -94,18 +84,40 @@ class Context:
 
 
 class Emitter:
-    def __init__(self, resolver: Resolver) -> None:
-        self.resolver = resolver
+    def __init__(self, *, m: t.Optional[Module] = None) -> None:
+        m = m or Module()
+        self.m = m
+        self.import_area = m.submodule()
+
+    def _get_type_str(self, typ: t.Type[t.Any]) -> str:
+        name = getattr(typ, "__name__", None)
+        if name is None:
+            if hasattr(typ, "__origin__"):
+                name = typ.__origin__._name
+        assert name is not None
+
+        if typ.__module__ != "builtins":
+            self.import_area.import_(typ.__module__)
+
+        # TODO: implementation
+        if hasattr(typ, "__args__"):
+            return str(typ)
+        else:
+            return typ.__name__
 
     def emit(self, ctx: Context) -> Module:
-        m = Module()
+        m = self.m
+
         for name, cls in ctx.types.items():
             with m.class_(name):
                 # TODO: omit class inheritance
                 for field_name, field_type in t.get_type_hints(cls).items():
                     # TODO: to pytype
-                    type_str = self.resolver.resolve_pytype_str(field_type)
+                    type_str = self._get_type_str(field_type)
                     m.stmt(f"{field_name}: {type_str}")
+
+        if str(self.import_area):
+            self.import_area.sep()
         return m
 
 
@@ -117,5 +129,5 @@ def main(d: AnyDict) -> None:
         # TODO: normalize
         ctx.types[name] = a.extract_python_type(name, sd)
 
-    emitter = Emitter(resolver)
+    emitter = Emitter()
     print(emitter.emit(ctx))
