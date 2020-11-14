@@ -33,8 +33,17 @@ class Resolver:
     def has_ref(self, d: AnyDict) -> bool:
         return "$ref" in d
 
+    def get_ref(self, d: AnyDict) -> str:
+        return d["$ref"]
+
     def has_allof(self, d: AnyDict) -> bool:
         return "allOf" in d
+
+    def has_array(self, d) -> bool:
+        return d.get("type") == "array" or "items" in d
+
+    def get_array_items(self, d) -> bool:
+        return d["items"]
 
     def has_schema(
         self, d: AnyDict, cand: t.Tuple[str, ...] = ("object",), fullscan: bool = True,
@@ -129,16 +138,20 @@ class Accessor:
             yield k, v
 
     def extract_type(self, name: str, d: AnyDict) -> Type:
+        resolver = self.resolver
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
         annotations = {}
 
         for field_name, field in d["properties"].items():
             metadata = metadata_dict[field_name]
-            if self.resolver.has_ref(field):
-                annotations[field_name] = Ref(ref=field["$ref"])
+            # TODO: see ref deeply
+            if resolver.has_ref(field):
+                annotations[field_name] = Ref(ref=resolver.get_ref(field))
                 continue
 
-            typ = Type(name="str")
+            typ = Type(name="str")  # TODO: cache
+            if resolver.has_array(field):
+                typ = List(Ref(ref=resolver.get_ref(resolver.get_array_items(field))))
             if not metadata["required"]:
                 typ = Optional(typ)
             annotations[field_name] = typ
@@ -177,6 +190,7 @@ class Ref:
     def as_type_str(self, ctx: Context) -> str:
         name = self.name
         if name not in ctx.types:
+            logger.info("as_type_str(): type %s is not found.", name)
             return f"TODO[{name}]"
         return ctx.types[name].as_type_str(ctx)
 
@@ -216,6 +230,14 @@ class Container:
 
 def Optional(typ: Type) -> Container:
     return Container(name="Optional", module="typing", args=[typ])
+
+
+def List(typ: Type) -> Container:
+    return Container(name="List", module="typing", args=[typ])
+
+
+def Dict(k: Type, v: Type) -> Container:
+    return Container(name="Dict", module="typing", args=[k, v])
 
 
 class Emitter:
