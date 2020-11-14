@@ -1,3 +1,3 @@
 class Person:
-    age: str
+    age: typing.Union[str, NoneType]
     name: str
