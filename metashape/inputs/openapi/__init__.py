@@ -386,5 +386,5 @@ def main(d: AnyDict) -> None:
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
     logger.info(
-        "total cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3)
+        "cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3)
     )
