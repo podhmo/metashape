@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 import logging
 import re
 import dataclasses
@@ -245,7 +245,7 @@ def main(d: AnyDict) -> None:
     resolver = Resolver(d, refs=ctx.refs)
     a = Accessor(resolver)
 
-    seen: t.Set[str] = set()
+    cc: t.Counter[str] = Counter()
     q: t.Deque[t.Tuple[GUESS_KIND, name, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
     for name, sd in a.schemas(d):
         q.append(("?", name, sd, []))
@@ -265,9 +265,10 @@ def main(d: AnyDict) -> None:
                     q.append(("primitive", name, sd, history))
                 continue
 
-            # if name in seen:
-            #     continue
-            # seen.add(name)
+            if name in cc:
+                cc[name] += 1
+                continue
+            cc[name] = 0
 
             if guess_kind == "ref":
                 ref = resolver.get_ref(sd)
@@ -303,3 +304,6 @@ def main(d: AnyDict) -> None:
         raise
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
+    logger.info(
+        "total cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3)
+    )
