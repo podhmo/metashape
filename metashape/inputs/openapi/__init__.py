@@ -272,7 +272,11 @@ class Emitter:
                 for field_name, field_type in typ.annotations.items():
                     # TODO: to pytype
                     type_str = field_type.as_type_str(ctx)
-                    m.stmt(f"{field_name}: {type_str}")
+                    normalized_name = normalize(field_name)
+                    if normalized_name == field_name:
+                        m.stmt(f"{normalized_name}: {type_str}")
+                    else:
+                        m.stmt(f"{normalized_name}: {type_str}  # original is {field_name}")
 
         if str(ctx.import_area):
             ctx.import_area.sep()

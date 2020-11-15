@@ -26,6 +26,9 @@
           },
           "memo": {
             "$ref": "#/components/schemas/Memo"
+          },
+          "optional-memo": {
+            "$ref": "#/components/schemas/Memo"
           }
         },
         "required": [
