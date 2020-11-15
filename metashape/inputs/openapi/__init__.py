@@ -22,11 +22,15 @@ from dictknife.langhelpers import make_dict
 # TODO: support list inline
 # TODO: support list ref
 # TODO: support list nested
+# TODO: support enqueue in field
 # - object
 # - primitive
 # - allOf
 
 AnyDict = t.Dict[str, t.Any]
+# TODO: allOf,oneOf,anyOf
+GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive"]
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +40,9 @@ class Resolver:
         self.refs = refs
         self._accessor = dictknife.Accessor()  # todo: rename
         self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
+
+    def resolve_type(self, d: AnyDict) -> Type:
+        return Type(name="str")  # TODO: implementation
 
     def resolve_normalized_name(self, name: str) -> str:
         return normalize(name)
@@ -54,7 +61,7 @@ class Resolver:
         # todo: cache
         path = ref[len("#/") :].split("/")
         name = path[-1]
-        source = self._accessor.maybe_access_container(self.fulldata, path)
+        source = self._accessor.maybe_access(self.fulldata, path)
         return name, source
 
     def has_allof(self, d: AnyDict) -> bool:
@@ -106,7 +113,7 @@ class Accessor:
                 annotations[field_name] = Ref(ref=resolver.get_ref(field))
                 continue
 
-            typ = Type(name="str")  # TODO: cache
+            typ = resolver.resolve_type(field)  # TODO: cache
             if resolver.has_array(field):
                 typ = List(Ref(ref=resolver.get_ref(resolver.get_array_items(field))))
             if not metadata["required"]:
@@ -132,11 +139,59 @@ class MetadataDict(tx.TypedDict, total=False):
 @dataclasses.dataclass
 class Context:
     import_area: Module
-    types: t.Dict[str, Type] = dataclasses.field(default_factory=make_dict)
-    refs: t.Dict[str, Ref] = dataclasses.field(default_factory=make_dict, compare=False)
+
+    types: t.Dict[str, Type] = dataclasses.field(default_factory=make_dict, repr=False)
+    refs: t.Dict[str, Ref] = dataclasses.field(
+        default_factory=make_dict, compare=False, repr=False
+    )
+    globals: t.Dict[str, t.Union[Type, Container]] = dataclasses.field(
+        default_factory=make_dict, compare=False, repr=False
+    )
+
+    def apply_history(self, history: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
+        itr = iter(reversed(history))
+        guess_kind, type_name = next(itr)
+        typ = self.globals.get(type_name)
+
+        if typ is None:
+            assert guess_kind == "object"
+            typ = self.types[type_name]
+            self.globals[type_name] = typ
+
+        for guess_kind, name in itr:
+            if guess_kind == "?":
+                continue
+
+            prev_type = typ
+            typ = self.globals.get(name)
+            if guess_kind == "ref":
+                if typ is not None:
+                    if prev_type is not None:
+                        assert typ == prev_type
+                    continue
+                if typ is None:
+                    assert prev_type is not None
+                    typ = self.globals[name] = prev_type
+                continue
+            elif guess_kind == "object":
+                if typ is not None:
+                    if prev_type is not None:
+                        assert typ == prev_type
+                    continue
+                typ = self.globals[name] = self.types.get(name)
+                assert typ == prev_type
+                continue
+            elif guess_kind == "array":
+                if typ is not None:
+                    if prev_type is not None:
+                        assert len(typ.args) == 1
+                        assert typ.args[0] == prev_type
+                    continue
+                typ = self.globals[name] = self.types[name] = List(prev_type)
+                continue
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Ref:
     ref: str
 
@@ -146,10 +201,11 @@ class Ref:
 
     def as_type_str(self, ctx: Context) -> str:
         name = self.name
-        if name not in ctx.types:
-            logger.info("as_type_str(): type %s is not found.", name)
-            return f"TODO[{name}]"
-        return ctx.types[name].as_type_str(ctx)
+        typ = ctx.globals.get(name)
+        if typ is None:
+            logger.info("as_type_str(): type %s is not found.", self.name)
+            return f"TODO[{self.name}]"
+        return typ.as_type_str(ctx)
 
 
 @dataclasses.dataclass
@@ -157,7 +213,7 @@ class Type:
     name: str
     bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
     annotations: t.Dict[str, t.Union[Type, Ref]] = dataclasses.field(
-        default_factory=make_dict, compare=False
+        default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
 
@@ -203,8 +259,11 @@ class Emitter:
 
     def emit(self, ctx: Context) -> Module:
         m = self.m
-
         for name, typ in ctx.types.items():
+            if not hasattr(typ, "annotations"):
+                logger.info("skip %s", name)
+                continue
+
             with m.class_(name):
                 for field_name, field_type in typ.annotations.items():
                     # TODO: to pytype
@@ -233,10 +292,6 @@ def titleize(name: str) -> str:
     return normalize("{}{}".format(name[0].upper(), name[1:]))
 
 
-# TODO: allOf,oneOf,anyOf
-GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive"]
-
-
 def main(d: AnyDict) -> None:
     logging.basicConfig(level=logging.INFO)  # debug
 
@@ -250,23 +305,25 @@ def main(d: AnyDict) -> None:
     for name, sd in a.schemas(d):
         q.append(("?", name, sd, []))
 
+    histories = []
     try:
         while len(q) > 0:
             guess_kind, name, sd, history = q.popleft()
             history.append((guess_kind, name))
             if guess_kind == "?":
                 if resolver.has_ref(sd):
-                    q.append(("ref", name, sd, history))
+                    q.appendleft(("ref", name, sd, history))
                 elif resolver.has_array(sd):
-                    q.append(("array", name, sd, history))
+                    q.appendleft(("array", name, sd, history))
                 elif resolver.has_object(sd):
-                    q.append(("object", name, sd, history))
+                    q.appendleft(("object", name, sd, history))
                 else:
-                    q.append(("primitive", name, sd, history))
+                    q.appendleft(("primitive", name, sd, history))
                 continue
 
             if name in cc:
                 cc[name] += 1
+                histories.append(history)
                 continue
             cc[name] = 0
 
@@ -275,20 +332,24 @@ def main(d: AnyDict) -> None:
                 ctx.refs[name] = Ref(ref=ref)
                 new_name, new_sd = resolver.resolve_ref(ref)
                 logger.debug("enqueue: ref %s as %s", name, new_name)
-                q.append(("?", new_name, new_sd, history))
+                q.appendleft(("?", new_name, new_sd, history))
             elif guess_kind == "array":
-                # todo: save array?, todo: cache
                 if resolver.has_array(sd):
                     logger.debug("enqueue: array item %s", name)
                     new_sd = resolver.get_array_items(sd)
-                    q.append(("?", name + "Item", new_sd, history))
-                logger.info("skip: array %r is skipped", name)
+                    q.appendleft(("?", name + "Item", new_sd, history))
+                logger.debug("   use: array %s", name)
             elif guess_kind == "object":
+                logger.debug("   use: object %s", name)
                 ctx.types[name] = a.extract_type(name, sd)
+                ctx.apply_history(history)
             elif guess_kind == "primitive":
                 logger.info("skip: primitive %r is skipped", name)
+                ctx.globals[name] = resolver.resolve_type(sd)
+                ctx.apply_history(history)  # todo:
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
+
     except Exception as e:
         # TODO: only DEBUG=1
         import json
@@ -302,6 +363,11 @@ def main(d: AnyDict) -> None:
             json.dumps(sd, indent=2),
         )
         raise
+
+    # fix relation
+    for h in histories:
+        ctx.apply_history(h)
+
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
     logger.info(
