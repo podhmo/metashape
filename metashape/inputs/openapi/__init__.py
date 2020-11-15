@@ -105,7 +105,7 @@ class Accessor:
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
         annotations = {}
 
-        for field_name, field in d["properties"].items():
+        for field_name, field in (d.get("properties") or {}).items():
             metadata = metadata_dict[field_name]
             # TODO: see ref deeply
             if resolver.has_ref(field):
