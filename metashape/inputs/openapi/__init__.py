@@ -13,8 +13,6 @@ from swagger_marshmallow_codegen.lifting import lifting_definition  # TODO: omit
 # TODO: flatten
 # TODO: normalize name
 # TODO: memorize original name
-# TODO: support the name startswith reserved word
-# TODO: support the name startswith emoji or number
 # TODO: metashape like structure
 # TODO: support schemas
 # TODO: support required/unrequired
@@ -124,7 +122,11 @@ class Accessor:
             if not metadata["required"]:
                 typ = Optional(typ)
             annotations[field_name] = typ
-        return Type(name=name, bases=(), annotations=annotations)
+        return Type(
+            name=self.resolver.resolve_schema_name(name),
+            bases=(),
+            annotations=annotations,
+        )
 
     def _extract_metadata_dict_pre_properties(
         self, d: t.Dict[str, t.Any]
@@ -272,16 +274,19 @@ class Emitter:
                 logger.info("skip %s", name)
                 continue
 
-            with m.class_(name):
+            normalized_name = typ.name
+            if name != normalized_name:
+                m.stmt(f"# original is {name}")
+            with m.class_(normalized_name):
                 for field_name, field_type in typ.annotations.items():
                     # TODO: to pytype
                     type_str = field_type.as_type_str(ctx)
-                    normalized_name = normalize(field_name)
-                    if normalized_name == field_name:
-                        m.stmt(f"{normalized_name}: {type_str}")
+                    normalized_field_name = normalize(field_name)
+                    if normalized_field_name == field_name:
+                        m.stmt(f"{normalized_field_name}: {type_str}")
                     else:
                         m.stmt(
-                            f"{normalized_name}: {type_str}  # original is {field_name}"
+                            f"{normalized_field_name}: {type_str}  # original is {field_name}"
                         )
 
         if str(ctx.import_area):
@@ -290,13 +295,30 @@ class Emitter:
 
 
 # langhelpers
-def normalize(name: str, ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+")) -> str:
+_NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
+
+
+def normalize(
+    name: str,
+    ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+"),
+    *,
+    _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
+) -> str:
     c = name[0]
     if c.isdigit():
         name = "n" + name
     elif not (c.isalpha() or c == "_"):
-        name = "x" + name
-    return ignore_rx.sub("", name.replace("-", "_"))
+        name = "_invalid_" + name
+    normalized_name = ignore_rx.sub("", name.replace("-", "_"))
+
+    _id_dict = _id_dict_dict.get(normalized_name)
+    if _id_dict is None:
+        _id_dict = _id_dict_dict[normalized_name] = {name: normalized_name}
+        return normalized_name
+    uid = _id_dict.get(name)
+    if uid is None:
+        uid = _id_dict[name] = normalized_name + "G" + str(len(_id_dict))
+    return uid
 
 
 def titleize(name: str) -> str:
@@ -310,7 +332,9 @@ def main(d: AnyDict) -> None:
     logging.basicConfig(level=logging.INFO)  # debug
 
     m = Module()
-    ctx = Context(import_area=m.submodule())
+    import_area = m.submodule()
+    import_area.stmt("from __future__ import annotations")
+    ctx = Context(import_area=import_area)
     resolver = Resolver(d, refs=ctx.refs)
     a = Accessor(resolver)
 
@@ -385,6 +409,4 @@ def main(d: AnyDict) -> None:
 
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
-    logger.info(
-        "cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3)
-    )
+    logger.info("cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3))
