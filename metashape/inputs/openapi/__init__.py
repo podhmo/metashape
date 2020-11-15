@@ -1,8 +1,9 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
+from collections import defaultdict, deque
 import logging
-from collections import defaultdict
+import re
 import dataclasses
 import dictknife
 from prestring.python import Module
@@ -17,6 +18,10 @@ from dictknife.langhelpers import make_dict
 # TODO: support schemas
 # TODO: support required/unrequired
 # TODO: support nullable
+# TODO: support list
+# TODO: support list inline
+# TODO: support list ref
+# TODO: support list nested
 # - object
 # - primitive
 # - allOf
@@ -26,15 +31,31 @@ logger = logging.getLogger(__name__)
 
 
 class Resolver:
-    def __init__(self, fulldata: AnyDict) -> None:
+    def __init__(self, fulldata: AnyDict, *, refs: t.Dict[str, Ref]) -> None:
         self.fulldata = fulldata
+        self.refs = refs
         self._accessor = dictknife.Accessor()  # todo: rename
+        self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
+
+    def resolve_normalized_name(self, name: str) -> str:
+        return normalize(name)
+
+    def resolve_schema_name(self, name: str) -> str:
+        return titleize(name)
 
     def has_ref(self, d: AnyDict) -> bool:
         return "$ref" in d
 
     def get_ref(self, d: AnyDict) -> str:
         return d["$ref"]
+
+    def resolve_ref(self, ref: str) -> t.Tuple[str, AnyDict]:  # shallow
+        # ref format is "#/components/schemas/<name>"
+        # todo: cache
+        path = ref[len("#/") :].split("/")
+        name = path[-1]
+        source = self._accessor.maybe_access_container(self.fulldata, path)
+        return name, source
 
     def has_allof(self, d: AnyDict) -> bool:
         return "allOf" in d
@@ -45,82 +66,18 @@ class Resolver:
     def get_array_items(self, d) -> bool:
         return d["items"]
 
-    def has_schema(
-        self, d: AnyDict, cand: t.Tuple[str, ...] = ("object",), fullscan: bool = True,
-    ) -> bool:
+    def has_object(self, d, cand: t.Tuple[str, ...] = ("object",)) -> bool:
         typ = d.get("type", None)
         if typ in cand:
             return True
-        if "properties" in d:
-            return True
         if self.has_allof(d):
             return True
-        if not self.has_ref(d):
-            return False
-        if not fullscan:
-            return False
-
-        # TODO: cache?
-        _, definition = self.resolve_ref_definition(d)
-        return self.has_schema(definition, fullscan=False)
-
-    ##
-    def resolve_ref_definition(
-        self,
-        d: t.Dict[str, t.Any],
-        name: t.Optional[str] = None,
-        i: int = 0,
-        level: int = -1,
-    ) -> t.Tuple[str, t.Dict[str, t.Any]]:
-        # return schema_name, definition_dict
-        # todo: support quoted "/"
-        # on array
-        if "items" in d:
-            definition = d
-            name, _ = self.resolve_ref_definition(
-                d["items"], name=name, i=i, level=level + 1
-            )  # xxx
-            return name, definition
-
-        if "$ref" not in d:
-            return self.resolve_schema_name(name), d
-        if level == 0:
-            return self.resolve_schema_name(name), d
-
-        logger.debug("    resolve: %sref=%r", "  " * i, d["$ref"])
-
-        path = d["$ref"][len("#/") :].split("/")
-        name = path[-1]
-
-        parent = self._accessor.maybe_access_container(path)
-        if parent is None:
-            logger.warning("%r is not found", d["$ref"])
-            return self.resolve_schema_name(name), d
-        ref_name, definition = self.resolve_ref_definition(
-            parent[name], name=name, i=i + 1, level=level - 1
-        )
-
-        # import for separated output
-        # if X_MARSHMALLOW_INLINE not in definition:
-        #     if c is not None and (
-        #         "properties" in definition
-        #         or (
-        #             (
-        #                 "additionalProperties" in definition
-        #                 or "items" in definition
-        #                 or "allOf" in definition
-        #             )
-        #             and self.has_schema(fulldata, definition)
-        #         )
-        #     ):
-        #         c.relative_import_from_lazy(ref_name)
-        return ref_name, definition
+        return False
 
 
 class Accessor:
-    def __init__(self, resolver: Resolver, *, refs: t.Dict[str, Ref]):
+    def __init__(self, resolver: Resolver):
         self.resolver = resolver
-        self.refs = refs
 
     def schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
         try:
@@ -249,7 +206,6 @@ class Emitter:
 
         for name, typ in ctx.types.items():
             with m.class_(name):
-                # TODO: omit class inheritance
                 for field_name, field_type in typ.annotations.items():
                     # TODO: to pytype
                     type_str = field_type.as_type_str(ctx)
@@ -260,18 +216,90 @@ class Emitter:
         return m
 
 
+# langhelpers
+def normalize(name: str, ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+")) -> str:
+    c = name[0]
+    if c.isdigit():
+        name = "n" + name
+    elif not (c.isalpha() or c == "_"):
+        name = "x" + name
+    return ignore_rx.sub("", name.replace("-", "_"))
+
+
+def titleize(name: str) -> str:
+    if not name:
+        return name
+    name = str(name)
+    return normalize("{}{}".format(name[0].upper(), name[1:]))
+
+
+# TODO: allOf,oneOf,anyOf
+GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive"]
+
+
 def main(d: AnyDict) -> None:
+    logging.basicConfig(level=logging.INFO)  # debug
+
     m = Module()
     ctx = Context(import_area=m.submodule())
-    resolver = Resolver(d)
-    a = Accessor(resolver, refs=ctx.refs)
+    resolver = Resolver(d, refs=ctx.refs)
+    a = Accessor(resolver)
+
+    seen: t.Set[str] = set()
+    q: t.Deque[t.Tuple[GUESS_KIND, name, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
     for name, sd in a.schemas(d):
-        if not a.resolver.has_schema(sd):
-            logger.debug("skip schema %s", name)
-            continue
+        q.append(("?", name, sd, []))
 
-        # TODO: normalize
-        ctx.types[name] = a.extract_type(name, sd)
+    try:
+        while len(q) > 0:
+            guess_kind, name, sd, history = q.popleft()
+            history.append((guess_kind, name))
+            if guess_kind == "?":
+                if resolver.has_ref(sd):
+                    q.append(("ref", name, sd, history))
+                elif resolver.has_array(sd):
+                    q.append(("array", name, sd, history))
+                elif resolver.has_object(sd):
+                    q.append(("object", name, sd, history))
+                else:
+                    q.append(("primitive", name, sd, history))
+                continue
 
+            # if name in seen:
+            #     continue
+            # seen.add(name)
+
+            if guess_kind == "ref":
+                ref = resolver.get_ref(sd)
+                ctx.refs[name] = Ref(ref=ref)
+                new_name, new_sd = resolver.resolve_ref(ref)
+                logger.debug("enqueue: ref %s as %s", name, new_name)
+                q.append(("?", new_name, new_sd, history))
+            elif guess_kind == "array":
+                # todo: save array?, todo: cache
+                if resolver.has_array(sd):
+                    logger.debug("enqueue: array item %s", name)
+                    new_sd = resolver.get_array_items(sd)
+                    q.append(("?", name + "Item", new_sd, history))
+                logger.info("skip: array %r is skipped", name)
+            elif guess_kind == "object":
+                ctx.types[name] = a.extract_type(name, sd)
+            elif guess_kind == "primitive":
+                logger.info("skip: primitive %r is skipped", name)
+            else:
+                raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
+    except Exception as e:
+        # TODO: only DEBUG=1
+        import json
+
+        logger.warning(
+            "hmm.. %r. in guess_kind=%s, name=%s, history=%s, data=%s",
+            e,
+            guess_kind,
+            name,
+            history,
+            json.dumps(sd, indent=2),
+        )
+        raise
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
