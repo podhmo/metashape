@@ -1,0 +1,32 @@
+{
+  "components": {
+    "schemas": {
+      "💣": {
+        "type": "object",
+        "properties": {
+          "💣": {
+            "$ref": "#/components/schemas/💣"
+          },
+          "⽝": {
+            "type": "string"
+          },
+          "100": {
+            "type": "string"
+          },
+          "1234": {
+            "type": "string"
+          },
+          "1": {
+            "type": "string"
+          },
+          "-1": {
+            "type": "string"
+          },
+          "8ball": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
