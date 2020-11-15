@@ -25,7 +25,7 @@ from swagger_marshmallow_codegen.lifting import lifting_definition  # TODO: omit
 
 AnyDict = t.Dict[str, t.Any]
 # TODO: allOf,oneOf,anyOf
-GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive"]
+GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive", "dict"]
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class Resolver:
     def has_array(self, d) -> bool:
         return d.get("type") == "array" or "items" in d
 
-    def get_array_items(self, d) -> bool:
+    def get_array_items(self, d) -> AnyDict:
         return d["items"]
 
     def has_object(self, d, cand: t.Tuple[str, ...] = ("object",)) -> bool:
@@ -76,6 +76,14 @@ class Resolver:
         if self.has_allof(d):
             return True
         return False
+
+    def has_dict(self, d) -> bool:
+        return "additionalProperties" in d and not (
+            "properties" in d or "items" in d or "allOf" in d
+        )
+
+    def get_dict_addtional_properties(self, d) -> AnyDict:
+        return d["additionalProperties"]
 
 
 class Accessor:
@@ -114,7 +122,15 @@ class Accessor:
             typ = resolver.resolve_type(field)  # TODO: cache
             if resolver.has_array(field):
                 typ = List(Ref(ref=resolver.get_ref(resolver.get_array_items(field))))
-
+            if resolver.has_dict(field):
+                typ = Dict(
+                    Type(name="str"),
+                    Ref(
+                        ref=resolver.get_ref(
+                            resolver.get_dict_addtional_properties(field)
+                        )
+                    ),
+                )
             if not metadata["required"]:
                 typ = Optional(typ)
             annotations[field_name] = typ
@@ -195,7 +211,17 @@ class Context:
                     continue
                 typ = self.globals[name] = self.types[name] = List(prev_type)
                 continue
-
+            elif guess_kind == "dict":
+                if typ is not None:
+                    if prev_type is not None:
+                        assert len(typ.args) == 2
+                        assert typ.args[1] == prev_type
+                    continue
+                typ = self.globals[name] = self.types[name] = Dict(Type(name="str"), prev_type)
+                continue
+            else:
+                raise ValueError(f"unexpected guess kind {guess_kind}")
+            
 
 @dataclasses.dataclass(frozen=True)
 class Ref:
@@ -351,6 +377,8 @@ def main(d: AnyDict) -> None:
                     q.appendleft(("ref", name, sd, history))
                 elif resolver.has_array(sd):
                     q.appendleft(("array", name, sd, history))
+                elif resolver.has_dict(sd):
+                    q.appendleft(("dict", name, sd, history))
                 elif resolver.has_object(sd):
                     q.appendleft(("object", name, sd, history))
                 else:
@@ -375,6 +403,11 @@ def main(d: AnyDict) -> None:
                 new_sd = resolver.get_array_items(sd)
                 q.appendleft(("?", name + "Item", new_sd, history))
                 logger.debug("   use: array %s", name)
+            elif guess_kind == "dict":
+                logger.debug("enqueue: dict additionalProperties %s", name)
+                new_sd = resolver.get_dict_addtional_properties(sd)
+                q.appendleft(("?", name + "Map", new_sd, history))
+                logger.debug("   use: dict %s", name)
             elif guess_kind == "object":
                 logger.debug("   use: object %s", name)
                 ctx.types[name] = a.extract_type(name, sd)
@@ -398,6 +431,9 @@ def main(d: AnyDict) -> None:
             json.dumps(sd, indent=2),
         )
         raise
+
+    # import json
+    # print(json.dumps(d, indent=2))
 
     # fix relation
     for h in histories:
