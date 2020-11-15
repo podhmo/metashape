@@ -1,4 +1,4 @@
-{
+ {
   "components": {
     "schemas": {
       "Person": {
@@ -15,11 +15,23 @@
             "items": {
               "$ref": "#/components/schemas/Person"
             }
+          },
+          "children2": {
+            "$ref": "#/components/schemas/Children2"
           }
         },
         "required": [
           "name"
         ]
+      },
+      "Children2": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Person"
+        }
+      },
+      "Children3": {
+        "$ref": "#/components/schemas/Children2"
       }
     }
   },
