@@ -8,6 +8,7 @@ import dataclasses
 import dictknife
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
+from swagger_marshmallow_codegen.lifting import lifting_definition  # TODO: omit
 
 # TODO: flatten
 # TODO: normalize name
@@ -147,6 +148,9 @@ class Context:
     globals: t.Dict[str, t.Union[Type, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
+    cache_counter: t.Counter[str] = dataclasses.field(
+        default_factory=Counter, compare=False, repr=False
+    )
 
     def apply_history(self, history: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
         itr = iter(reversed(history))
@@ -154,7 +158,7 @@ class Context:
         typ = self.globals.get(type_name)
 
         if typ is None:
-            assert guess_kind == "object"
+            assert guess_kind == "object", history
             typ = self.types[type_name]
             self.globals[type_name] = typ
 
@@ -300,12 +304,14 @@ def main(d: AnyDict) -> None:
     resolver = Resolver(d, refs=ctx.refs)
     a = Accessor(resolver)
 
-    cc: t.Counter[str] = Counter()
+    d = lifting_definition(d)  # TODO: omit
+
     q: t.Deque[t.Tuple[GUESS_KIND, name, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
     for name, sd in a.schemas(d):
         q.append(("?", name, sd, []))
 
     histories = []
+    cc = ctx.cache_counter
     try:
         while len(q) > 0:
             guess_kind, name, sd, history = q.popleft()
@@ -320,6 +326,13 @@ def main(d: AnyDict) -> None:
                 else:
                     q.appendleft(("primitive", name, sd, history))
                 continue
+            elif guess_kind == "ref":
+                ref = resolver.get_ref(sd)
+                ctx.refs[name] = Ref(ref=ref)
+                new_name, new_sd = resolver.resolve_ref(ref)
+                logger.debug("enqueue: ref %s as %s", name, new_name)
+                q.appendleft(("?", new_name, new_sd, history))
+                continue
 
             if name in cc:
                 cc[name] += 1
@@ -327,17 +340,10 @@ def main(d: AnyDict) -> None:
                 continue
             cc[name] = 0
 
-            if guess_kind == "ref":
-                ref = resolver.get_ref(sd)
-                ctx.refs[name] = Ref(ref=ref)
-                new_name, new_sd = resolver.resolve_ref(ref)
-                logger.debug("enqueue: ref %s as %s", name, new_name)
-                q.appendleft(("?", new_name, new_sd, history))
-            elif guess_kind == "array":
-                if resolver.has_array(sd):
-                    logger.debug("enqueue: array item %s", name)
-                    new_sd = resolver.get_array_items(sd)
-                    q.appendleft(("?", name + "Item", new_sd, history))
+            if guess_kind == "array":
+                logger.debug("enqueue: array item %s", name)
+                new_sd = resolver.get_array_items(sd)
+                q.appendleft(("?", name + "Item", new_sd, history))
                 logger.debug("   use: array %s", name)
             elif guess_kind == "object":
                 logger.debug("   use: object %s", name)
@@ -349,7 +355,6 @@ def main(d: AnyDict) -> None:
                 ctx.apply_history(history)  # todo:
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
-
     except Exception as e:
         # TODO: only DEBUG=1
         import json
