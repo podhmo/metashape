@@ -111,12 +111,16 @@ class Accessor:
             metadata = metadata_dict[field_name]
             # TODO: see ref deeply
             if resolver.has_ref(field):
-                annotations[field_name] = Ref(ref=resolver.get_ref(field))
+                ref = Ref(ref=resolver.get_ref(field))
+                if not metadata["required"]:
+                    ref = Optional(ref)
+                annotations[field_name] = ref
                 continue
 
             typ = resolver.resolve_type(field)  # TODO: cache
             if resolver.has_array(field):
                 typ = List(Ref(ref=resolver.get_ref(resolver.get_array_items(field))))
+
             if not metadata["required"]:
                 typ = Optional(typ)
             annotations[field_name] = typ
@@ -276,7 +280,9 @@ class Emitter:
                     if normalized_name == field_name:
                         m.stmt(f"{normalized_name}: {type_str}")
                     else:
-                        m.stmt(f"{normalized_name}: {type_str}  # original is {field_name}")
+                        m.stmt(
+                            f"{normalized_name}: {type_str}  # original is {field_name}"
+                        )
 
         if str(ctx.import_area):
             ctx.import_area.sep()
