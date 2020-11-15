@@ -10,19 +10,16 @@ from prestring.python import Module
 from dictknife.langhelpers import make_dict
 from swagger_marshmallow_codegen.lifting import lifting_definition  # TODO: omit
 
-# TODO: flatten
-# TODO: normalize name
-# TODO: memorize original name
-# TODO: metashape like structure
-# TODO: support schemas
-# TODO: support required/unrequired
+# TODO: metashape compatible output
 # TODO: support nullable
-# TODO: support list
-# TODO: support list inline
-# TODO: support list ref
-# TODO: support list nested
-# TODO: support enqueue in field
-# - object
+# TODO: support enqueue in field (tree-shaking)
+# TODO: support array -- primitive
+# TODO: additionalProperties as dict -- primitive
+# TODO: additionalProperties as dict -- object
+# TODO: additionalProperties as class
+# TODO: primitive type with validation
+# TODO: array type with validation
+# TODO: handling type and format
 # - primitive
 # - allOf
 
@@ -96,7 +93,6 @@ class Accessor:
         except KeyError:
             logger.info("skip, components/schemas is not found")
             return []
-
         for k, v in schemas.items():
             yield k, v
 
