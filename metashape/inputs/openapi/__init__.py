@@ -350,12 +350,17 @@ def Dict(k: Type, v: Type) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
 
 
-def scan(ctx: Context, *, d: AnyDict) -> None:
+def scan(
+    ctx: Context,
+    *,
+    d: AnyDict,
+    items: t.Optional[t.Iterator[t.Tuple[str, AnyDict]]] = None,
+) -> None:
     resolver = Resolver(d, refs=ctx.refs)
 
     q: t.Deque[t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
     a = Accessor(resolver, enqueue=q.appendleft)
-    for name, sd in a.iterate_schemas(d):
+    for name, sd in items or a.iterate_schemas(d):
         q.append(("?", name, sd, []))
 
     histories = []
