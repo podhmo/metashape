@@ -353,78 +353,7 @@ def Dict(k: Type, v: Type) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
 
 
-class Emitter:
-    def __init__(self, *, m: t.Optional[Module] = None) -> None:
-        self.m = m or Module()
-
-    def emit(self, ctx: Context) -> Module:
-        m = self.m
-        for name, typ in ctx.types.items():
-            if not hasattr(typ, "annotations"):
-                logger.info("skip, emit %s", name)
-                continue
-
-            normalized_name = typ.name
-            if name != normalized_name:
-                m.stmt(f"# original is {name}")
-            with m.class_(normalized_name):
-                for field_name, field_type in typ.annotations.items():
-                    # TODO: to pytype
-                    type_str = field_type.as_type_str(ctx)
-                    normalized_field_name = normalize(field_name)
-                    if normalized_field_name == field_name:
-                        m.stmt(f"{normalized_field_name}: {type_str}")
-                    else:
-                        m.stmt(
-                            f"{normalized_field_name}: {type_str}  # original is {field_name}"
-                        )
-
-        if str(ctx.import_area):
-            ctx.import_area.sep()
-        return m
-
-
-# langhelpers
-_NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
-
-
-def normalize(
-    name: str,
-    ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+"),
-    *,
-    _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
-) -> str:
-    c = name[0]
-    if c.isdigit():
-        name = "n" + name
-    elif not (c.isalpha() or c == "_"):
-        name = "_invalid_" + name
-    normalized_name = ignore_rx.sub("", name.replace("-", "_"))
-
-    _id_dict = _id_dict_dict.get(normalized_name)
-    if _id_dict is None:
-        _id_dict = _id_dict_dict[normalized_name] = {name: normalized_name}
-        return normalized_name
-    uid = _id_dict.get(name)
-    if uid is None:
-        uid = _id_dict[name] = normalized_name + "G" + str(len(_id_dict))
-    return uid
-
-
-def titleize(name: str) -> str:
-    if not name:
-        return name
-    name = str(name)
-    return normalize("{}{}".format(name[0].upper(), name[1:]))
-
-
-def main(d: AnyDict) -> None:
-    logging.basicConfig(level=logging.INFO)  # debug
-
-    m = Module()
-    import_area = m.submodule()
-    import_area.stmt("from __future__ import annotations")
-    ctx = Context(import_area=import_area)
+def scan(ctx: Context, *, d: AnyDict) -> None:
     resolver = Resolver(d, refs=ctx.refs)
 
     q: t.Deque[t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
@@ -506,6 +435,84 @@ def main(d: AnyDict) -> None:
     for h in histories:
         ctx.apply_history(h)
 
+
+class Emitter:
+    def __init__(self, *, m: t.Optional[Module] = None) -> None:
+        self.m = m or Module()
+
+    def emit(self, ctx: Context) -> Module:
+        m = self.m
+        for name, typ in ctx.types.items():
+            if not hasattr(typ, "annotations"):
+                logger.info("skip, emit %s", name)
+                continue
+
+            normalized_name = typ.name
+            if name != normalized_name:
+                m.stmt(f"# original is {name}")
+            with m.class_(normalized_name):
+                for field_name, field_type in typ.annotations.items():
+                    # TODO: to pytype
+                    type_str = field_type.as_type_str(ctx)
+                    normalized_field_name = normalize(field_name)
+                    if normalized_field_name == field_name:
+                        m.stmt(f"{normalized_field_name}: {type_str}")
+                    else:
+                        m.stmt(
+                            f"{normalized_field_name}: {type_str}  # original is {field_name}"
+                        )
+
+        if str(ctx.import_area):
+            ctx.import_area.sep()
+        return m
+
+
+# langhelpers
+_NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
+
+
+def normalize(
+    name: str,
+    ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+"),
+    *,
+    _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
+) -> str:
+    c = name[0]
+    if c.isdigit():
+        name = "n" + name
+    elif not (c.isalpha() or c == "_"):
+        name = "_invalid_" + name
+    normalized_name = ignore_rx.sub("", name.replace("-", "_"))
+
+    _id_dict = _id_dict_dict.get(normalized_name)
+    if _id_dict is None:
+        _id_dict = _id_dict_dict[normalized_name] = {name: normalized_name}
+        return normalized_name
+    uid = _id_dict.get(name)
+    if uid is None:
+        uid = _id_dict[name] = normalized_name + "G" + str(len(_id_dict))
+    return uid
+
+
+def titleize(name: str) -> str:
+    if not name:
+        return name
+    name = str(name)
+    return normalize("{}{}".format(name[0].upper(), name[1:]))
+
+
+def main(d: AnyDict) -> None:
+    logging.basicConfig(level=logging.INFO)  # debug
+
+    m = Module()
+    import_area = m.submodule()
+    import_area.stmt("from __future__ import annotations")
+
+    ctx = Context(import_area=import_area)
+    scan(ctx, d=d)
+
     emitter = Emitter(m=m)
     print(emitter.emit(ctx))
+
+    cc = ctx.cache_counter
     logger.info("cache hits=%s, most common=%s", sum(cc.values()), cc.most_common(3))
