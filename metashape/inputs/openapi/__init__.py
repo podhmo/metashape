@@ -8,11 +8,9 @@ import dataclasses
 import dictknife
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
-from swagger_marshmallow_codegen.lifting import lifting_definition  # TODO: omit
 
 # TODO: metashape compatible output
 # TODO: support nullable
-# TODO: support enqueue in field (tree-shaking)
 # TODO: support array -- primitive
 # TODO: additionalProperties as dict -- primitive
 # TODO: additionalProperties as dict -- object
@@ -43,7 +41,7 @@ class Resolver:
     def resolve_normalized_name(self, name: str) -> str:
         return normalize(name)
 
-    def resolve_schema_name(self, name: str) -> str:
+    def resolve_type_name(self, name: str) -> str:
         return titleize(name)
 
     def has_ref(self, d: AnyDict) -> bool:
@@ -87,10 +85,20 @@ class Resolver:
 
 
 class Accessor:
-    def __init__(self, resolver: Resolver):
+    def __init__(
+        self,
+        resolver: Resolver,
+        *,
+        enqueue: t.Optional[
+            t.Callable[
+                [t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]], None
+            ]
+        ] = None,
+    ):
         self.resolver = resolver
+        self._enqueue = enqueue
 
-    def schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
+    def iterate_schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
         try:
             components = d["components"]
         except KeyError:
@@ -104,41 +112,81 @@ class Accessor:
         for k, v in schemas.items():
             yield k, v
 
-    def extract_type(self, name: str, d: AnyDict) -> Type:
-        resolver = self.resolver
+    def extract_object_type(self, name: str, d: AnyDict) -> Type:
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
         annotations = {}
 
         for field_name, field in (d.get("properties") or {}).items():
             metadata = metadata_dict[field_name]
-            # TODO: see ref deeply
-            if resolver.has_ref(field):
-                ref = Ref(ref=resolver.get_ref(field))
-                if not metadata["required"]:
-                    ref = Optional(ref)
-                annotations[field_name] = ref
-                continue
-
-            typ = resolver.resolve_type(field)  # TODO: cache
-            if resolver.has_array(field):
-                typ = List(Ref(ref=resolver.get_ref(resolver.get_array_items(field))))
-            if resolver.has_dict(field):
-                typ = Dict(
-                    Type(name="str"),
-                    Ref(
-                        ref=resolver.get_ref(
-                            resolver.get_dict_addtional_properties(field)
-                        )
-                    ),
-                )
+            typ = self._extract_field_type(
+                field_name, field, metadata=metadata, object_name=name
+            )
             if not metadata["required"]:
                 typ = Optional(typ)
             annotations[field_name] = typ
+
         return Type(
-            name=self.resolver.resolve_schema_name(name),
+            name=self.resolver.resolve_type_name(name),
             bases=(),
             annotations=annotations,
         )
+
+    def _extract_field_type(
+        self,
+        field_name: str,
+        field: AnyDict,
+        *,
+        metadata: MetadataDict,
+        object_name: str,
+    ) -> t.Union[Type, Ref, Container]:
+        resolver = self.resolver
+        if resolver.has_ref(field):
+            typ = ref = Ref(ref=resolver.get_ref(field))
+            ref_name = ref.name
+            logger.debug(
+                "enqueue: ref %s in extract_type %s.%s",
+                ref_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("ref", ref_name, field, []))
+            return typ
+        elif resolver.has_array(field):
+            sub_name = f"_{object_name}{resolver.resolve_type_name(field_name)}"
+            items = resolver.get_array_items(field)
+            if resolver.has_ref(items):
+                ref = Ref(ref=resolver.get_ref(items))
+                typ = List(ref)
+            else:
+                ref = Ref(ref=sub_name, inline=True)
+                typ = ref
+            logger.debug(
+                "enqueue: array %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("?", sub_name, field, []))
+            return typ
+        elif resolver.has_dict(field):
+            additional_properties = resolver.get_dict_addtional_properties(field)
+            sub_name = f"_{object_name}{resolver.resolve_type_name(field_name)}"
+            if resolver.has_ref(additional_properties):
+                ref = Ref(ref=resolver.get_ref(additional_properties))
+                typ = Dict(Type(name="str"), ref)
+            else:
+                ref = Ref(ref=sub_name, inline=True)
+                typ = ref
+            logger.debug(
+                "enqueue: array %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("?", sub_name, field, []))
+            return typ
+        else:
+            return resolver.resolve_type(field)
 
     def _extract_metadata_dict_pre_properties(
         self, d: t.Dict[str, t.Any]
@@ -214,21 +262,29 @@ class Context:
             elif guess_kind == "dict":
                 if typ is not None:
                     if prev_type is not None:
-                        assert len(typ.args) == 2
+                        try:
+                            assert len(typ.args) == 2
+                        except Exception as e:
+                            breakpoint()
                         assert typ.args[1] == prev_type
                     continue
-                typ = self.globals[name] = self.types[name] = Dict(Type(name="str"), prev_type)
+                typ = self.globals[name] = self.types[name] = Dict(
+                    Type(name="str"), prev_type
+                )
                 continue
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}")
-            
+
 
 @dataclasses.dataclass(frozen=True)
 class Ref:
     ref: str
+    inline: bool = False
 
     @property
     def name(self) -> str:
+        if self.inline:
+            return self.ref
         return self.ref.rsplit("/", 1)[-1]
 
     def as_type_str(self, ctx: Context) -> str:
@@ -293,7 +349,7 @@ class Emitter:
         m = self.m
         for name, typ in ctx.types.items():
             if not hasattr(typ, "annotations"):
-                logger.info("skip %s", name)
+                logger.info("skip, emit %s", name)
                 continue
 
             normalized_name = typ.name
@@ -358,12 +414,10 @@ def main(d: AnyDict) -> None:
     import_area.stmt("from __future__ import annotations")
     ctx = Context(import_area=import_area)
     resolver = Resolver(d, refs=ctx.refs)
-    a = Accessor(resolver)
 
-    d = lifting_definition(d)  # TODO: omit
-
-    q: t.Deque[t.Tuple[GUESS_KIND, name, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
-    for name, sd in a.schemas(d):
+    q: t.Deque[t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
+    a = Accessor(resolver, enqueue=q.appendleft)
+    for name, sd in a.iterate_schemas(d):
         q.append(("?", name, sd, []))
 
     histories = []
@@ -371,6 +425,7 @@ def main(d: AnyDict) -> None:
     try:
         while len(q) > 0:
             guess_kind, name, sd, history = q.popleft()
+            # print("#", guess_kind, name, "--", history)
             history.append((guess_kind, name))
             if guess_kind == "?":
                 if resolver.has_ref(sd):
@@ -402,18 +457,18 @@ def main(d: AnyDict) -> None:
                 logger.debug("enqueue: array item %s", name)
                 new_sd = resolver.get_array_items(sd)
                 q.appendleft(("?", name + "Item", new_sd, history))
-                logger.debug("   use: array %s", name)
+                logger.debug("    use: array %s", name)
             elif guess_kind == "dict":
                 logger.debug("enqueue: dict additionalProperties %s", name)
                 new_sd = resolver.get_dict_addtional_properties(sd)
                 q.appendleft(("?", name + "Map", new_sd, history))
-                logger.debug("   use: dict %s", name)
+                logger.debug("    use: dict %s", name)
             elif guess_kind == "object":
-                logger.debug("   use: object %s", name)
-                ctx.types[name] = a.extract_type(name, sd)
+                logger.debug("    use: object %s", name)
+                ctx.types[name] = a.extract_object_type(name, sd)
                 ctx.apply_history(history)
             elif guess_kind == "primitive":
-                logger.info("skip: primitive %r is skipped", name)
+                logger.info("skip, primitive %r is skipped", name)
                 ctx.globals[name] = resolver.resolve_type(sd)
                 ctx.apply_history(history)  # todo:
             else:
