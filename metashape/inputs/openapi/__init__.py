@@ -152,7 +152,7 @@ class Accessor:
             self._enqueue(("ref", ref_name, field, []))
             return typ
         elif resolver.has_array(field):
-            sub_name = f"_{object_name}{resolver.resolve_type_name(field_name)}"
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
             items = resolver.get_array_items(field)
             if resolver.has_ref(items):
                 ref = Ref(ref=resolver.get_ref(items))
@@ -170,7 +170,7 @@ class Accessor:
             return typ
         elif resolver.has_dict(field):
             additional_properties = resolver.get_dict_addtional_properties(field)
-            sub_name = f"_{object_name}{resolver.resolve_type_name(field_name)}"
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
             if resolver.has_ref(additional_properties):
                 ref = Ref(ref=resolver.get_ref(additional_properties))
                 typ = Dict(Type(name="str"), ref)
@@ -184,6 +184,18 @@ class Accessor:
                 field_name,
             )
             self._enqueue(("?", sub_name, field, []))
+            return typ
+        elif resolver.has_object(field):
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
+            ref = Ref(ref=sub_name, inline=True)
+            typ = ref
+            logger.debug(
+                "enqueue: object %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("object", sub_name, field, []))
             return typ
         else:
             return resolver.resolve_type(field)
