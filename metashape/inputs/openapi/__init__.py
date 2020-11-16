@@ -274,10 +274,7 @@ class Context:
             elif guess_kind == "dict":
                 if typ is not None:
                     if prev_type is not None:
-                        try:
-                            assert len(typ.args) == 2
-                        except Exception as e:
-                            breakpoint()
+                        assert len(typ.args) == 2
                         assert typ.args[1] == prev_type
                     continue
                 typ = self.globals[name] = self.types[name] = Dict(
