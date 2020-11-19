@@ -3,11 +3,11 @@ import typing as t
 import typing_extensions as tx
 from collections import defaultdict, deque, Counter
 import logging
-import re
 import dataclasses
 import dictknife
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
+from metashape.langhelpers import titleize, normalize
 
 # TODO: metashape compatible output
 # TODO: support nullable
@@ -469,40 +469,6 @@ class Emitter:
         if str(ctx.import_area):
             ctx.import_area.sep()
         return m
-
-
-# langhelpers
-_NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
-
-
-def normalize(
-    name: str,
-    ignore_rx: re.Pattern[str] = re.compile("[^0-9a-zA-Z_]+"),
-    *,
-    _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
-) -> str:
-    c = name[0]
-    if c.isdigit():
-        name = "n" + name
-    elif not (c.isalpha() or c == "_"):
-        name = "_invalid_" + name
-    normalized_name = ignore_rx.sub("", name.replace("-", "_"))
-
-    _id_dict = _id_dict_dict.get(normalized_name)
-    if _id_dict is None:
-        _id_dict = _id_dict_dict[normalized_name] = {name: normalized_name}
-        return normalized_name
-    uid = _id_dict.get(name)
-    if uid is None:
-        uid = _id_dict[name] = normalized_name + "G" + str(len(_id_dict))
-    return uid
-
-
-def titleize(name: str) -> str:
-    if not name:
-        return name
-    name = str(name)
-    return normalize("{}{}".format(name[0].upper(), name[1:]))
 
 
 def main(d: AnyDict) -> None:
