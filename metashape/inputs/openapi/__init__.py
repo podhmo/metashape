@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
+import sys
 import logging
 import dataclasses
 import dictknife
@@ -52,7 +53,7 @@ class Accessor:
 
     def extract_object_type(self, name: str, d: AnyDict) -> Type:
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
-        annotations: t.Dict[str, t.Union[Type, Ref, Container]] = {}
+        annotations: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = {}
 
         for field_name, field in (d.get("properties") or {}).items():
             metadata = metadata_dict[field_name]
@@ -76,8 +77,8 @@ class Accessor:
         *,
         metadata: MetadataDict,
         object_name: str,
-    ) -> t.Union[Type, Ref, Container]:
-        typ: t.Union[Type, Ref, Container]
+    ) -> t.Union[Repr, Type, Ref, Container]:
+        typ: t.Union[Repr, Type, Ref, Container]
         resolver = self.resolver
         if resolver.has_ref(field):
             typ = ref = Ref(ref=resolver.get_ref(field))
@@ -158,11 +159,21 @@ class Resolver:
         self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
 
         self._type_guesser = TypeGuesser()
-        self._unknown_type = Type(name="str")
 
-    def resolve_type(self, d: AnyDict, *, name: str = "") -> Type:
+    def resolve_type(self, d: AnyDict, *, name: str = "") -> t.Union[Type, Container]:
+        if "enum" in d:
+            if d.get("nullable", False):
+                return Optional(Literal([Repr(x) for x in d["enum"] if x]))
+            else:
+                return Literal([Repr(x) for x in d["enum"]])
+
         pair = self._resolve_format_pair(d, name=name)
-        return self._type_guesser.guess_type(pair, field=d) or self._unknown_type
+        typ = self._type_guesser.guess_type(pair, field=d)
+        if "pattern" in d:
+            return dataclasses.replace(
+                typ, metadata={"pattern": d["pattern"], **typ.metadata}  # type:ignore
+            )
+        return typ
 
     def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
         try:
@@ -176,8 +187,6 @@ class Resolver:
             return Pair(type=typ, format=format)
         except KeyError as e:
             logger.info("%s is not found. name=%s", e.args[0], name)
-            if "enum" in field:
-                return Pair(type="string", format=None)
             if not field:
                 return Pair(type="any", format=None)
             return Pair(type="object", format=None)
@@ -230,8 +239,12 @@ class Resolver:
 
 class MetadataDict(tx.TypedDict, total=False):
     required: bool
+
     type: str
     format: str
+
+    enum: str
+    pattern: str
 
 
 @dataclasses.dataclass
@@ -244,7 +257,7 @@ class Context:
     refs: t.Dict[str, Ref] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
-    globals: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
+    globals: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     cache_counter: t.Counter[str] = dataclasses.field(
@@ -307,6 +320,15 @@ class Context:
 
 
 @dataclasses.dataclass(frozen=True)
+class Repr:
+    __slots__ = ("val",)
+    val: object
+
+    def as_type_str(self, ctx: Context) -> str:
+        return repr(self.val)
+
+
+@dataclasses.dataclass(frozen=True)
 class Ref:
     ref: str
     inline: bool = False
@@ -330,7 +352,7 @@ class Ref:
 class Type:
     name: str
     bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
-    annotations: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
+    annotations: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
@@ -348,7 +370,7 @@ class Type:
 class Container:
     name: str
     module: str
-    args: t.List[t.Union[Type, Ref, Container]] = dataclasses.field(
+    args: t.Sequence[t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=list
     )
 
@@ -362,16 +384,24 @@ class Container:
         return f"{fullname}[{', '.join(args)}]"
 
 
-def Optional(typ: t.Union[Type, Ref, Container]) -> Container:
+def Optional(typ: t.Union[Repr, Type, Ref, Container]) -> Container:
     return Container(name="Optional", module="typing", args=[typ])
 
 
-def List(typ: t.Union[Type, Ref, Container]) -> Container:
+def List(typ: t.Union[Repr, Type, Ref, Container]) -> Container:
     return Container(name="List", module="typing", args=[typ])
 
 
+def Literal(
+    args: t.Sequence[Repr],
+    *,
+    module: str = "typing" if sys.version_info >= (3, 8) else "typing_extensions",
+) -> Container:
+    return Container(name="Literal", module=module, args=args)
+
+
 def Dict(
-    k: t.Union[Type, Ref, Container], v: t.Union[Type, Ref, Container]
+    k: t.Union[Repr, Type, Ref, Container], v: t.Union[Repr, Type, Ref, Container]
 ) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
 
@@ -422,17 +452,18 @@ TYPE_MAP = {
 class TypeGuesser:
     type_map = TYPE_MAP
 
-    @classmethod
-    def override(cls, type_map):
-        return partial(cls, type_map=type_map)
-
     def __init__(
         self, *, type_map: t.Optional[t.Dict[Pair, Type]] = None,
     ):
         self.type_map = type_map or self.__class__.type_map
+        self._unknown_type = Type(name="str", metadata={"format": "?"})
 
-    def guess_type(self, pair: Pair, *, field: AnyDict) -> t.Optional[Type]:
-        return self.type_map.get(pair) or self.type_map.get((pair[0], None))
+    def guess_type(self, pair: Pair, *, field: AnyDict) -> Type:
+        return (
+            self.type_map.get(pair)
+            or self.type_map.get(Pair(pair[0], None))
+            or self._unknown_type
+        )
 
 
 def scan(
