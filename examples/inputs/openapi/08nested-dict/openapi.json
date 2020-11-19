@@ -1,0 +1,89 @@
+{
+  "components": {
+    "schemas":{
+      "S": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "x2": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          },
+          "x3": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "y": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/P"
+            }
+          },
+          "y2": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/P2"
+            }
+          },
+          "y3": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/P2"
+              }
+            }
+          },
+          "z": {
+            "$ref": "#/components/schemas/D"
+          },
+          "z2": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/D"
+            }
+          },
+          "z3": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/D"
+              }
+            }
+          },
+          "z4": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/D2"
+              }
+            }
+          }
+        }
+      },
+      "P": {
+        "type": "integer"
+      },
+      "P2": {
+        "$ref": "#/components/schemas/P"
+      },
+      "D": {
+        "additionalProperties": {
+          "type": "integer"
+        }
+      },
+      "D2": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

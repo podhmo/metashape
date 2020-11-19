@@ -1,0 +1,21 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "openapi": "3.1.0"
+}

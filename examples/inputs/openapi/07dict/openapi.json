@@ -1,0 +1,37 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "parents": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "parents2": {
+            "$ref": "#/components/schemas/Parents2"
+          }
+        },
+        "required": [
+          "name",
+          "age"
+        ]
+      },
+      "Parents2": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Person"
+        }
+      }
+    }
+  },
+  "openapi": "3.1.0"
+}
