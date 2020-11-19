@@ -48,7 +48,7 @@ class Resolver:
         return "$ref" in d
 
     def get_ref(self, d: AnyDict) -> str:
-        return d["$ref"]
+        return d["$ref"]  # type: ignore
 
     def resolve_ref(self, ref: str) -> t.Tuple[str, AnyDict]:  # shallow
         # ref format is "#/components/schemas/<name>"
@@ -61,13 +61,13 @@ class Resolver:
     def has_allof(self, d: AnyDict) -> bool:
         return "allOf" in d
 
-    def has_array(self, d) -> bool:
+    def has_array(self, d: AnyDict) -> bool:
         return d.get("type") == "array" or "items" in d
 
-    def get_array_items(self, d) -> AnyDict:
-        return d["items"]
+    def get_array_items(self, d: AnyDict) -> AnyDict:
+        return d["items"]  # type: ignore
 
-    def has_object(self, d, cand: t.Tuple[str, ...] = ("object",)) -> bool:
+    def has_object(self, d: AnyDict, cand: t.Tuple[str, ...] = ("object",)) -> bool:
         typ = d.get("type", None)
         if typ in cand:
             return True
@@ -75,25 +75,18 @@ class Resolver:
             return True
         return False
 
-    def has_dict(self, d) -> bool:
+    def has_dict(self, d: AnyDict) -> bool:
         return "additionalProperties" in d and not (
             "properties" in d or "items" in d or "allOf" in d
         )
 
-    def get_dict_addtional_properties(self, d) -> AnyDict:
-        return d["additionalProperties"]
+    def get_dict_addtional_properties(self, d: AnyDict) -> AnyDict:
+        return d["additionalProperties"]  # type: ignore
 
 
 class Accessor:
     def __init__(
-        self,
-        resolver: Resolver,
-        *,
-        enqueue: t.Optional[
-            t.Callable[
-                [t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]], None
-            ]
-        ] = None,
+        self, resolver: Resolver, *, enqueue: t.Callable[[t.Any], None],
     ):
         self.resolver = resolver
         self._enqueue = enqueue
@@ -114,7 +107,7 @@ class Accessor:
 
     def extract_object_type(self, name: str, d: AnyDict) -> Type:
         metadata_dict = self._extract_metadata_dict_pre_properties(d)
-        annotations = {}
+        annotations: t.Dict[str, t.Union[Type, Ref, Container]] = {}
 
         for field_name, field in (d.get("properties") or {}).items():
             metadata = metadata_dict[field_name]
@@ -139,6 +132,7 @@ class Accessor:
         metadata: MetadataDict,
         object_name: str,
     ) -> t.Union[Type, Ref, Container]:
+        typ: t.Union[Type, Ref, Container]
         resolver = self.resolver
         if resolver.has_ref(field):
             typ = ref = Ref(ref=resolver.get_ref(field))
@@ -219,24 +213,26 @@ class MetadataDict(tx.TypedDict, total=False):
 class Context:
     import_area: Module
 
-    types: t.Dict[str, Type] = dataclasses.field(default_factory=make_dict, repr=False)
+    types: t.Dict[str, t.Union[Type, Container]] = dataclasses.field(
+        default_factory=make_dict, repr=False
+    )
     refs: t.Dict[str, Ref] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
-    globals: t.Dict[str, t.Union[Type, Container]] = dataclasses.field(
+    globals: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     cache_counter: t.Counter[str] = dataclasses.field(
         default_factory=Counter, compare=False, repr=False
     )
 
-    def apply_history(self, history: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
-        itr = iter(reversed(history))
+    def apply_history(self, histories: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
+        itr = iter(reversed(histories))
         guess_kind, type_name = next(itr)
         typ = self.globals.get(type_name)
 
         if typ is None:
-            assert guess_kind == "object", history
+            assert guess_kind == "object", histories
             typ = self.types[type_name]
             self.globals[type_name] = typ
 
@@ -260,22 +256,22 @@ class Context:
                     if prev_type is not None:
                         assert typ == prev_type
                     continue
-                typ = self.globals[name] = self.types.get(name)
+                typ = self.globals[name] = self.types[name]
                 assert typ == prev_type
                 continue
             elif guess_kind == "array":
                 if typ is not None:
                     if prev_type is not None:
-                        assert len(typ.args) == 1
-                        assert typ.args[0] == prev_type
+                        assert len(typ.args) == 1  # type: ignore
+                        assert typ.args[0] == prev_type  # type: ignore
                     continue
                 typ = self.globals[name] = self.types[name] = List(prev_type)
                 continue
             elif guess_kind == "dict":
                 if typ is not None:
                     if prev_type is not None:
-                        assert len(typ.args) == 2
-                        assert typ.args[1] == prev_type
+                        assert len(typ.args) == 2  # type:ignore
+                        assert typ.args[1] == prev_type  # type:ignore
                     continue
                 typ = self.globals[name] = self.types[name] = Dict(
                     Type(name="str"), prev_type
@@ -309,7 +305,7 @@ class Ref:
 class Type:
     name: str
     bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
-    annotations: t.Dict[str, t.Union[Type, Ref]] = dataclasses.field(
+    annotations: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
@@ -326,7 +322,9 @@ class Type:
 class Container:
     name: str
     module: str
-    args: t.List[Type] = dataclasses.field(default_factory=list)
+    args: t.List[t.Union[Type, Ref, Container]] = dataclasses.field(
+        default_factory=list
+    )
 
     def as_type_str(self, ctx: Context) -> str:
         # TODO: cache
@@ -338,15 +336,17 @@ class Container:
         return f"{fullname}[{', '.join(args)}]"
 
 
-def Optional(typ: Type) -> Container:
+def Optional(typ: t.Union[Type, Ref, Container]) -> Container:
     return Container(name="Optional", module="typing", args=[typ])
 
 
-def List(typ: Type) -> Container:
+def List(typ: t.Union[Type, Ref, Container]) -> Container:
     return Container(name="List", module="typing", args=[typ])
 
 
-def Dict(k: Type, v: Type) -> Container:
+def Dict(
+    k: t.Union[Type, Ref, Container], v: t.Union[Type, Ref, Container]
+) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
 
 
@@ -358,12 +358,14 @@ def scan(
 ) -> None:
     resolver = Resolver(d, refs=ctx.refs)
 
-    q: t.Deque[t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[str, str]]]] = deque()
+    q: t.Deque[
+        t.Tuple[GUESS_KIND, str, AnyDict, t.List[t.Tuple[GUESS_KIND, str]]]
+    ] = deque()
     a = Accessor(resolver, enqueue=q.appendleft)
     for name, sd in items or a.iterate_schemas(d):
         q.append(("?", name, sd, []))
 
-    histories = []
+    histories: t.List[t.List[t.Tuple[GUESS_KIND, str]]] = []
     cc = ctx.cache_counter
     try:
         while len(q) > 0:
@@ -445,7 +447,7 @@ class Emitter:
     def emit(self, ctx: Context) -> Module:
         m = self.m
         for name, typ in ctx.types.items():
-            if not hasattr(typ, "annotations"):
+            if isinstance(typ, Container):
                 logger.info("skip, emit %s", name)
                 continue
 
@@ -475,7 +477,7 @@ _NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
 
 def normalize(
     name: str,
-    ignore_rx: re.Pattern = re.compile("[^0-9a-zA-Z_]+"),
+    ignore_rx: re.Pattern[str] = re.compile("[^0-9a-zA-Z_]+"),
     *,
     _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
 ) -> str:
@@ -507,7 +509,7 @@ def main(d: AnyDict) -> None:
     logging.basicConfig(level=logging.INFO)  # debug
 
     m = Module()
-    import_area = m.submodule()
+    import_area: Module = m.submodule()
     import_area.stmt("from __future__ import annotations")
 
     ctx = Context(import_area=import_area)
