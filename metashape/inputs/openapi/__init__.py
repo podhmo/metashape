@@ -5,6 +5,7 @@ import sys
 import logging
 import dataclasses
 import dictknife
+from functools import partial
 from collections import defaultdict, deque, Counter, namedtuple
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
@@ -168,10 +169,11 @@ class Resolver:
     def resolve_type(self, d: AnyDict, *, name: str = "") -> t.Union[Type, Container]:
         if "enum" in d:
             typ = Literal([Repr(x) for x in d["enum"] if x is not None])
+            typ.metadata.update(d)
+            return typ
         else:
             pair = self._resolve_format_pair(d, name=name)
-            typ = self._type_guesser.guess_type(pair, field=d)
-        return dataclasses.replace(typ, metadata=d)
+            return self._type_guesser.guess_type(pair, field=d)
 
     def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
         try:
@@ -411,41 +413,21 @@ Pair = namedtuple("Pair", "type,format")
 # TODO: correct mapping, https://swagger.io/specification/#format
 
 TYPE_MAP = {
-    Pair(type="integer", format=None): Type(name="int", metadata={"type": "integer"}),
-    Pair(type="integer", format="int32"): Type(
-        name="int", metadata={"format": "int32", "type": "integer"}
+    Pair(type="integer", format=None): partial(Type, name="int"),
+    Pair(type="integer", format="int32"): partial(Type, name="int"),
+    Pair(type="number", format=None): partial(Type, name="float"),
+    Pair(type="number", format="decimal"): partial(
+        Type, name="Decimal", module="decimal",
     ),
-    Pair(type="number", format=None): Type(name="float", metadata={"type": "number"}),
-    Pair(type="number", format="float"): Type(
-        name="float", metadata={"type": "number", "format": "float"}
+    Pair(type="string", format=None): partial(Type, name="str"),
+    Pair(type="boolean", format=None): partial(Type, name="bool"),
+    Pair(type="string", format="uuid"): partial(Type, name="UUID", module="uuid"),
+    Pair(type="string", format="date-time"): partial(
+        Type, name="datetime", module="datetime",
     ),
-    Pair(type="number", format="decimal"): Type(
-        name="Decimal",
-        metadata={"type": "number", "format": "decimal"},
-        module="decimal",
-    ),
-    Pair(type="string", format=None): Type(name="str", metadata={"type": "string"}),
-    Pair(type="boolean", format=None): Type(name="bool", metadata={"type": "boolean"}),
-    Pair(type="string", format="uuid"): Type(
-        name="UUID", metadata={"type": "string", "format": "uuid"}, module="uuid",
-    ),
-    Pair(type="string", format="date-time"): Type(
-        name="datetime",
-        metadata={"type": "string", "format": "date-time"},  # RFC3339
-        module="datetime",
-    ),
-    Pair(type="string", format="date"): Type(
-        name="date",
-        metadata={"type": "string", "format": "date"},  # RFC3339
-        module="datetime",
-    ),
-    Pair(type="string", format="email"): Type(
-        name="string",
-        metadata={"type": "string", "format": "email"},  # TODO: email type?
-    ),
-    Pair(type="string", format="url"): Type(
-        name="string", metadata={"type": "string", "format": "url"},  # TODO: url type?
-    ),
+    Pair(type="string", format="date"): partial(Type, name="date", module="datetime"),
+    Pair(type="string", format="email"): partial(Type, name="string"),
+    Pair(type="string", format="url"): partial(Type, name="string"),
 }
 
 
@@ -459,11 +441,10 @@ class TypeGuesser:
         self._unknown_type = Type(name="str", metadata={"format": "?"})
 
     def guess_type(self, pair: Pair, *, field: AnyDict) -> Type:
-        return (
-            self.type_map.get(pair)
-            or self.type_map.get(Pair(pair[0], None))
-            or self._unknown_type
-        )
+        factory = self.type_map.get(pair) or self.type_map.get(Pair(pair[0], None))
+        if factory is None:
+            return self._unknown_type
+        return factory(metadata=field)
 
 
 def scan(
