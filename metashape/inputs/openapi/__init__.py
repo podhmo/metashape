@@ -6,7 +6,6 @@ import logging
 import dataclasses
 import dictknife
 from collections import defaultdict, deque, Counter, namedtuple
-from functools import partial
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
 from metashape.langhelpers import titleize, normalize
@@ -60,8 +59,7 @@ class Accessor:
             typ = self._extract_field_type(
                 field_name, field, metadata=metadata, object_name=name
             )
-            if not metadata["required"]:
-                typ = Optional(typ)
+            typ.metadata.update(metadata)
             annotations[field_name] = typ
 
         return Type(
@@ -162,17 +160,19 @@ class Resolver:
 
     def resolve_type(self, d: AnyDict, *, name: str = "") -> t.Union[Type, Container]:
         if "enum" in d:
-            if d.get("nullable", False):
-                return Optional(Literal([Repr(x) for x in d["enum"] if x]))
-            else:
-                return Literal([Repr(x) for x in d["enum"]])
+            typ = Literal([Repr(x) for x in d["enum"] if x is not None])
+        else:
+            pair = self._resolve_format_pair(d, name=name)
+            typ = self._type_guesser.guess_type(pair, field=d)
 
-        pair = self._resolve_format_pair(d, name=name)
-        typ = self._type_guesser.guess_type(pair, field=d)
-        if "pattern" in d:
-            return dataclasses.replace(
-                typ, metadata={"pattern": d["pattern"], **typ.metadata}  # type:ignore
+        if "pattern" in d or "nullable" in d:
+            typ = dataclasses.replace(
+                typ, metadata={**typ.metadata} if typ.metadata is not None else {}
             )
+            if "pattern" in d:
+                typ.metadata["pattern"] = d["pattern"]
+            if "nullable" in d:
+                typ.metadata["nullable"] = d["nullable"]
         return typ
 
     def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
@@ -321,8 +321,8 @@ class Context:
 
 @dataclasses.dataclass(frozen=True)
 class Repr:
-    __slots__ = ("val",)
     val: object
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     def as_type_str(self, ctx: Context) -> str:
         return repr(self.val)
@@ -332,6 +332,7 @@ class Repr:
 class Ref:
     ref: str
     inline: bool = False
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     @property
     def name(self) -> str:
@@ -356,7 +357,7 @@ class Type:
         default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
-    metadata: t.Optional[MetadataDict] = None
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     def as_type_str(self, ctx: Context) -> str:
         if not self.module:
@@ -373,6 +374,7 @@ class Container:
     args: t.Sequence[t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=list
     )
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     def as_type_str(self, ctx: Context) -> str:
         # TODO: cache
@@ -572,7 +574,12 @@ class Emitter:
                 m.stmt(f"# original is {name}")
             with m.class_(normalized_name):
                 for field_name, field_type in typ.annotations.items():
-                    # TODO: to pytype
+                    metadata = field_type.metadata
+                    if hasattr(field_type, "ref"):
+                        field_type = ctx.globals.get(field_type.name)
+                        metadata.update(field_type.metadata)
+                    if not metadata.get("required") or metadata.get("nullable"):
+                        field_type = Optional(field_type)
                     type_str = field_type.as_type_str(ctx)
                     normalized_field_name = normalize(field_name)
                     if normalized_field_name == field_name:
