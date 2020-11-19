@@ -45,7 +45,7 @@ _NORMALIZE_ID_DICT: t.Dict[str, t.Dict[str, str]] = {}
 
 def normalize(
     name: str,
-    ignore_rx: re.Pattern[str] = re.compile("[^0-9a-zA-Z_]+"),
+    ignore_rx: t.Pattern[str] = re.compile("[^0-9a-zA-Z_]+"),
     *,
     _id_dict_dict: t.Dict[str, t.Dict[str, str]] = _NORMALIZE_ID_DICT,
 ) -> str:
