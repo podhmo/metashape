@@ -4,7 +4,7 @@ import typing
 
 class Person:
     name: str
-    age: typing.Optional[str]
+    age: typing.Optional[int]
     children: typing.Optional[typing.List[Person]]
     children2: typing.Optional[typing.List[Person]]
     children3: typing.Optional[typing.List[Person]]
@@ -18,11 +18,11 @@ class Person:
 
 class PersonNchildren5ItemItem:
     name: str
-    age: typing.Optional[str]
+    age: typing.Optional[int]
     Nchildren: typing.Optional[typing.List[Person]]
 
 
 class PersonChildren4Item:
     name: str
-    age: typing.Optional[str]
+    age: typing.Optional[int]
     children: typing.Optional[typing.List[Person]]

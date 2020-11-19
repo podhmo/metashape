@@ -162,14 +162,6 @@ class Resolver:
 
     def resolve_type(self, d: AnyDict, *, name: str = "") -> Type:
         pair = self._resolve_format_pair(d, name=name)
-        import sys
-
-        print(
-            "@",
-            name,
-            self._type_guesser.guess_type(pair, field=d) or self._unknown_type,
-            file=sys.stderr,
-        )
         return self._type_guesser.guess_type(pair, field=d) or self._unknown_type
 
     def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:

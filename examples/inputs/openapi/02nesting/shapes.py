@@ -9,6 +9,6 @@ class Memo:
 
 class Person:
     name: str
-    age: typing.Optional[str]
+    age: typing.Optional[int]
     memo: Memo
     optional_memo: typing.Optional[Memo]  # original is optional-memo

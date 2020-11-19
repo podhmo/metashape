@@ -11,10 +11,10 @@ class Commit:
 
 # original is commitFilesItem
 class CommitFilesItem:
-    additions: typing.Optional[str]
+    additions: typing.Optional[int]
     blob_url: typing.Optional[str]
-    changes: typing.Optional[str]
-    deletions: typing.Optional[str]
+    changes: typing.Optional[int]
+    deletions: typing.Optional[int]
     filename: typing.Optional[str]
     patch: typing.Optional[str]
     raw_url: typing.Optional[str]
@@ -54,6 +54,6 @@ class CommitCommitAuthor:
 class CommitAuthor:
     avatar_url: typing.Optional[str]
     gravatar_id: typing.Optional[str]
-    id: typing.Optional[str]
+    id: typing.Optional[int]
     login: typing.Optional[str]
     url: typing.Optional[str]
