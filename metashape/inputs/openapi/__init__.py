@@ -1,10 +1,11 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
-from collections import defaultdict, deque, Counter
 import logging
 import dataclasses
 import dictknife
+from collections import defaultdict, deque, Counter, namedtuple
+from functools import partial
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
 from metashape.langhelpers import titleize, normalize
@@ -26,62 +27,6 @@ AnyDict = t.Dict[str, t.Any]
 GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive", "dict"]
 
 logger = logging.getLogger(__name__)
-
-
-class Resolver:
-    def __init__(self, fulldata: AnyDict, *, refs: t.Dict[str, Ref]) -> None:
-        self.fulldata = fulldata
-        self.refs = refs
-        self._accessor = dictknife.Accessor()  # todo: rename
-        self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
-
-    def resolve_type(self, d: AnyDict) -> Type:
-        return Type(name="str")  # TODO: implementation
-
-    def resolve_normalized_name(self, name: str) -> str:
-        return normalize(name)
-
-    def resolve_type_name(self, name: str) -> str:
-        return titleize(name)
-
-    def has_ref(self, d: AnyDict) -> bool:
-        return "$ref" in d
-
-    def get_ref(self, d: AnyDict) -> str:
-        return d["$ref"]  # type: ignore
-
-    def resolve_ref(self, ref: str) -> t.Tuple[str, AnyDict]:  # shallow
-        # ref format is "#/components/schemas/<name>"
-        # todo: cache
-        path = ref[len("#/") :].split("/")
-        name = path[-1]
-        source = self._accessor.maybe_access(self.fulldata, path)
-        return name, source
-
-    def has_allof(self, d: AnyDict) -> bool:
-        return "allOf" in d
-
-    def has_array(self, d: AnyDict) -> bool:
-        return d.get("type") == "array" or "items" in d
-
-    def get_array_items(self, d: AnyDict) -> AnyDict:
-        return d["items"]  # type: ignore
-
-    def has_object(self, d: AnyDict, cand: t.Tuple[str, ...] = ("object",)) -> bool:
-        typ = d.get("type", None)
-        if typ in cand:
-            return True
-        if self.has_allof(d):
-            return True
-        return False
-
-    def has_dict(self, d: AnyDict) -> bool:
-        return "additionalProperties" in d and not (
-            "properties" in d or "items" in d or "allOf" in d
-        )
-
-    def get_dict_addtional_properties(self, d: AnyDict) -> AnyDict:
-        return d["additionalProperties"]  # type: ignore
 
 
 class Accessor:
@@ -192,7 +137,7 @@ class Accessor:
             self._enqueue(("object", sub_name, field, []))
             return typ
         else:
-            return resolver.resolve_type(field)
+            return resolver.resolve_type(field, name=field_name)
 
     def _extract_metadata_dict_pre_properties(
         self, d: t.Dict[str, t.Any]
@@ -205,8 +150,96 @@ class Accessor:
         return metadata_dict
 
 
+class Resolver:
+    def __init__(self, fulldata: AnyDict, *, refs: t.Dict[str, Ref]) -> None:
+        self.fulldata = fulldata
+        self.refs = refs
+        self._accessor = dictknife.Accessor()  # todo: rename
+        self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
+
+        self._type_guesser = TypeGuesser()
+        self._unknown_type = Type(name="str")
+
+    def resolve_type(self, d: AnyDict, *, name: str = "") -> Type:
+        pair = self._resolve_format_pair(d, name=name)
+        import sys
+
+        print(
+            "@",
+            name,
+            self._type_guesser.guess_type(pair, field=d) or self._unknown_type,
+            file=sys.stderr,
+        )
+        return self._type_guesser.guess_type(pair, field=d) or self._unknown_type
+
+    def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
+        try:
+            typ = field["type"]
+            if isinstance(typ, (list, tuple)):
+                for typ in typ:
+                    if typ is None:
+                        continue
+                    break
+            format = field.get("format")
+            return Pair(type=typ, format=format)
+        except KeyError as e:
+            logger.info("%s is not found. name=%s", e.args[0], name)
+            if "enum" in field:
+                return Pair(type="string", format=None)
+            if not field:
+                return Pair(type="any", format=None)
+            return Pair(type="object", format=None)
+
+    def resolve_normalized_name(self, name: str) -> str:
+        return normalize(name)
+
+    def resolve_type_name(self, name: str) -> str:
+        return titleize(name)
+
+    def has_ref(self, d: AnyDict) -> bool:
+        return "$ref" in d
+
+    def get_ref(self, d: AnyDict) -> str:
+        return d["$ref"]  # type: ignore
+
+    def resolve_ref(self, ref: str) -> t.Tuple[str, AnyDict]:  # shallow
+        # ref format is "#/components/schemas/<name>"
+        # todo: cache
+        path = ref[len("#/") :].split("/")
+        name = path[-1]
+        source = self._accessor.maybe_access(self.fulldata, path)
+        return name, source
+
+    def has_allof(self, d: AnyDict) -> bool:
+        return "allOf" in d
+
+    def has_array(self, d: AnyDict) -> bool:
+        return d.get("type") == "array" or "items" in d
+
+    def get_array_items(self, d: AnyDict) -> AnyDict:
+        return d["items"]  # type: ignore
+
+    def has_object(self, d: AnyDict, cand: t.Tuple[str, ...] = ("object",)) -> bool:
+        typ = d.get("type", None)
+        if typ in cand:
+            return True
+        if self.has_allof(d):
+            return True
+        return False
+
+    def has_dict(self, d: AnyDict) -> bool:
+        return "additionalProperties" in d and not (
+            "properties" in d or "items" in d or "allOf" in d
+        )
+
+    def get_dict_addtional_properties(self, d: AnyDict) -> AnyDict:
+        return d["additionalProperties"]  # type: ignore
+
+
 class MetadataDict(tx.TypedDict, total=False):
     required: bool
+    type: str
+    format: str
 
 
 @dataclasses.dataclass
@@ -309,6 +342,7 @@ class Type:
         default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
+    metadata: t.Optional[MetadataDict] = None
 
     def as_type_str(self, ctx: Context) -> str:
         if not self.module:
@@ -348,6 +382,65 @@ def Dict(
     k: t.Union[Type, Ref, Container], v: t.Union[Type, Ref, Container]
 ) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
+
+
+Pair = namedtuple("Pair", "type,format")
+
+# TODO: correct mapping, https://swagger.io/specification/#format
+
+TYPE_MAP = {
+    Pair(type="integer", format=None): Type(name="int", metadata={"type": "integer"}),
+    Pair(type="integer", format="int32"): Type(
+        name="int", metadata={"format": "int32", "type": "integer"}
+    ),
+    Pair(type="number", format=None): Type(name="float", metadata={"type": "number"}),
+    Pair(type="number", format="float"): Type(
+        name="float", metadata={"type": "number", "format": "float"}
+    ),
+    Pair(type="number", format="decimal"): Type(
+        name="Decimal",
+        metadata={"type": "number", "format": "decimal"},
+        module="decimal",
+    ),
+    Pair(type="string", format=None): Type(name="str", metadata={"type": "string"}),
+    Pair(type="boolean", format=None): Type(name="bool", metadata={"type": "boolean"}),
+    Pair(type="string", format="uuid"): Type(
+        name="UUID", metadata={"type": "string", "format": "uuid"}, module="uuid",
+    ),
+    Pair(type="string", format="date-time"): Type(
+        name="datetime",
+        metadata={"type": "string", "format": "date-time"},  # RFC3339
+        module="datetime",
+    ),
+    Pair(type="string", format="date"): Type(
+        name="date",
+        metadata={"type": "string", "format": "date"},  # RFC3339
+        module="datetime",
+    ),
+    Pair(type="string", format="email"): Type(
+        name="string",
+        metadata={"type": "string", "format": "email"},  # TODO: email type?
+    ),
+    Pair(type="string", format="url"): Type(
+        name="string", metadata={"type": "string", "format": "url"},  # TODO: url type?
+    ),
+}
+
+
+class TypeGuesser:
+    type_map = TYPE_MAP
+
+    @classmethod
+    def override(cls, type_map):
+        return partial(cls, type_map=type_map)
+
+    def __init__(
+        self, *, type_map: t.Optional[t.Dict[Pair, Type]] = None,
+    ):
+        self.type_map = type_map or self.__class__.type_map
+
+    def guess_type(self, pair: Pair, *, field: AnyDict) -> t.Optional[Type]:
+        return self.type_map.get(pair) or self.type_map.get((pair[0], None))
 
 
 def scan(
@@ -414,7 +507,7 @@ def scan(
                 ctx.apply_history(history)
             elif guess_kind == "primitive":
                 logger.info("skip, primitive %r is skipped", name)
-                ctx.globals[name] = resolver.resolve_type(sd)
+                ctx.globals[name] = resolver.resolve_type(sd, name=name)
                 ctx.apply_history(history)  # todo:
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
