@@ -62,11 +62,13 @@ class Accessor:
             typ.metadata.update(metadata)
             annotations[field_name] = typ
 
-        return Type(
+        typ = Type(
             name=self.resolver.resolve_type_name(name),
             bases=(),
             annotations=annotations,
         )
+        typ.metadata.update([(k, v) for k, v in field.items() if k != "properties"])
+        return typ
 
     def _extract_field_type(
         self,
@@ -95,9 +97,11 @@ class Accessor:
             if resolver.has_ref(items):
                 ref = Ref(ref=resolver.get_ref(items))
                 typ = List(ref)
+                typ.metadata.update([(k, v) for k, v in field.items() if k != "items"])
             else:
                 ref = Ref(ref=sub_name, inline=True)
                 typ = ref
+
             logger.debug(
                 "enqueue: array %s in extract_type %s.%s",
                 sub_name,
@@ -112,6 +116,9 @@ class Accessor:
             if resolver.has_ref(additional_properties):
                 ref = Ref(ref=resolver.get_ref(additional_properties))
                 typ = Dict(Type(name="str"), ref)
+                typ.metadata.update(
+                    [(k, v) for k, v in field.items() if k != "additionalProperties"]
+                )
             else:
                 ref = Ref(ref=sub_name, inline=True)
                 typ = ref
@@ -164,16 +171,7 @@ class Resolver:
         else:
             pair = self._resolve_format_pair(d, name=name)
             typ = self._type_guesser.guess_type(pair, field=d)
-
-        if "pattern" in d or "nullable" in d:
-            typ = dataclasses.replace(
-                typ, metadata={**typ.metadata} if typ.metadata is not None else {}
-            )
-            if "pattern" in d:
-                typ.metadata["pattern"] = d["pattern"]
-            if "nullable" in d:
-                typ.metadata["nullable"] = d["nullable"]
-        return typ
+        return dataclasses.replace(typ, metadata=d)
 
     def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
         try:
@@ -559,8 +557,9 @@ def scan(
 
 
 class Emitter:
-    def __init__(self, *, m: t.Optional[Module] = None) -> None:
+    def __init__(self, *, m: t.Optional[Module] = None, verbose: bool = False) -> None:
         self.m = m or Module()
+        self.verbose = verbose
 
     def emit(self, ctx: Context) -> Module:
         m = self.m
@@ -587,6 +586,11 @@ class Emitter:
                     else:
                         m.stmt(
                             f"{normalized_field_name}: {type_str}  # original is {field_name}"
+                        )
+                    if self.verbose:
+                        m.stmt(
+                            "# metadata: {metadata}",
+                            metadata=Repr(metadata).as_type_str(ctx),
                         )
 
         if str(ctx.import_area):
