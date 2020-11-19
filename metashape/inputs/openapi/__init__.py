@@ -326,7 +326,7 @@ class Ref:
         return typ.as_type_str(ctx)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Type:
     name: str
     bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
@@ -344,7 +344,7 @@ class Type:
         return f"{self.module}.{self.name}"
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Container:
     name: str
     module: str
