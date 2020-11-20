@@ -30,6 +30,10 @@ GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive", "dict"]
 logger = logging.getLogger(__name__)
 
 
+class ResolveError(Exception):
+    pass
+
+
 class Accessor:
     def __init__(
         self, resolver: Resolver, *, enqueue: t.Callable[[t.Any], None],
@@ -211,6 +215,8 @@ class Resolver:
         path = ref[len("#/") :].split("/")
         name = path[-1]
         source = self._accessor.maybe_access(self.fulldata, path)
+        if source is None:
+            raise ResolveError(f"ref {ref!r} is not found")
         return name, source
 
     def has_allof(self, d: AnyDict) -> bool:
