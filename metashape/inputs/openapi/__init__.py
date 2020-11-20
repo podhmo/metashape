@@ -244,9 +244,39 @@ class MetadataDict(tx.TypedDict, total=False):
 
     type: str
     format: str
-
-    enum: str
+    enum: t.List[t.Any]
     pattern: str
+
+    title: str
+    multipleOf: float
+    maximum: float
+    exclusiveMaximum: float
+    minimum: float
+    exclusiveMinimum: float
+    maxLength: int
+    minLength: int
+    maxItems: int
+    minItems: int
+    uniqueItems: bool
+    maxProperties: int
+    minProperties: int
+    allOf: t.List[t.Any]  # TODO
+    oneOf: t.List[t.Any]  # TODO
+    anyOf: t.List[t.Any]  # TODO
+    not_: t.List[t.Any]  # alias not
+    items: t.Any
+    properties: t.Dict[str, t.Any]
+    additionalProperties: t.Union[AnyDict, bool]  # TODO: support bool
+    description: str
+    default: t.Any
+    nullable: bool
+    discriminator: AnyDict
+    readOnly: bool
+    writeOnly: bool
+    # xml: XML
+    externalDocs: AnyDict
+    example: t.Any
+    deprecated: bool
 
 
 @dataclasses.dataclass
