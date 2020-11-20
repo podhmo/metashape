@@ -24,3 +24,5 @@ default: $(shell cat Makefile | grep -o '^[0-9][0-9]*:' | tr : "\n")
 	python -m metashape.inputs.openapi $(DIR)openapi.json | tee $(DIR)shapes.py
 10:
 	python -m metashape.inputs.openapi $(DIR)openapi.json | tee $(DIR)shapes.py
+11:
+	python -m metashape.inputs.openapi --verbose $(DIR)openapi.json | tee $(DIR)shapes.py
