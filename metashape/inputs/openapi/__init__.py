@@ -56,8 +56,12 @@ class Accessor:
             yield k, v
 
     def extract_object_type(self, name: str, d: AnyDict) -> Type:
-        metadata_dict = self._extract_metadata_dict_pre_properties(d)
         annotations: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = {}
+        metadata_dict: t.Dict[str, MetadataDict] = defaultdict(
+            lambda: {"required": False}
+        )
+        for field_name in d.get("required") or []:
+            metadata_dict[field_name]["required"] = True
 
         for field_name, field in (d.get("properties") or {}).items():
             metadata = metadata_dict[field_name]
@@ -151,16 +155,6 @@ class Accessor:
             return typ
         else:
             return resolver.resolve_type(field, name=field_name)
-
-    def _extract_metadata_dict_pre_properties(
-        self, d: t.Dict[str, t.Any]
-    ) -> t.Dict[str, MetadataDict]:
-        metadata_dict: t.Dict[str, MetadataDict] = defaultdict(
-            lambda: {"required": False}
-        )
-        for field_name in d.get("required") or []:
-            metadata_dict[field_name]["required"] = True
-        return metadata_dict
 
 
 class Resolver:
