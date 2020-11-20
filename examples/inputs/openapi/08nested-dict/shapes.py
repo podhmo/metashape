@@ -3,13 +3,13 @@ import typing
 
 
 class S:
-    x: typing.Optional[typing.Dict[str, str]]
-    x2: typing.Optional[typing.Dict[str, typing.Dict[str, str]]]
-    x3: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, str]]]]
-    y: typing.Optional[typing.Dict[str, str]]
-    y2: typing.Optional[typing.Dict[str, str]]
-    y3: typing.Optional[typing.Dict[str, typing.Dict[str, str]]]
-    z: typing.Optional[typing.Dict[str, str]]
-    z2: typing.Optional[typing.Dict[str, typing.Dict[str, str]]]
-    z3: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, str]]]]
-    z4: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, typing.Dict[str, str]]]]]
+    x: typing.Optional[typing.Dict[str, int]]
+    x2: typing.Optional[typing.Dict[str, typing.Dict[str, int]]]
+    x3: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, int]]]]
+    y: typing.Optional[typing.Dict[str, int]]
+    y2: typing.Optional[typing.Dict[str, int]]
+    y3: typing.Optional[typing.Dict[str, typing.Dict[str, int]]]
+    z: typing.Optional[typing.Dict[str, int]]
+    z2: typing.Optional[typing.Dict[str, typing.Dict[str, int]]]
+    z3: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, int]]]]
+    z4: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Dict[str, typing.Dict[str, int]]]]]

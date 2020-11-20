@@ -1,0 +1,55 @@
+{
+  "components": {
+    "schemas": {
+      "Color": {
+        "enum": [
+          "black",
+          "white",
+          "red",
+          "green",
+          "blue"
+        ],
+        "type": "string"
+      },
+      "NullableColor": {
+        "description": "Nullable enums",
+        "enum": [
+          "black",
+          "white",
+          "red",
+          "green",
+          "blue",
+          null
+        ],
+        "nullable": true,
+        "type": "string"
+      },
+      "Palette": {
+        "properties": {
+          "main": {
+            "$ref": "#/components/schemas/Color"
+          },
+          "sort": {
+            "description": "inline enums",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "sub1": {
+            "$ref": "#/components/schemas/NullableColor"
+          },
+          "sub2": {
+            "$ref": "#/components/schemas/NullableColor"
+          }
+        },
+        "required": [
+          "main",
+          "sub1"
+        ],
+        "type": "object"
+      }
+    }
+  }
+}

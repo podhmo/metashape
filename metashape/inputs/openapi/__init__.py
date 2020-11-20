@@ -1,10 +1,12 @@
 from __future__ import annotations
 import typing as t
 import typing_extensions as tx
-from collections import defaultdict, deque, Counter
+import sys
 import logging
 import dataclasses
 import dictknife
+from functools import partial
+from collections import defaultdict, deque, Counter, namedtuple
 from prestring.python import Module
 from dictknife.langhelpers import make_dict
 from metashape.langhelpers import titleize, normalize
@@ -28,6 +30,130 @@ GUESS_KIND = tx.Literal["?", "object", "array", "ref", "primitive", "dict"]
 logger = logging.getLogger(__name__)
 
 
+class ResolveError(Exception):
+    pass
+
+
+class Accessor:
+    def __init__(
+        self, resolver: Resolver, *, enqueue: t.Callable[[t.Any], None],
+    ):
+        self.resolver = resolver
+        self._enqueue = enqueue
+
+    def iterate_schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
+        try:
+            components = d["components"]
+        except KeyError:
+            logger.info("skip, components is not found")
+            return []
+        try:
+            schemas = components["schemas"]
+        except KeyError:
+            logger.info("skip, components/schemas is not found")
+            return []
+        for k, v in schemas.items():
+            yield k, v
+
+    def extract_object_type(self, name: str, d: AnyDict) -> Type:
+        annotations: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = {}
+        metadata_dict: t.Dict[str, MetadataDict] = defaultdict(
+            lambda: {"required": False}
+        )
+        for field_name in d.get("required") or []:
+            metadata_dict[field_name]["required"] = True
+
+        for field_name, field in (d.get("properties") or {}).items():
+            metadata = metadata_dict[field_name]
+            typ = self._extract_field_type(
+                field_name, field, metadata=metadata, object_name=name
+            )
+            typ.metadata.update(metadata)
+            annotations[field_name] = typ
+
+        typ = Type(
+            name=self.resolver.resolve_type_name(name),
+            bases=(),
+            annotations=annotations,
+        )
+        return typ
+
+    def _extract_field_type(
+        self,
+        field_name: str,
+        field: AnyDict,
+        *,
+        metadata: MetadataDict,
+        object_name: str,
+    ) -> t.Union[Repr, Type, Ref, Container]:
+        typ: t.Union[Repr, Type, Ref, Container]
+        resolver = self.resolver
+        if resolver.has_ref(field):
+            typ = ref = Ref(ref=resolver.get_ref(field))
+            ref_name = ref.name
+            logger.debug(
+                "enqueue: ref %s in extract_type %s.%s",
+                ref_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("ref", ref_name, field, []))
+            return typ
+        elif resolver.has_array(field):
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
+            items = resolver.get_array_items(field)
+            if resolver.has_ref(items):
+                ref = Ref(ref=resolver.get_ref(items))
+                typ = List(ref)
+                typ.metadata.update([(k, v) for k, v in field.items() if k != "items"])  # type: ignore
+            else:
+                ref = Ref(ref=sub_name, inline=True)
+                typ = ref
+
+            logger.debug(
+                "enqueue: array %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("?", sub_name, field, []))
+            return typ
+        elif resolver.has_dict(field):
+            additional_properties = resolver.get_dict_addtional_properties(field)
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
+            if resolver.has_ref(additional_properties):
+                ref = Ref(ref=resolver.get_ref(additional_properties))
+                typ = Dict(Type(name="str"), ref)
+                typ.metadata.update(
+                    [(k, v) for k, v in field.items() if k != "additionalProperties"]  # type: ignore
+                )
+            else:
+                ref = Ref(ref=sub_name, inline=True)
+                typ = ref
+            logger.debug(
+                "enqueue: array %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("?", sub_name, field, []))
+            return typ
+        elif resolver.has_object(field):
+            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
+            ref = Ref(ref=sub_name, inline=True)
+            typ = ref
+            logger.debug(
+                "enqueue: object %s in extract_type %s.%s",
+                sub_name,
+                object_name,
+                field_name,
+            )
+            self._enqueue(("object", sub_name, field, []))
+            return typ
+        else:
+            return resolver.resolve_type(field, name=field_name)
+
+
 class Resolver:
     def __init__(self, fulldata: AnyDict, *, refs: t.Dict[str, Ref]) -> None:
         self.fulldata = fulldata
@@ -35,8 +161,32 @@ class Resolver:
         self._accessor = dictknife.Accessor()  # todo: rename
         self._origin_defs: t.Dict[str, t.Tuple[str, AnyDict]] = {}
 
-    def resolve_type(self, d: AnyDict) -> Type:
-        return Type(name="str")  # TODO: implementation
+        self._type_guesser = TypeGuesser()
+
+    def resolve_type(self, d: AnyDict, *, name: str = "") -> t.Union[Type, Container]:
+        if "enum" in d:
+            typ = Literal([Repr(x) for x in d["enum"] if x is not None])
+            typ.metadata.update(d)  # type: ignore
+            return typ
+        else:
+            pair = self._resolve_format_pair(d, name=name)
+            return self._type_guesser.guess_type(pair, field=d)
+
+    def _resolve_format_pair(self, field: t.Dict[str, t.Any], *, name: str) -> Pair:
+        try:
+            typ = field["type"]
+            if isinstance(typ, (list, tuple)):
+                for typ in typ:
+                    if typ is None:
+                        continue
+                    break
+            format = field.get("format")
+            return Pair(type=typ, format=format)
+        except KeyError as e:
+            logger.info("%s is not found. name=%s", e.args[0], name)
+            if not field:
+                return Pair(type="any", format=None)
+            return Pair(type="object", format=None)
 
     def resolve_normalized_name(self, name: str) -> str:
         return normalize(name)
@@ -56,6 +206,8 @@ class Resolver:
         path = ref[len("#/") :].split("/")
         name = path[-1]
         source = self._accessor.maybe_access(self.fulldata, path)
+        if source is None:
+            raise ResolveError(f"ref {ref!r} is not found")
         return name, source
 
     def has_allof(self, d: AnyDict) -> bool:
@@ -84,129 +236,44 @@ class Resolver:
         return d["additionalProperties"]  # type: ignore
 
 
-class Accessor:
-    def __init__(
-        self, resolver: Resolver, *, enqueue: t.Callable[[t.Any], None],
-    ):
-        self.resolver = resolver
-        self._enqueue = enqueue
-
-    def iterate_schemas(self, d: AnyDict) -> t.Iterator[t.Tuple[str, AnyDict]]:
-        try:
-            components = d["components"]
-        except KeyError:
-            logger.info("skip, components is not found")
-            return []
-        try:
-            schemas = components["schemas"]
-        except KeyError:
-            logger.info("skip, components/schemas is not found")
-            return []
-        for k, v in schemas.items():
-            yield k, v
-
-    def extract_object_type(self, name: str, d: AnyDict) -> Type:
-        metadata_dict = self._extract_metadata_dict_pre_properties(d)
-        annotations: t.Dict[str, t.Union[Type, Ref, Container]] = {}
-
-        for field_name, field in (d.get("properties") or {}).items():
-            metadata = metadata_dict[field_name]
-            typ = self._extract_field_type(
-                field_name, field, metadata=metadata, object_name=name
-            )
-            if not metadata["required"]:
-                typ = Optional(typ)
-            annotations[field_name] = typ
-
-        return Type(
-            name=self.resolver.resolve_type_name(name),
-            bases=(),
-            annotations=annotations,
-        )
-
-    def _extract_field_type(
-        self,
-        field_name: str,
-        field: AnyDict,
-        *,
-        metadata: MetadataDict,
-        object_name: str,
-    ) -> t.Union[Type, Ref, Container]:
-        typ: t.Union[Type, Ref, Container]
-        resolver = self.resolver
-        if resolver.has_ref(field):
-            typ = ref = Ref(ref=resolver.get_ref(field))
-            ref_name = ref.name
-            logger.debug(
-                "enqueue: ref %s in extract_type %s.%s",
-                ref_name,
-                object_name,
-                field_name,
-            )
-            self._enqueue(("ref", ref_name, field, []))
-            return typ
-        elif resolver.has_array(field):
-            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
-            items = resolver.get_array_items(field)
-            if resolver.has_ref(items):
-                ref = Ref(ref=resolver.get_ref(items))
-                typ = List(ref)
-            else:
-                ref = Ref(ref=sub_name, inline=True)
-                typ = ref
-            logger.debug(
-                "enqueue: array %s in extract_type %s.%s",
-                sub_name,
-                object_name,
-                field_name,
-            )
-            self._enqueue(("?", sub_name, field, []))
-            return typ
-        elif resolver.has_dict(field):
-            additional_properties = resolver.get_dict_addtional_properties(field)
-            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
-            if resolver.has_ref(additional_properties):
-                ref = Ref(ref=resolver.get_ref(additional_properties))
-                typ = Dict(Type(name="str"), ref)
-            else:
-                ref = Ref(ref=sub_name, inline=True)
-                typ = ref
-            logger.debug(
-                "enqueue: array %s in extract_type %s.%s",
-                sub_name,
-                object_name,
-                field_name,
-            )
-            self._enqueue(("?", sub_name, field, []))
-            return typ
-        elif resolver.has_object(field):
-            sub_name = f"{object_name}{resolver.resolve_type_name(field_name)}"
-            ref = Ref(ref=sub_name, inline=True)
-            typ = ref
-            logger.debug(
-                "enqueue: object %s in extract_type %s.%s",
-                sub_name,
-                object_name,
-                field_name,
-            )
-            self._enqueue(("object", sub_name, field, []))
-            return typ
-        else:
-            return resolver.resolve_type(field)
-
-    def _extract_metadata_dict_pre_properties(
-        self, d: t.Dict[str, t.Any]
-    ) -> t.Dict[str, MetadataDict]:
-        metadata_dict: t.Dict[str, MetadataDict] = defaultdict(
-            lambda: {"required": False}
-        )
-        for field_name in d.get("required") or []:
-            metadata_dict[field_name]["required"] = True
-        return metadata_dict
-
-
 class MetadataDict(tx.TypedDict, total=False):
     required: bool
+
+    type: str
+    format: str
+    enum: t.List[t.Any]
+    pattern: str
+
+    title: str
+    multipleOf: float
+    maximum: float
+    exclusiveMaximum: float
+    minimum: float
+    exclusiveMinimum: float
+    maxLength: int
+    minLength: int
+    maxItems: int
+    minItems: int
+    uniqueItems: bool
+    maxProperties: int
+    minProperties: int
+    allOf: t.List[t.Any]  # TODO
+    oneOf: t.List[t.Any]  # TODO
+    anyOf: t.List[t.Any]  # TODO
+    not_: t.List[t.Any]  # alias not
+    items: t.Any
+    properties: t.Dict[str, t.Any]
+    additionalProperties: t.Union[AnyDict, bool]  # TODO: support bool
+    description: str
+    default: t.Any
+    nullable: bool
+    discriminator: AnyDict
+    readOnly: bool
+    writeOnly: bool
+    # xml: XML
+    externalDocs: AnyDict
+    example: t.Any
+    deprecated: bool
 
 
 @dataclasses.dataclass
@@ -219,22 +286,29 @@ class Context:
     refs: t.Dict[str, Ref] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
-    globals: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
+    globals: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
+        default_factory=make_dict, compare=False, repr=False
+    )
+
+    metadata_map: t.Dict[str, MetadataDict] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     cache_counter: t.Counter[str] = dataclasses.field(
         default_factory=Counter, compare=False, repr=False
     )
+    verbose: bool = False
 
     def apply_history(self, histories: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
         itr = iter(reversed(histories))
-        guess_kind, type_name = next(itr)
-        typ = self.globals.get(type_name)
+        guess_kind, name = next(itr)
+        typ = self.globals.get(name)
 
         if typ is None:
             assert guess_kind == "object", histories
-            typ = self.types[type_name]
-            self.globals[type_name] = typ
+            typ = self.types[name]
+            self.globals[name] = typ
+            if name in self.metadata_map:
+                typ.metadata.update(self.metadata_map[name])
 
         for guess_kind, name in itr:
             if guess_kind == "?":
@@ -257,6 +331,8 @@ class Context:
                         assert typ == prev_type
                     continue
                 typ = self.globals[name] = self.types[name]
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 assert typ == prev_type
                 continue
             elif guess_kind == "array":
@@ -266,6 +342,8 @@ class Context:
                         assert typ.args[0] == prev_type  # type: ignore
                     continue
                 typ = self.globals[name] = self.types[name] = List(prev_type)
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 continue
             elif guess_kind == "dict":
                 if typ is not None:
@@ -276,15 +354,27 @@ class Context:
                 typ = self.globals[name] = self.types[name] = Dict(
                     Type(name="str"), prev_type
                 )
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 continue
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}")
 
 
 @dataclasses.dataclass(frozen=True)
+class Repr:
+    val: object
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
+
+    def as_type_str(self, ctx: Context) -> str:
+        return repr(self.val)
+
+
+@dataclasses.dataclass(frozen=True)
 class Ref:
     ref: str
     inline: bool = False
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     @property
     def name(self) -> str:
@@ -301,14 +391,15 @@ class Ref:
         return typ.as_type_str(ctx)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Type:
     name: str
     bases: t.Tuple[str, ...] = dataclasses.field(default_factory=tuple)
-    annotations: t.Dict[str, t.Union[Type, Ref, Container]] = dataclasses.field(
+    annotations: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
     module: str = ""
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     def as_type_str(self, ctx: Context) -> str:
         if not self.module:
@@ -318,13 +409,14 @@ class Type:
         return f"{self.module}.{self.name}"
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Container:
     name: str
     module: str
-    args: t.List[t.Union[Type, Ref, Container]] = dataclasses.field(
+    args: t.Sequence[t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=list
     )
+    metadata: MetadataDict = dataclasses.field(default_factory=make_dict)
 
     def as_type_str(self, ctx: Context) -> str:
         # TODO: cache
@@ -336,18 +428,65 @@ class Container:
         return f"{fullname}[{', '.join(args)}]"
 
 
-def Optional(typ: t.Union[Type, Ref, Container]) -> Container:
+def Optional(typ: t.Union[Repr, Type, Ref, Container]) -> Container:
     return Container(name="Optional", module="typing", args=[typ])
 
 
-def List(typ: t.Union[Type, Ref, Container]) -> Container:
+def List(typ: t.Union[Repr, Type, Ref, Container]) -> Container:
     return Container(name="List", module="typing", args=[typ])
 
 
+def Literal(
+    args: t.Sequence[Repr],
+    *,
+    module: str = "typing" if sys.version_info >= (3, 8) else "typing_extensions",
+) -> Container:
+    return Container(name="Literal", module=module, args=args)
+
+
 def Dict(
-    k: t.Union[Type, Ref, Container], v: t.Union[Type, Ref, Container]
+    k: t.Union[Repr, Type, Ref, Container], v: t.Union[Repr, Type, Ref, Container]
 ) -> Container:
     return Container(name="Dict", module="typing", args=[k, v])
+
+
+Pair = namedtuple("Pair", "type,format")
+
+# TODO: correct mapping, https://swagger.io/specification/#format
+
+TYPE_MAP = {
+    Pair(type="integer", format=None): partial(Type, name="int"),
+    Pair(type="integer", format="int32"): partial(Type, name="int"),
+    Pair(type="number", format=None): partial(Type, name="float"),
+    Pair(type="number", format="decimal"): partial(
+        Type, name="Decimal", module="decimal",
+    ),
+    Pair(type="string", format=None): partial(Type, name="str"),
+    Pair(type="boolean", format=None): partial(Type, name="bool"),
+    Pair(type="string", format="uuid"): partial(Type, name="UUID", module="uuid"),
+    Pair(type="string", format="date-time"): partial(
+        Type, name="datetime", module="datetime",
+    ),
+    Pair(type="string", format="date"): partial(Type, name="date", module="datetime"),
+    Pair(type="string", format="email"): partial(Type, name="string"),
+    Pair(type="string", format="url"): partial(Type, name="string"),
+}
+
+
+class TypeGuesser:
+    type_map = TYPE_MAP
+
+    def __init__(
+        self, *, type_map: t.Optional[t.Dict[Pair, partial[Type]]] = None,
+    ):
+        self.type_map = type_map or self.__class__.type_map
+        self._unknown_type = Type(name="str", metadata={"format": "?"})
+
+    def guess_type(self, pair: Pair, *, field: AnyDict) -> Type:
+        factory = self.type_map.get(pair) or self.type_map.get(Pair(pair[0], None))
+        if factory is None:
+            return self._unknown_type
+        return factory(metadata=field)
 
 
 def scan(
@@ -402,19 +541,27 @@ def scan(
                 logger.debug("enqueue: array item %s", name)
                 new_sd = resolver.get_array_items(sd)
                 q.appendleft(("?", name + "Item", new_sd, history))
+                ctx.metadata_map[name] = {k: v for k, v in sd.items() if k != "items"}  # type: ignore
                 logger.debug("    use: array %s", name)
             elif guess_kind == "dict":
                 logger.debug("enqueue: dict additionalProperties %s", name)
                 new_sd = resolver.get_dict_addtional_properties(sd)
                 q.appendleft(("?", name + "Map", new_sd, history))
+                ctx.metadata_map[name] = {  # type: ignore
+                    k: v for k, v in sd.items() if k != "additionalProperties"
+                }
                 logger.debug("    use: dict %s", name)
             elif guess_kind == "object":
                 logger.debug("    use: object %s", name)
                 ctx.types[name] = a.extract_object_type(name, sd)
+                ctx.metadata_map[name] = {  # type: ignore
+                    k: v for k, v in sd.items() if k not in ("required", "properties")
+                }
                 ctx.apply_history(history)
             elif guess_kind == "primitive":
                 logger.info("skip, primitive %r is skipped", name)
-                ctx.globals[name] = resolver.resolve_type(sd)
+                ctx.globals[name] = resolver.resolve_type(sd, name=name)
+                # typ.metadata is complete, so ctx.metadata_map[name] is not needed
                 ctx.apply_history(history)  # todo:
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
@@ -454,9 +601,25 @@ class Emitter:
             normalized_name = typ.name
             if name != normalized_name:
                 m.stmt(f"# original is {name}")
+
+            description = typ.metadata.get("description")
+            if ctx.verbose:
+                metadata = typ.metadata
+                m.stmt(
+                    "# metadata: {metadata}", metadata=Repr(metadata).as_type_str(ctx),
+                )
             with m.class_(normalized_name):
+                if description is not None:
+                    m.docstring(description)
+                    m.sep()
+
                 for field_name, field_type in typ.annotations.items():
-                    # TODO: to pytype
+                    metadata = field_type.metadata
+                    if hasattr(field_type, "ref"):
+                        field_type = ctx.globals.get(field_type.name)  # type: ignore
+                        metadata.update(field_type.metadata)
+                    if not metadata.get("required") or metadata.get("nullable"):
+                        field_type = Optional(field_type)
                     type_str = field_type.as_type_str(ctx)
                     normalized_field_name = normalize(field_name)
                     if normalized_field_name == field_name:
@@ -465,20 +628,25 @@ class Emitter:
                         m.stmt(
                             f"{normalized_field_name}: {type_str}  # original is {field_name}"
                         )
+                    if ctx.verbose:
+                        m.stmt(
+                            "# metadata: {metadata}",
+                            metadata=Repr(metadata).as_type_str(ctx),
+                        )
 
         if str(ctx.import_area):
             ctx.import_area.sep()
         return m
 
 
-def main(d: AnyDict) -> None:
+def main(d: AnyDict, *, verbose: bool = False) -> None:
     logging.basicConfig(level=logging.INFO)  # debug
 
     m = Module()
     import_area: Module = m.submodule()
     import_area.stmt("from __future__ import annotations")
 
-    ctx = Context(import_area=import_area)
+    ctx = Context(import_area=import_area, verbose=verbose)
     scan(ctx, d=d)
 
     emitter = Emitter(m=m)

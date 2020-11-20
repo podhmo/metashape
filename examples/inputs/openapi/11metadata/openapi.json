@@ -1,0 +1,59 @@
+{
+  "components": {
+    "schemas": {
+      "ErrorModel": {
+        "description": "this is error model",
+        "type": "object",
+        "required": [
+          "message",
+          "code"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 600
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "statusCode": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 600,
+            "deprecated": true
+          }
+        }
+      },
+      "ErrorModelList": {
+        "description": "list of error model",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ErrorModel"
+        },
+        "minItems": 1,
+        "maxItems": 3
+      },
+      "Toplevel": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "$ref": "#/components/schemas/ErrorModelList"
+          },
+          "errors-inline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          }
+        }
+      }
+    }
+  }
+}
