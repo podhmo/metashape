@@ -4,7 +4,7 @@ from metadata.declarative import field
 
 
 class Value:
-    pi: typing.Optional[float] = field(default='3.14')
+    pi: typing.Optional[float] = field(default=3.14)
 
 
 class Person:
