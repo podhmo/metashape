@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing
+from metadata.declarative import field
 
 
 # original is commit
@@ -38,14 +39,14 @@ class CommitCommitTree:
 
 # original is commitCommitCommitter
 class CommitCommitCommitter:
-    date: typing.Optional[str]
+    date: typing.Optional[str] = field(metadata={'openapi': {'description': 'ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ'}})
     email: typing.Optional[str]
     name: typing.Optional[str]
 
 
 # original is commitCommitAuthor
 class CommitCommitAuthor:
-    date: typing.Optional[str]
+    date: typing.Optional[str] = field(metadata={'openapi': {'description': 'ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ'}})
     email: typing.Optional[str]
     name: typing.Optional[str]
 
