@@ -262,9 +262,11 @@ class Context:
     globals: t.Dict[str, t.Union[Repr, Type, Ref, Container]] = dataclasses.field(
         default_factory=make_dict, compare=False, repr=False
     )
+
     cache_counter: t.Counter[str] = dataclasses.field(
         default_factory=Counter, compare=False, repr=False
     )
+    verbose: bool = False
 
     def apply_history(self, histories: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
         itr = iter(reversed(histories))
@@ -540,9 +542,8 @@ def scan(
 
 
 class Emitter:
-    def __init__(self, *, m: t.Optional[Module] = None, verbose: bool = False) -> None:
+    def __init__(self, *, m: t.Optional[Module] = None) -> None:
         self.m = m or Module()
-        self.verbose = verbose
 
     def emit(self, ctx: Context) -> Module:
         m = self.m
@@ -570,7 +571,7 @@ class Emitter:
                         m.stmt(
                             f"{normalized_field_name}: {type_str}  # original is {field_name}"
                         )
-                    if self.verbose:
+                    if ctx.verbose:
                         m.stmt(
                             "# metadata: {metadata}",
                             metadata=Repr(metadata).as_type_str(ctx),
@@ -581,14 +582,14 @@ class Emitter:
         return m
 
 
-def main(d: AnyDict) -> None:
+def main(d: AnyDict, *, verbose: bool = False) -> None:
     logging.basicConfig(level=logging.INFO)  # debug
 
     m = Module()
     import_area: Module = m.submodule()
     import_area.stmt("from __future__ import annotations")
 
-    ctx = Context(import_area=import_area)
+    ctx = Context(import_area=import_area, verbose=verbose)
     scan(ctx, d=d)
 
     emitter = Emitter(m=m)

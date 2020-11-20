@@ -4,6 +4,6 @@ from metashape.inputs.openapi import main
 
 
 @as_command  # type:ignore
-def run(filename: str) -> None:
+def run(filename: str, *, verbose: bool = False) -> None:
     d = loading.loadfile(filename)
-    main(d)
+    main(d, verbose=verbose)
