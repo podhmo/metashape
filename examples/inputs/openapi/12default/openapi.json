@@ -1,0 +1,39 @@
+{
+  "components": {
+    "schemas": {
+      "Value": {
+        "type": "object",
+        "properties": {
+          "pi": {
+            "type": "number",
+            "default": "3.14"
+          }
+        }
+      },
+      "Person": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "default": "foo"
+          },
+          "age": {
+            "type": "integer",
+            "default": 0
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["male", "feamale", "unknown"],
+            "default": "unknown"
+          }
+        },
+        "required": [
+          "name",
+          "gender"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "openapi": "3.1.0"
+}
+
