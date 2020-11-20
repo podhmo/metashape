@@ -625,8 +625,11 @@ class Emitter:
                     if normalized_field_name == field_name:
                         m.stmt(f"{normalized_field_name}: {type_str}")
                     else:
+                        from_ = ctx.import_area.from_("metadata.declarative")
+                        field_sym = from_.import_("field")
+                        original_name_sym = from_.import_("ORIGINAL_NAME")
                         m.stmt(
-                            f"{normalized_field_name}: {type_str}  # original is {field_name}"
+                            f"{normalized_field_name}: {type_str} = {field_sym}(metadata={{{original_name_sym}: {field_name!r}}})"
                         )
                     if ctx.verbose:
                         m.stmt(
