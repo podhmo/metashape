@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing
-from metadata.declarative import field
+from metashape.declarative import field
 
 
 # original is commit

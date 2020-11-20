@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing
-from metadata.declarative import (
+from metashape.declarative import (
     field,
     ORIGINAL_NAME,
 )

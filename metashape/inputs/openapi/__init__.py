@@ -628,7 +628,7 @@ class Emitter:
                     if len(metadata) < 3 and normalized_field_name == field_name:
                         m.stmt(f"{normalized_field_name}: {type_str}")
                     else:
-                        from_ = ctx.import_area.from_("metadata.declarative")
+                        from_ = ctx.import_area.from_("metashape.declarative")
                         field_sym = from_.import_("field")
                         metashape_metadata = {}
                         metashape_kwargs = {}

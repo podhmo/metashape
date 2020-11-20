@@ -1,5 +1,5 @@
 from __future__ import annotations
-from metadata.declarative import (
+from metashape.declarative import (
     field,
     ORIGINAL_NAME,
 )
