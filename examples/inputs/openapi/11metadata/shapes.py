@@ -1,5 +1,9 @@
 from __future__ import annotations
 import typing
+from metadata.declarative import (
+    field,
+    ORIGINAL_NAME,
+)
 
 
 # metadata: {'description': 'this is error model', 'type': 'object'}
@@ -22,5 +26,5 @@ class ErrorModel:
 class Toplevel:
     errors: typing.Optional[typing.List[ErrorModel]]
     # metadata: {'required': False, 'description': 'list of error model', 'type': 'array', 'minItems': 1, 'maxItems': 3}
-    errors_inline: typing.Optional[typing.List[ErrorModel]]  # original is errors-inline
+    errors_inline: typing.Optional[typing.List[ErrorModel]] = field(metadata={ORIGINAL_NAME: 'errors-inline'})
     # metadata: {'type': 'array', 'minItems': 1, 'maxItems': 3, 'required': False}
