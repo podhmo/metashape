@@ -76,9 +76,6 @@ class Accessor:
             bases=(),
             annotations=annotations,
         )
-        typ.metadata.update(
-            [(k, v) for k, v in d.items() if k not in ("properties", "required")]  # type: ignore
-        )
         return typ
 
     def _extract_field_type(
@@ -293,6 +290,9 @@ class Context:
         default_factory=make_dict, compare=False, repr=False
     )
 
+    metadata_map: t.Dict[str, MetadataDict] = dataclasses.field(
+        default_factory=make_dict, compare=False, repr=False
+    )
     cache_counter: t.Counter[str] = dataclasses.field(
         default_factory=Counter, compare=False, repr=False
     )
@@ -300,13 +300,15 @@ class Context:
 
     def apply_history(self, histories: t.List[t.Tuple[GUESS_KIND, str]]) -> None:
         itr = iter(reversed(histories))
-        guess_kind, type_name = next(itr)
-        typ = self.globals.get(type_name)
+        guess_kind, name = next(itr)
+        typ = self.globals.get(name)
 
         if typ is None:
             assert guess_kind == "object", histories
-            typ = self.types[type_name]
-            self.globals[type_name] = typ
+            typ = self.types[name]
+            self.globals[name] = typ
+            if name in self.metadata_map:
+                typ.metadata.update(self.metadata_map[name])
 
         for guess_kind, name in itr:
             if guess_kind == "?":
@@ -329,6 +331,8 @@ class Context:
                         assert typ == prev_type
                     continue
                 typ = self.globals[name] = self.types[name]
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 assert typ == prev_type
                 continue
             elif guess_kind == "array":
@@ -338,6 +342,8 @@ class Context:
                         assert typ.args[0] == prev_type  # type: ignore
                     continue
                 typ = self.globals[name] = self.types[name] = List(prev_type)
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 continue
             elif guess_kind == "dict":
                 if typ is not None:
@@ -348,6 +354,8 @@ class Context:
                 typ = self.globals[name] = self.types[name] = Dict(
                     Type(name="str"), prev_type
                 )
+                if name in self.metadata_map:
+                    typ.metadata.update(self.metadata_map[name])
                 continue
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}")
@@ -533,19 +541,27 @@ def scan(
                 logger.debug("enqueue: array item %s", name)
                 new_sd = resolver.get_array_items(sd)
                 q.appendleft(("?", name + "Item", new_sd, history))
+                ctx.metadata_map[name] = {k: v for k, v in sd.items() if k != "items"}
                 logger.debug("    use: array %s", name)
             elif guess_kind == "dict":
                 logger.debug("enqueue: dict additionalProperties %s", name)
                 new_sd = resolver.get_dict_addtional_properties(sd)
                 q.appendleft(("?", name + "Map", new_sd, history))
+                ctx.metadata_map[name] = {
+                    k: v for k, v in sd.items() if k != "additionalProperties"
+                }
                 logger.debug("    use: dict %s", name)
             elif guess_kind == "object":
                 logger.debug("    use: object %s", name)
                 ctx.types[name] = a.extract_object_type(name, sd)
+                ctx.metadata_map[name] = {
+                    k: v for k, v in sd.items() if k not in ("required", "properties")
+                }
                 ctx.apply_history(history)
             elif guess_kind == "primitive":
                 logger.info("skip, primitive %r is skipped", name)
                 ctx.globals[name] = resolver.resolve_type(sd, name=name)
+                # typ.metadata is complete, so ctx.metadata_map[name] is not needed
                 ctx.apply_history(history)  # todo:
             else:
                 raise ValueError(f"unexpected guess kind {guess_kind}, name={name}")
