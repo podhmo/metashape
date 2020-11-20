@@ -601,7 +601,18 @@ class Emitter:
             normalized_name = typ.name
             if name != normalized_name:
                 m.stmt(f"# original is {name}")
+
+            description = typ.metadata.get("description")
+            if ctx.verbose:
+                metadata = typ.metadata
+                m.stmt(
+                    "# metadata: {metadata}", metadata=Repr(metadata).as_type_str(ctx),
+                )
             with m.class_(normalized_name):
+                if description is not None:
+                    m.docstring(description)
+                    m.sep()
+
                 for field_name, field_type in typ.annotations.items():
                     metadata = field_type.metadata
                     if hasattr(field_type, "ref"):
