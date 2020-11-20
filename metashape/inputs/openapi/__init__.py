@@ -541,20 +541,20 @@ def scan(
                 logger.debug("enqueue: array item %s", name)
                 new_sd = resolver.get_array_items(sd)
                 q.appendleft(("?", name + "Item", new_sd, history))
-                ctx.metadata_map[name] = {k: v for k, v in sd.items() if k != "items"}
+                ctx.metadata_map[name] = {k: v for k, v in sd.items() if k != "items"}  # type: ignore
                 logger.debug("    use: array %s", name)
             elif guess_kind == "dict":
                 logger.debug("enqueue: dict additionalProperties %s", name)
                 new_sd = resolver.get_dict_addtional_properties(sd)
                 q.appendleft(("?", name + "Map", new_sd, history))
-                ctx.metadata_map[name] = {
+                ctx.metadata_map[name] = {  # type: ignore
                     k: v for k, v in sd.items() if k != "additionalProperties"
                 }
                 logger.debug("    use: dict %s", name)
             elif guess_kind == "object":
                 logger.debug("    use: object %s", name)
                 ctx.types[name] = a.extract_object_type(name, sd)
-                ctx.metadata_map[name] = {
+                ctx.metadata_map[name] = {  # type: ignore
                     k: v for k, v in sd.items() if k not in ("required", "properties")
                 }
                 ctx.apply_history(history)
