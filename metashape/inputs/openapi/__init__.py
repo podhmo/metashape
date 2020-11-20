@@ -69,7 +69,7 @@ class Accessor:
             annotations=annotations,
         )
         typ.metadata.update(
-            [(k, v) for k, v in d.items() if k not in ("properties", "required")]
+            [(k, v) for k, v in d.items() if k not in ("properties", "required")]  # type: ignore
         )
         return typ
 
@@ -100,7 +100,7 @@ class Accessor:
             if resolver.has_ref(items):
                 ref = Ref(ref=resolver.get_ref(items))
                 typ = List(ref)
-                typ.metadata.update([(k, v) for k, v in field.items() if k != "items"])
+                typ.metadata.update([(k, v) for k, v in field.items() if k != "items"])  # type: ignore
             else:
                 ref = Ref(ref=sub_name, inline=True)
                 typ = ref
@@ -120,7 +120,7 @@ class Accessor:
                 ref = Ref(ref=resolver.get_ref(additional_properties))
                 typ = Dict(Type(name="str"), ref)
                 typ.metadata.update(
-                    [(k, v) for k, v in field.items() if k != "additionalProperties"]
+                    [(k, v) for k, v in field.items() if k != "additionalProperties"]  # type: ignore
                 )
             else:
                 ref = Ref(ref=sub_name, inline=True)
@@ -171,7 +171,7 @@ class Resolver:
     def resolve_type(self, d: AnyDict, *, name: str = "") -> t.Union[Type, Container]:
         if "enum" in d:
             typ = Literal([Repr(x) for x in d["enum"] if x is not None])
-            typ.metadata.update(d)
+            typ.metadata.update(d)  # type: ignore
             return typ
         else:
             pair = self._resolve_format_pair(d, name=name)
@@ -439,7 +439,7 @@ class TypeGuesser:
     type_map = TYPE_MAP
 
     def __init__(
-        self, *, type_map: t.Optional[t.Dict[Pair, Type]] = None,
+        self, *, type_map: t.Optional[t.Dict[Pair, partial[Type]]] = None,
     ):
         self.type_map = type_map or self.__class__.type_map
         self._unknown_type = Type(name="str", metadata={"format": "?"})
@@ -559,7 +559,7 @@ class Emitter:
                 for field_name, field_type in typ.annotations.items():
                     metadata = field_type.metadata
                     if hasattr(field_type, "ref"):
-                        field_type = ctx.globals.get(field_type.name)
+                        field_type = ctx.globals.get(field_type.name)  # type: ignore
                         metadata.update(field_type.metadata)
                     if not metadata.get("required") or metadata.get("nullable"):
                         field_type = Optional(field_type)
