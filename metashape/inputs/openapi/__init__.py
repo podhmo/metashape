@@ -646,11 +646,14 @@ class Emitter:
                             metashape_kwargs["default"] = repr(metadata["default"])
 
                         # symplify
-                        openapi_metadata = {
-                            k: v
-                            for k, v in metadata.items()
-                            if k not in ("required", "type", "enum", "default")
-                        }
+                        if ctx.verbose:
+                            openapi_metadata = metadata
+                        else:
+                            openapi_metadata = {
+                                k: v
+                                for k, v in metadata.items()
+                                if k not in ("required", "type", "enum", "default")
+                            }
                         if openapi_metadata:
                             metashape_metadata["openapi"] = openapi_metadata
 
@@ -658,12 +661,6 @@ class Emitter:
                             metashape_kwargs["metadata"] = metashape_metadata
                         m.stmt(
                             f"{normalized_field_name}: {type_str} = {field_sym}({LazyArgumentsAndKeywords(kwargs=metashape_kwargs)})"
-                        )
-
-                    if ctx.verbose:
-                        m.stmt(
-                            "# metadata: {metadata}",
-                            metadata=Repr(metadata).as_type_str(ctx),
                         )
 
         if str(ctx.import_area):
