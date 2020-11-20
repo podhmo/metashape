@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "ErrorModel": {
+        "description": "this is error model",
         "type": "object",
         "required": [
           "message",
@@ -29,6 +30,7 @@
         }
       },
       "ErrorModelList": {
+        "description": "list of error model",
         "type": "array",
         "items": {
           "$ref": "#/components/schemas/ErrorModel"
@@ -41,6 +43,14 @@
         "properties": {
           "errors": {
             "$ref": "#/components/schemas/ErrorModelList"
+          },
+          "errors-inline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            },
+            "minItems": 1,
+            "maxItems": 3
           }
         }
       }
