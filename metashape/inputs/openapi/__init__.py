@@ -631,24 +631,33 @@ class Emitter:
                         from_ = ctx.import_area.from_("metadata.declarative")
                         field_sym = from_.import_("field")
                         metashape_metadata = {}
+                        metashape_kwargs = {}
 
+                        # original name
                         if normalized_field_name != field_name:
                             original_name_sym = from_.import_("ORIGINAL_NAME")
                             metashape_metadata[
                                 UnReprStr(str(original_name_sym))
                             ] = field_name
 
+                        # default
+                        if "default" in metadata:
+                            # todo: handle format
+                            metashape_kwargs["default"] = repr(metadata["default"])
+
                         # symplify
                         openapi_metadata = {
                             k: v
                             for k, v in metadata.items()
-                            if k not in ("required", "type")
+                            if k not in ("required", "type", "enum", "default")
                         }
                         if openapi_metadata:
                             metashape_metadata["openapi"] = openapi_metadata
 
+                        if metashape_metadata:
+                            metashape_kwargs["metadata"] = metashape_metadata
                         m.stmt(
-                            f"{normalized_field_name}: {type_str} = {field_sym}({LazyArgumentsAndKeywords(kwargs={'metadata': metashape_metadata})})"
+                            f"{normalized_field_name}: {type_str} = {field_sym}({LazyArgumentsAndKeywords(kwargs=metashape_kwargs)})"
                         )
 
                     if ctx.verbose:
