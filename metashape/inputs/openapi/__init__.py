@@ -8,6 +8,8 @@ import dictknife
 from functools import partial
 from collections import defaultdict, deque, Counter, namedtuple
 from prestring.python import Module
+from prestring.utils import LazyArgumentsAndKeywords
+from prestring.utils import UnRepr as UnReprStr
 from dictknife.langhelpers import make_dict
 from metashape.langhelpers import titleize, normalize
 
@@ -622,15 +624,33 @@ class Emitter:
                         field_type = Optional(field_type)
                     type_str = field_type.as_type_str(ctx)
                     normalized_field_name = normalize(field_name)
-                    if normalized_field_name == field_name:
+
+                    if len(metadata) < 3 and normalized_field_name == field_name:
                         m.stmt(f"{normalized_field_name}: {type_str}")
                     else:
                         from_ = ctx.import_area.from_("metadata.declarative")
                         field_sym = from_.import_("field")
-                        original_name_sym = from_.import_("ORIGINAL_NAME")
+                        metashape_metadata = {}
+
+                        if normalized_field_name != field_name:
+                            original_name_sym = from_.import_("ORIGINAL_NAME")
+                            metashape_metadata[
+                                UnReprStr(str(original_name_sym))
+                            ] = field_name
+
+                        # symplify
+                        openapi_metadata = {
+                            k: v
+                            for k, v in metadata.items()
+                            if k not in ("required", "type")
+                        }
+                        if openapi_metadata:
+                            metashape_metadata["openapi"] = openapi_metadata
+
                         m.stmt(
-                            f"{normalized_field_name}: {type_str} = {field_sym}(metadata={{{original_name_sym}: {field_name!r}}})"
+                            f"{normalized_field_name}: {type_str} = {field_sym}({LazyArgumentsAndKeywords(kwargs={'metadata': metashape_metadata})})"
                         )
+
                     if ctx.verbose:
                         m.stmt(
                             "# metadata: {metadata}",
