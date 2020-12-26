@@ -630,8 +630,8 @@ class Emitter:
                     else:
                         from_ = ctx.import_area.from_("metashape.declarative")
                         field_sym = from_.import_("field")
-                        metashape_metadata = {}
-                        metashape_kwargs = {}
+                        metashape_metadata: t.Dict[t.Union[str, UnReprStr], t.Any] = {}
+                        metashape_kwargs: t.Dict[str, t.Any] = {}
 
                         # original name
                         if normalized_field_name != field_name:
@@ -649,7 +649,7 @@ class Emitter:
                         if ctx.verbose:
                             openapi_metadata = metadata
                         else:
-                            openapi_metadata = {
+                            openapi_metadata = {  # type: ignore
                                 k: v
                                 for k, v in metadata.items()
                                 if k not in ("required", "type", "enum", "default")
