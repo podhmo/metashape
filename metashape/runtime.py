@@ -190,6 +190,7 @@ def _mark_recursive(
         kind = guess_member(m)
         if kind != "object":
             logger.debug("skip recursive walk, kind=%r, type=%r", kind, m)
+            assert kind is not None
             mark(m, kind=kind)
             continue
 
