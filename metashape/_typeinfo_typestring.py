@@ -52,7 +52,22 @@ def type_string(
 
 
 def _to_str_default(info: TypeInfo) -> str:
-    return info.type_.__name__
+    """
+    >>> _to_str_default(typeinfo(str))
+    'str'
+
+    >>> import typing
+    >>> _to_str_default(typeinfo(typing.List[int]))
+    '`typing.List[int]`'
+
+    >>> import typing
+    >>> XorY = typing.Literal["X", "Y"]
+    >>> _to_str_default(typeinfo(XorY))
+    "`typing.Literal['X', 'Y']`"
+    """
+    if info.underlying != info.type_:
+        return f"`{info.type_!r}`"
+    return info.underlying.__name__
 
 
 def typeinfo_string(
