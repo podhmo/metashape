@@ -13,7 +13,7 @@ NoneType = type(None)
 
 
 def type_string(
-    typ: t.Type[t.Any], to_str: t.Optional[t.Callable[TypeInfo], str] = None
+    typ: t.Type[t.Any], to_str: t.Optional[t.Callable[[TypeInfo], str]] = None
 ) -> str:
     """
     >>> type_string(str)
