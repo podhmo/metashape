@@ -84,10 +84,6 @@ def typeinfo_string(
     return to_str(info)
 
 
-def run(typ: t.Type[t.Any]) -> None:
-    print(typ, type_string(typ))
-
-
 if __name__ == "__main__":
     import doctest
 
