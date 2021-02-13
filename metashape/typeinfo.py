@@ -10,18 +10,23 @@ from ._typeinfo import (
     _default_raise_error,
 )
 from ._typeinfo_evil import typeinfo, omit_optional
-
+from ._typeinfo_typestring import type_string
+from ._typeinfo_typestring import typeinfo_string as to_string
 
 __all__ = [
-    "PrimitiveType",
+    # exported functions (or classes)
+    "typeinfo",
+    "type_string",
+    "to_string",
+    "omit_optional",  # TODO: remove
     "is_primitive_type",
+    "TypeInfo",
+    # helpers
+    "PrimitiveType",
     "Atom",
     "Container",
     "Container_with_children",
-    "TypeInfo",
     "_default_raise_error",
-    "typeinfo",
-    "omit_optional",
 ]
 
 if __name__ == "__main__":
