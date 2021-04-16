@@ -225,7 +225,7 @@ class Resolver:
         typ = d.get("type", None)
         if typ in cand:
             return True
-        if self.has_allof(d):
+        if self.has_allof(d) and all("type" in x or "$ref" in x for x in d["allOf"]):
             return True
         return False
 
