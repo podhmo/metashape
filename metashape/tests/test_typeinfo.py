@@ -234,6 +234,16 @@ if sys.version_info < (3, 9):
             ),
         ),
         (
+            "union int str (pep604)",
+            int | str,
+            container(
+                raw=t.Union[int, str],
+                container_type="union",
+                is_combined=True,
+                raw_args=[atom(raw=int, underlying=int), atom(raw=str, underlying=str)],
+            ),
+        ),
+        (
             "optional union optional user_defined_type optional str",
             # simplify -> t.Union[NoneType, _Person, str]
             t.Optional[t.Union[t.Optional[_Person], t.Optional[str]]],
