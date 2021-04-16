@@ -233,7 +233,7 @@ if sys.version_info < (3, 9):
                 raw_args=[atom(raw=int, underlying=int), atom(raw=str, underlying=str)],
             ),
         ),
-        (
+        pytest.param(
             "union int str (pep604)",
             int | str,
             container(
@@ -241,6 +241,9 @@ if sys.version_info < (3, 9):
                 container_type="union",
                 is_combined=True,
                 raw_args=[atom(raw=int, underlying=int), atom(raw=str, underlying=str)],
+            ),
+            marks=pytest.mark.skipif(
+                sys.version_info < (3, 10), reason="pep604 not supported"
             ),
         ),
         (
