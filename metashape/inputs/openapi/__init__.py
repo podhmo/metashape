@@ -225,7 +225,7 @@ class Resolver:
         typ = d.get("type", None)
         if typ in cand:
             return True
-        if self.has_allof(d):
+        if self.has_allof(d) and all("type" in x or "$ref" in x for x in d["allOf"]):
             return True
         return False
 
@@ -615,7 +615,9 @@ class Emitter:
                     m.docstring(description)
                     m.sep()
 
+                properties_is_existed = False
                 for field_name, field_type in typ.annotations.items():
+                    properties_is_existed = True
                     metadata = field_type.metadata
                     if hasattr(field_type, "ref"):
                         field_type = ctx.globals.get(field_type.name)  # type: ignore
@@ -662,6 +664,9 @@ class Emitter:
                         m.stmt(
                             f"{normalized_field_name}: {type_str} = {field_sym}({LazyArgumentsAndKeywords(kwargs=metashape_kwargs)})"
                         )
+
+                if not properties_is_existed:
+                    m.stmt("pass  # maybe Unknown?")
 
         if str(ctx.import_area):
             ctx.import_area.sep()
