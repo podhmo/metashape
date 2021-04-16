@@ -12,6 +12,14 @@ from ._typeinfo import (
     Atom,
 )
 
+_override_underlying_map = {}
+try:
+    from types import Union as Pep604Union
+
+    _override_underlying_map[Pep604Union] = t.Union
+except ImportError:
+    pass  # py<3.10
+
 
 # todo: rename
 @lru_cache(maxsize=1024, typed=False)
@@ -30,7 +38,10 @@ def typeinfo(
 ) -> TypeInfo:
     raw = typ
     args: t.List[t.Type[t.Any]] = typing_get_args(typ)
-    underlying = getattr(typ, "__origin__", None)
+
+    underlying = _override_underlying_map.get(typ.__class__)
+    if underlying is None:
+        underlying = getattr(typ, "__origin__", None)
 
     if underlying is None:
         if not hasattr(typ, "__iter__"):
