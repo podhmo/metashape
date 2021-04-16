@@ -339,6 +339,21 @@ parameters = [
 ]
 
 
+if sys.version_info >= (3, 10):
+    parameters.append(
+        (
+            "union int str (pep604)",
+            int | str,
+            container(
+                raw=t.Union[int, str],
+                container_type="union",
+                is_combined=True,
+                raw_args=[atom(raw=int, underlying=int), atom(raw=str, underlying=str)],
+            ),
+        )
+    )
+
+
 @pytest.mark.parametrize(
     "msg, typ, want",
     parameters,
