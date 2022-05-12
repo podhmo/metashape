@@ -1,0 +1,115 @@
+{
+  "components": {
+    "schemas": {
+      "Person": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "memo": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "memoList": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "pets": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Dog"
+                },
+                {
+                  "$ref": "#/components/schemas/Cat"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "$type"
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "memo",
+          "memoList",
+          "parents",
+          "pets"
+        ],
+        "additionalProperties": false
+      },
+      "Dog": {
+        "type": "object",
+        "properties": {
+          "bark": {
+            "type": "boolean"
+          },
+          "breed": {
+            "type": "string"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bark",
+          "breed",
+          "age",
+          "$type"
+        ],
+        "additionalProperties": false
+      },
+      "Cat": {
+        "type": "object",
+        "properties": {
+          "hunts": {
+            "type": "boolean"
+          },
+          "age": {
+            "type": "integer"
+          },
+          "$type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hunts",
+          "age",
+          "$type"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
