@@ -15,7 +15,13 @@
           "name",
           "age"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "defaults": [
+          {
+            "id": 1,
+            "name": "foo"
+          }
+        ]
       }
     }
   }
