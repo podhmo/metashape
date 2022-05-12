@@ -1,22 +1,14 @@
 from __future__ import annotations
 import typing as t
-import sys
 import re
 from .types import T
 
 
 # makedict
-if sys.version_info[:2] >= (3, 6):
-    make_dict = dict
-else:
-    from collections import OrderedDict as make_dict  # noqa
+make_dict = dict
 
 # get_args
-typing_get_args = getattr(t, "get_args", None)
-if typing_get_args is None:
-    import typing_inspect as ti
-
-    typing_get_args = ti.get_args
+typing_get_args = t.get_args
 
 
 # stolen from pyramid

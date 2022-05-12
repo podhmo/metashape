@@ -15,7 +15,10 @@ def iterate_props(
 
     for field in fields(typ):  # type: Field[t.Any]
         mutable_state: t.Dict[str, t.Any] = {}
-        metadata = ChainMap(mutable_state, field.metadata)
+
+        # TODO(podhmo) fix: chainMap is MappingProxyType
+        metadata = ChainMap(mutable_state, field.metadata)  # type:ignore
+
         field_type = _evaluate_type(typ, field)
         yield field.name, field_type, metadata
 

@@ -52,7 +52,7 @@ class NameResolver:
             return name
 
         if hasattr(typ, "__name__"):
-            name = getattr(typ, "__qualname__", typ.__name__)
+            name = getattr(typ, "__qualname__", typ.__name__) or ""
             # HACK: for the type defined in closure. (e.g. t.NewType)
             if "<locals>" in name:
                 name = typ.__name__
@@ -115,7 +115,7 @@ class NameGuesser:
     def register(self, name: str, typ: t.Type[t.Any]) -> None:
         self.resolver.register(name, typ)
         self._cache[self.resolver._get_key(typ)] = name
-    
+
     def guess(self, typ: t.Type[t.Any]) -> str:
         k = self.resolver._get_key(typ)
         cached = self._cache.get(k)
@@ -127,7 +127,7 @@ class NameGuesser:
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
         if not hasattr(typ, "__origin__"):
-            return self.resolver.resolve_maybe(typ) or self._aliases.get(typ)
+            return self.resolver.resolve_maybe(typ) or self._aliases.get(typ) or "-"
         else:
             # for generics
             origin = typ.__origin__
