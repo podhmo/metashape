@@ -1,7 +1,7 @@
 OUTFILE := output.json
 SHELL := $(shell which bash)
 
-GREP := $(shell which ggrep || grep)
+GREP := $(shell which ggrep || which grep)
 ALLS := $(shell cat Makefile| $(GREP) -Po '^\d+')
 
 default: $(ALLS)
@@ -69,4 +69,6 @@ typing:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
 23:
 	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
-
+24:
+	python -m metashape.outputs.openapi --aggressive $@*/*.py | tee `echo $@*`/${OUTFILE}
+	dictknife diff `echo 09*`/${OUTFILE} `echo $@*`/${OUTFILE} |& tee `echo $@*`/a.diff
