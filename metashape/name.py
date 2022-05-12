@@ -112,6 +112,10 @@ class NameGuesser:
 
         return weakref.WeakKeyDictionary()
 
+    def register(self, name: str, typ: t.Type[t.Any]) -> None:
+        self.resolver.register(name, typ)
+        self._cache[self.resolver._get_key(typ)] = name
+    
     def guess(self, typ: t.Type[t.Any]) -> str:
         k = self.resolver._get_key(typ)
         cached = self._cache.get(k)
@@ -122,18 +126,13 @@ class NameGuesser:
         return guessed
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
-        name = self.resolver.resolve_maybe(typ)
-        if name is not None:
-            return name
-
-        alias = self._aliases.get(typ)
-        if alias is not None:
-            return alias
-
-        # for generics
-        origin = typ.__origin__
-        joiner = self._joiners.get(origin) or self._joiners[t.Any]
-        return joiner(origin, typ.__args__)
+        if not hasattr(typ, "__origin__"):
+            return self.resolver.resolve_maybe(typ) or self._aliases.get(typ)
+        else:
+            # for generics
+            origin = typ.__origin__
+            joiner = self._joiners.get(origin) or self._joiners[t.Any]
+            return joiner(origin, typ.__args__)
 
     def _join_name_for_default(
         self, origin: t.Type[t.Any], args: t.Tuple[t.Type[t.Any], ...],
@@ -178,7 +177,8 @@ _guesser = NameGuesser(_resolver)
 def NewNamedType(
     name: str, typ: TypeT, *, _resolver: NameResolver = _resolver
 ) -> TypeT:
-    _resolver.register(name, typ)
+    # TODO(podhmo): This is hack. (more complete implementation is https://github.com/lovasoa/marshmallow_dataclass)
+    _guesser.register(name, typ)
     return typ
 
 
