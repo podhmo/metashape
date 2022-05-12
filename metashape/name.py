@@ -115,7 +115,7 @@ class NameGuesser:
     def register(self, name: str, typ: t.Type[t.Any]) -> None:
         self.resolver.register(name, typ)
         self._cache[self.resolver._get_key(typ)] = name
-    
+
     def guess(self, typ: t.Type[t.Any]) -> str:
         k = self.resolver._get_key(typ)
         cached = self._cache.get(k)
