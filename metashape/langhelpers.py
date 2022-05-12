@@ -8,11 +8,7 @@ from .types import T
 make_dict = dict
 
 # get_args
-typing_get_args = getattr(t, "get_args", None)
-if typing_get_args is None:
-    import typing_inspect as ti
-
-    typing_get_args = ti.get_args
+typing_get_args = t.get_args
 
 
 # stolen from pyramid

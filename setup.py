@@ -1,12 +1,9 @@
-import sys
 from setuptools import setup, find_packages
 
 install_requires = [
     "typing-extensions",
     "dictknife",  # for metashape.outputs
 ]
-if sys.version_info < (3, 8):
-    install_requires.append("typing-inspect")
 
 tests_requires = ["pytest", "magicalimport"]
 extras_require = {
