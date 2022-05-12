@@ -34,7 +34,13 @@ def scan(walker: Walker,) -> Context:
     return ctx
 
 
-def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None) -> None:
+def emit(ctx: Context, *, output: t.Optional[t.IO[str]] = None, hooks: t.Optional[t.List[str]] = None) -> None:
+    if hooks is not None:
+        for hook_name in hooks:
+            for cls, schema in ctx.pyobject_to_schema_map.items():
+                hook = getattr(cls, hook_name, None)
+                if hook is not None:
+                    hook(schema)
     loading.dump(ctx.result, output, format=ctx.config.option.output_format)
 
 
@@ -43,12 +49,15 @@ class Context:
     result: ResultDict
     resolver: Resolver
     config: AnalyzingConfig
+    pyobject_to_schema_map: t.Dict[t.Type[t.Any], SchemaDict]
 
     def __init__(self, walker: Walker) -> None:
         self.state = Context.State()
         self.result = {"components": {"schemas": {}}}
         self.resolver = walker.resolver
         self.config = walker.config
+
+        self.pyobject_to_schema_map = {}
 
     @property
     def verbose(self) -> bool:
@@ -71,6 +80,8 @@ class Context:
             typename
         ] = schema
         self.state.refs[cls] = {"$ref": f"#/components/schemas/{typename}"}
+
+        self.pyobject_to_schema_map[cls] = schema
 
 
 class ResultDict(tx.TypedDict):

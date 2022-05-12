@@ -15,12 +15,16 @@ def run(
     aggressive: bool = False,
     is_member: t.Optional[t.Callable[[t.Type[T]], bool]] = None,
     emit: t.Optional[EmitFunc] = None,
+    hooks: t.Optional[t.List[str]] = None,
 ) -> None:
+    if hooks is None:
+        hooks = []
+
     m = import_module(filename, cwd=True)
     walker = get_walker(m, aggressive=aggressive)
     emit = emit or import_symbol("metashape.outputs.raw:emit")  # xxx:
     logger.debug("collect members: %d", len(walker))
-    emit(walker, output=sys.stdout)
+    emit(walker, output=sys.stdout, hooks=hooks)
 
 
 def main(
@@ -33,6 +37,7 @@ def main(
     parser.print_usage = parser.print_help  # type:ignore
     parser.add_argument("filename")
     parser.add_argument("--aggressive", action="store_true")
+    parser.add_argument("--hooks", action="append", defaullt=[])
     parser.add_argument(
         "--logging", choices=list(logging._nameToLevel.keys()), default="INFO"
     )

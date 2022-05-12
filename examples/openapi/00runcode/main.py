@@ -8,6 +8,10 @@ class Person:
     name: str
     age: int
 
+    @classmethod
+    def __defaults__(cls, d):
+        d["defaults"] = [{"id": 1, "name": "foo"}]
+
 
 # main
-codegen(get_walker([Person]))
+codegen(get_walker([Person]), hooks=["__defaults__"])
