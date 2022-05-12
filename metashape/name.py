@@ -122,18 +122,13 @@ class NameGuesser:
         return guessed
 
     def _guess(self, typ: t.Type[t.Any]) -> str:
-        name = self.resolver.resolve_maybe(typ)
-        if name is not None:
-            return name
-
-        alias = self._aliases.get(typ)
-        if alias is not None:
-            return alias
-
-        # for generics
-        origin = typ.__origin__
-        joiner = self._joiners.get(origin) or self._joiners[t.Any]
-        return joiner(origin, typ.__args__)
+        if not hasattr(typ, "__origin__"):
+            return self.resolver.resolve_maybe(typ) or self._aliases.get(typ)
+        else:
+            # for generics
+            origin = typ.__origin__
+            joiner = self._joiners.get(origin) or self._joiners[t.Any]
+            return joiner(origin, typ.__args__)
 
     def _join_name_for_default(
         self, origin: t.Type[t.Any], args: t.Tuple[t.Type[t.Any], ...],
