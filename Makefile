@@ -31,4 +31,12 @@ upload:
 	twine upload dist/metashape-$(shell cat VERSION)*.gz
 	twine upload dist/metashape-$(shell cat VERSION)*.whl
 
+local-tox:
+	docker run -v `pwd`:/app --rm -it quay.io/pypa/manylinux_2_24_x86_64:latest bash 
+	# python3.11 -m pip install --user
+	# cd /app
+	# ~/.local/bin/tox .
+
+
+
 .PHONY: test format lint build upload examples typing
