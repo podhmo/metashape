@@ -23,16 +23,16 @@ class TypeInfo:
     class A: pass
     class B: pass
 
-    A                    -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]]
-    NewType("A", B)      -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]], is_newtype=True
-    List[A]              -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]], is_container=True, python_container_type=list
-    Dict[A, B]           -> is_primitive=False, defined_by_hand_members=[TypeInfo[A], TypeInfo[B]], is_container=True, python_container_type=dict
+    A                    -> is_primitive=False, named_members=[TypeInfo[A]]
+    NewType("A", B)      -> is_primitive=False, named_members=[TypeInfo[A]], is_newtype=True
+    List[A]              -> is_primitive=False, named_members=[TypeInfo[A]], is_container=True, python_container_type=list
+    Dict[A, B]           -> is_primitive=False, named_members=[TypeInfo[A], TypeInfo[B]], is_container=True, python_container_type=dict
     """
 
     name: str
     python_type: t.Type[t.Any]
     args: t.List[TypeInfo]
-    defined_by_hand_members: t.List[TypeInfo]  # todo: renmae
+    named_members: t.List[TypeInfo]  # todo: renmae
     enum_values: t.Tuple[t.Any, ...]
 
     _underlying: t.Optional[
@@ -52,7 +52,7 @@ class TypeInfo:
     def is_primitive(self) -> bool:
         # e.g. str, int is primitive
         return not (
-            self._underlying is not None or len(self.defined_by_hand_members) > 0
+            self._underlying is not None or len(self.named_members) > 0
         )
 
     @property
@@ -69,18 +69,18 @@ class TypeInfo:
         return self.python_container_class is not None
 
     @property
-    def has_defined_by_hand_members(self) -> bool:
-        return len(self.defined_by_hand_members) > 0
+    def has_named_members(self) -> bool:
+        return len(self.named_members) > 0
 
     def __str__(self):
-        defined_by_hand_members_suffix = (
-            "#" + ",".join(x.name for x in self.defined_by_hand_members)
-            if len(self.defined_by_hand_members) > 0
+        named_members_suffix = (
+            "#" + ",".join(x.name for x in self.named_members)
+            if len(self.named_members) > 0
             else ""
         )
         newtype_suffix = "@" + self.underlying.name if self.is_newtype else ""
         optional_suffix = "?" if self.is_optional else ""
-        return f"{self.__class__.__name__}[{self.name}{defined_by_hand_members_suffix}{newtype_suffix}{optional_suffix}]"
+        return f"{self.__class__.__name__}[{self.name}{named_members_suffix}{newtype_suffix}{optional_suffix}]"
 
 
 _nonetype: t.Type[t.Any] = t.cast(t.Type[t.Any], type(None))  # xxx
@@ -127,25 +127,25 @@ def _typeinfo(
         python_type = typ
         args = []
         enum_values = ()
-        defined_by_hand_members = []
+        named_members = []
         if is_newtype:
             python_type = raw_type
             underlying = typeinfo(typ, _toplevel=False, lv=lv + 1)
             args = underlying.args
             enum_values = underlying.enum_values
-            defined_by_hand_members = underlying.defined_by_hand_members[:]
+            named_members = underlying.named_members[:]
 
         ti = TypeInfo(
             name=python_type.__name__,
             python_type=python_type,
             args=args,
             enum_values=enum_values,
-            defined_by_hand_members=defined_by_hand_members,
+            named_members=named_members,
             _underlying=underlying,
             is_optional=is_optional,
         )
         if python_type not in _primitives_types:
-            defined_by_hand_members.append(ti)
+            named_members.append(ti)
         return ti
     elif origin == t.Union:
         if len(args) == 2:
@@ -171,8 +171,8 @@ def _typeinfo(
             python_container_type=t.Union,
             args=args_info_list,
             enum_values=(),
-            defined_by_hand_members=[
-                ut for x in args_info_list for ut in x.defined_by_hand_members
+            named_members=[
+                ut for x in args_info_list for ut in x.named_members
             ],  # TODO: dedup
             is_optional=len(args) != len(new_args),
         )
@@ -185,7 +185,7 @@ def _typeinfo(
             python_container_type=t.Literal,
             args=[],
             enum_values=enum_values,
-            defined_by_hand_members=[],
+            named_members=[],
             _underlying=underlying,
         )
     raise NotImplementedError("never")
