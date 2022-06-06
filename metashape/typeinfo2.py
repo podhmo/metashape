@@ -6,6 +6,8 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+# TODO: fullname
+
 @dataclasses.dataclass(slots=True, frozen=True)
 class TypeInfo:
     """
@@ -19,16 +21,16 @@ class TypeInfo:
     class A: pass
     class B: pass
 
-    A                    -> is_primitive=False, user_defined_types=[TypeInfo[A]]
-    NewType("A", B)      -> is_primitive=False, user_defined_types=[TypeInfo[A]], is_newtype=True
-    List[A]              -> is_primitive=False, user_defined_types=[TypeInfo[A]], is_container=True, python_container_type=list
-    Dict[A, B]           -> is_primitive=False, user_defined_types=[TypeInfo[A], TypeInfo[B]], is_container=True, python_container_type=dict
+    A                    -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]]
+    NewType("A", B)      -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]], is_newtype=True
+    List[A]              -> is_primitive=False, defined_by_hand_members=[TypeInfo[A]], is_container=True, python_container_type=list
+    Dict[A, B]           -> is_primitive=False, defined_by_hand_members=[TypeInfo[A], TypeInfo[B]], is_container=True, python_container_type=dict
     """
 
     name: str
     python_type: t.Type[t.Any]
     args: t.List[TypeInfo]
-    user_defined_types: t.List[TypeInfo]  # todo: renmae
+    defined_by_hand_members: t.List[TypeInfo]  # todo: renmae
 
     _underlying: t.Optional[
         TypeInfo
@@ -43,7 +45,7 @@ class TypeInfo:
     @property
     def is_primitive(self) -> bool:
         # e.g. str, int is primitive
-        return not (self._underlying is not None or len(self.user_defined_types) > 0)
+        return not (self._underlying is not None or len(self.defined_by_hand_members) > 0)
 
     @property
     def is_enum(self) -> bool:
@@ -59,14 +61,15 @@ class TypeInfo:
         return self.python_container_class is not None
 
     @property
-    def has_user_defined_types(self) -> bool:
-        return len(self.user_defined_types) > 0
+    def has_defined_by_hand_members(self) -> bool:
+        return len(self.defined_by_hand_members) > 0
 
     def __str__(self):
+        defined_by_hand_members_suffix = "#" + ','.join(x.name for x in self.defined_by_hand_members) if len(self.defined_by_hand_members) > 0 else ""
         newtype_suffix = "@" + self.underlying.name if self.is_newtype else ""
         optional_suffix = "?" if self.is_optional else ""
         return (
-            f"{self.__class__.__name__}[{self.name}{newtype_suffix}{optional_suffix}]"
+            f"{self.__class__.__name__}[{self.name}{defined_by_hand_members_suffix}{newtype_suffix}{optional_suffix}]"
         )
 
 
@@ -115,14 +118,19 @@ def _typeinfo(
         if is_newtype:
             python_type = raw_type
             underlying = typeinfo(typ, _toplevel=False)
-        return TypeInfo(
+
+        defined_by_hand_members = []
+        ti = TypeInfo(
             name=python_type.__name__,
             python_type=python_type,
             args=[],
-            user_defined_types=[],
+            defined_by_hand_members=defined_by_hand_members,
             _underlying=underlying,
             is_optional=is_optional,
         )
+        if python_type not in _primitives_types:
+            defined_by_hand_members.append(ti)
+        return ti
     elif origin == t.Union:
         if len(args) == 2:
             if args[0] == _nonetype:
@@ -146,8 +154,8 @@ def _typeinfo(
             python_type=typ,
             python_container_type=t.Union,
             args=args_info_list,
-            user_defined_types=[
-                ut for x in args_info_list for ut in x.user_defined_types
+            defined_by_hand_members=[
+                ut for x in args_info_list for ut in x.defined_by_hand_members
             ],  # TODO: dedup
             is_optional=len(args) != len(new_args),
         )
