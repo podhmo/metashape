@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 import typing as t
 import dataclasses
 from logging import getLogger
@@ -73,6 +74,10 @@ class TypeInfo:
         return len(self.named_members) > 0
 
     @property
+    def has_fields(self) -> bool:
+        return self in self.named_members
+
+    @property
     def name(self) -> str:
         if self._python_extracted_type:
             # t.Dict[A,B] -> ABDict
@@ -102,7 +107,6 @@ _primitives_types: t.Set[t.Type[t.Any]] = set(
 # TODO: t.Literal["A","B", "C"]
 
 
-# TODO: cache
 # TODO: deduplicate named_members
 def typeinfo(typ: t.Type[t.Any], _toplevel: bool = True, lv: int = 0) -> TypeInfo:
     if _toplevel:
@@ -113,6 +117,7 @@ def typeinfo(typ: t.Type[t.Any], _toplevel: bool = True, lv: int = 0) -> TypeInf
     return ti
 
 
+@lru_cache(maxsize=1024)  # todo: fix lv
 def _typeinfo(
     typ: t.Type[t.Any],
     *,
