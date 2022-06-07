@@ -3,6 +3,8 @@ import typing as t
 import dataclasses
 from logging import getLogger
 
+from metashape.name import guess_name
+
 
 logger = getLogger(__name__)
 
@@ -29,7 +31,6 @@ class TypeInfo:
     Dict[A, B]           -> is_primitive=False, named_members=[TypeInfo[A], TypeInfo[B]], is_container=True, python_container_type=dict
     """
 
-    name: str
     python_type: t.Type[t.Any]
     args: t.List[TypeInfo]
     named_members: t.List[TypeInfo]  # todo: renmae
@@ -39,6 +40,7 @@ class TypeInfo:
         TypeInfo
     ] = None  # for example, NewType[str] is passed, str is underlying type
     python_container_type: t.Optional[t.Type[t.Any]] = None
+    _python_extracted_type: t.Optional[t.Type[t.Any]] = None
     is_optional: bool = False  # Nullable
 
     @property
@@ -51,9 +53,7 @@ class TypeInfo:
     @property
     def is_primitive(self) -> bool:
         # e.g. str, int is primitive
-        return not (
-            self._underlying is not None or len(self.named_members) > 0
-        )
+        return not (self._underlying is not None or len(self.named_members) > 0)
 
     @property
     def is_enum(self) -> bool:
@@ -71,6 +71,13 @@ class TypeInfo:
     @property
     def has_named_members(self) -> bool:
         return len(self.named_members) > 0
+
+    @property
+    def name(self) -> str:
+        if self._python_extracted_type:
+            # t.Dict[A,B] -> ABDict
+            return guess_name(self._python_extracted_type)
+        return self.python_type.__name__
 
     def __str__(self):
         named_members_suffix = (
@@ -96,6 +103,7 @@ _primitives_types: t.Set[t.Type[t.Any]] = set(
 
 
 # TODO: cache
+# TODO: deduplicate named_members
 def typeinfo(typ: t.Type[t.Any], _toplevel: bool = True, lv: int = 0) -> TypeInfo:
     if _toplevel:
         logger.debug("-------------------- typeinfo: %r --------------------", typ)
@@ -136,7 +144,6 @@ def _typeinfo(
             named_members = underlying.named_members[:]
 
         ti = TypeInfo(
-            name=python_type.__name__,
             python_type=python_type,
             args=args,
             enum_values=enum_values,
@@ -166,7 +173,6 @@ def _typeinfo(
         typ = t.Union[tuple(new_args)]  # type: ignore
         args_info_list = [typeinfo(x, _toplevel=False, lv=lv + 1) for x in new_args]
         return TypeInfo(
-            name=str(typ),
             python_type=typ,
             python_container_type=t.Union,
             args=args_info_list,
@@ -180,7 +186,6 @@ def _typeinfo(
         enum_values = t.get_args(typ)
         underlying = typeinfo(type(enum_values[0]), _toplevel=False, lv=lv + 1)
         return TypeInfo(
-            name=str(typ),
             python_type=typ,
             python_container_type=t.Literal,
             args=[],
@@ -188,6 +193,49 @@ def _typeinfo(
             named_members=[],
             _underlying=underlying,
         )
+    elif issubclass(origin, t.Sequence):
+        container_type = list
+        args_info_list = [typeinfo(x, _toplevel=False, lv=lv + 1) for x in args]
+        return TypeInfo(
+            _python_extracted_type=container_type[args],
+            python_type=typ,
+            python_container_type=container_type,
+            args=args_info_list,
+            enum_values=(),
+            named_members=[
+                ut for x in args_info_list for ut in x.named_members
+            ],  # TODO: dedup
+            is_optional=False,
+        )
+    elif issubclass(origin, t.Mapping):
+        container_type = dict
+        args_info_list = [typeinfo(x, _toplevel=False, lv=lv + 1) for x in args]
+        return TypeInfo(
+            _python_extracted_type=container_type[args],
+            python_type=typ,
+            python_container_type=container_type,
+            args=args_info_list,
+            enum_values=(),
+            named_members=[
+                ut for x in args_info_list for ut in x.named_members
+            ],  # TODO: dedup
+            is_optional=False,
+        )
+    elif issubclass(origin, t.Set):
+        container_type = set
+        args_info_list = [typeinfo(x, _toplevel=False, lv=lv + 1) for x in args]
+        return TypeInfo(
+            _python_extracted_type=container_type[args],
+            python_type=typ,
+            python_container_type=container_type,
+            args=args_info_list,
+            enum_values=(),
+            named_members=[
+                ut for x in args_info_list for ut in x.named_members
+            ],  # TODO: dedup
+            is_optional=False,
+        )
+
     raise NotImplementedError("never")
 
 
@@ -239,8 +287,12 @@ if __name__ == "__main__":
     # literal
     Direction = t.Literal["up", "down", "left", "right"]
     print('\t** t.Literal["up", "down", "left", "right"]', "->", typeinfo(Direction))
-    Direction2 = t.NewType("Direction2", Direction)
-    print('\t** t.NewType("Direction2", t.Literal["up", "down", "left", "right"])', "->", typeinfo(Direction2))
+    Direction2 = t.NewType("Direction2", Direction)  # type: ignore
+    print(
+        '\t** t.NewType("Direction2", t.Literal["up", "down", "left", "right"])',
+        "->",
+        typeinfo(Direction2),
+    )
     print(typeinfo(Direction).enum_values)
     print(typeinfo(Direction2).enum_values)
     print("")
@@ -253,5 +305,19 @@ if __name__ == "__main__":
     class B:
         pass
 
+    class C:
+        pass
+
     print("\t** A", "->", typeinfo(A))
     print("\t** B", "->", typeinfo(B))
+
+    # container
+    print("\t** t.List[int]", "->", typeinfo(t.List[int]))
+    print("\t** list[int]", "->", typeinfo(list[int]))
+    print("\t** t.List[A]", "->", typeinfo(t.List[A]))
+    print("\t** t.Dict[A, A]", "->", typeinfo(t.Dict[A, A]))
+    print(
+        "\t** t.Dict[A, t.List[t.Dict[str,B]]]",
+        "->",
+        typeinfo(t.Dict[A, t.List[t.Dict[str, B]]]),
+    )
